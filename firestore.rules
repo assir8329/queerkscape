@@ -1,0 +1,348 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required) - matches document ID
+    //   - username: string (required, 1-30 chars)
+    //   - nickname: string (optional, 1-30 chars)
+    //   - color: string (required, 'purple', 'pink', 'blue', 'cyan', 'yellow')
+    //   - tags: list of strings (optional, max 10 items, max 20 chars each)
+    //   - signal: string (optional, max 100 chars)
+    //   - x: number (required)
+    //   - y: number (required)
+    //   - createdAt: timestamp (required, immutable)
+    //   - lastActive: timestamp (required)
+    //   - pronouns: string (optional, max 20 chars)
+    //   - lookingFor: list of strings (optional, max 3 items, max 50 chars each)
+    //   - blockedUsers: list of strings (optional, max 100 items)
+    //   - onboarded: boolean (optional)
+    //   - favorites: list of strings (optional, max 100 items)
+    //   - signalUpdatedAt: timestamp (optional)
+    //   - constellationId: string (optional, max 50 chars)
+    //
+    // Collection: constellations
+    // Document ID: {constellationId}
+    // Fields:
+    //   - name: string (required, max 50 chars)
+    //   - memberIds: list of strings (required, min 3, max 20 items)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: connections
+    // Document ID: {connectionId}
+    // Fields:
+    //   - users: list of exactly 2 strings (required, immutable)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: interactions
+    // Document ID: {interactionId}
+    // Fields:
+    //   - fromUid: string (required, immutable)
+    //   - toUid: string (required, immutable)
+    //   - message: string (required, max 500 chars)
+    //   - createdAt: timestamp (required, immutable)
+    //   - read: boolean (required)
+    //
+    // Collection: reports
+    // Document ID: {reportId}
+    // Fields:
+    //   - reportedUid: string (required, immutable)
+    //   - reportedByUid: string (required, immutable)
+    //   - reason: string (required, max 500 chars)
+    //   - category: string (required, max 50 chars)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: unsaidThoughts
+    // Document ID: {thoughtId}
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - text: string (required, max 150 chars)
+    //   - createdAt: timestamp (required, immutable)
+    //   - expiresAt: timestamp (optional)
+    //   - vibe: string (optional, max 50 chars)
+    //   - isAnonymous: boolean (optional)
+    //   - x: number (optional)
+    //   - y: number (optional)
+    //   - lat: number (optional)
+    //   - lng: number (optional)
+    //   - viewCount: number (optional)
+    //   - city: string (optional)
+    //   - region: string (optional)
+    //   - country: string (optional)
+    //   - visibility: string (optional, 'nearby' or 'global')
+    //
+    // Collection: memories
+    // Document ID: {memoryId}
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - text: string (required, max 500 chars)
+    //   - lat: number (required)
+    //   - lng: number (required)
+    //   - region: string (required, max 100 chars)
+    //   - createdAt: timestamp (required, immutable)
+    //   - date: timestamp (optional)
+    //   - vibe: string (optional, max 50 chars)
+    //   - viewCount: number (optional)
+    //
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "epstopikguideph@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+    
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+    
+    function isValidOptionalBoolean(field) {
+      return !(field in request.resource.data) || request.resource.data[field] is bool;
+    }
+    
+    function isValidList(listData, maxSize) {
+      return listData is list && listData.size() <= maxSize;
+    }
+    
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidUser() {
+      let data = request.resource.data;
+      
+      let hasValidTags = !('tags' in data) || (data.tags is list && data.tags.size() <= 10);
+      let hasValidLookingFor = !('lookingFor' in data) || (
+        (data.lookingFor is list && data.lookingFor.size() <= 3) || 
+        (data.lookingFor is string)
+      );
+      let hasValidBlocked = !('blockedUsers' in data) || (data.blockedUsers is list && data.blockedUsers.size() <= 100);
+      let hasValidFavorites = !('favorites' in data) || (data.favorites is list && data.favorites.size() <= 100);
+      let hasValidOnboarded = !('onboarded' in data) || (data.onboarded is bool);
+      let hasValidSignalUpdatedAt = !('signalUpdatedAt' in data) || (data.signalUpdatedAt is timestamp);
+      let hasValidHideLocation = !('hideLocation' in data) || (data.hideLocation is bool);
+      let hasValidLocation = !('location' in data) || (
+        data.location is map &&
+        (!('city' in data.location) || data.location.city is string) &&
+        (!('region' in data.location) || data.location.region is string) &&
+        (!('country' in data.location) || data.location.country is string) &&
+        (!('lat' in data.location) || data.location.lat is number) &&
+        (!('lng' in data.location) || data.location.lng is number)
+      );
+      
+      return hasRequiredFields(['uid', 'username', 'color', 'createdAt', 'lastActive']) &&
+             (resource != null || hasRequiredFields(['x', 'y'])) &&
+             data.uid == request.auth.uid &&
+             validStringLength('username', 1, 30) &&
+             isValidOptionalString('nickname', 0, 30) &&
+             validStringLength('color', 1, 20) &&
+             (!('x' in data) || data.x is number) &&
+             (!('y' in data) || data.y is number) &&
+             data.createdAt is timestamp &&
+             data.lastActive is timestamp &&
+             isValidOptionalString('signal', 0, 100) &&
+             isValidOptionalString('pronouns', 0, 20) &&
+             isValidOptionalString('constellationId', 0, 50) &&
+             isValidOptionalString('vibe', 0, 50) &&
+             isValidOptionalString('relationshipStatus', 0, 50) &&
+             isValidOptionalString('zodiacSign', 0, 20) &&
+             isValidOptionalString('mbti', 0, 4) &&
+             isValidOptionalString('identity', 0, 30) &&
+             isValidOptionalString('sexualRole', 0, 30) &&
+             isValidOptionalBoolean('usernameChanged') &&
+             hasValidTags &&
+             hasValidLookingFor &&
+             hasValidBlocked &&
+             hasValidFavorites &&
+             hasValidOnboarded &&
+             hasValidSignalUpdatedAt &&
+             hasValidHideLocation &&
+             hasValidLocation;
+    }
+    
+    function isValidConstellation() {
+      let data = request.resource.data;
+      return hasRequiredFields(['name', 'memberIds', 'createdAt']) &&
+             validStringLength('name', 1, 50) &&
+             data.memberIds is list &&
+             data.memberIds.size() >= 2 &&
+             data.memberIds.size() <= 20 &&
+             request.auth.uid in data.memberIds &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidConnection() {
+      let data = request.resource.data;
+      return hasRequiredFields(['users', 'createdAt']) &&
+             data.users is list &&
+             data.users.size() == 2 &&
+             request.auth.uid in data.users &&
+             data.users[0] is string &&
+             data.users[1] is string &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidInteraction() {
+      let data = request.resource.data;
+      return hasRequiredFields(['fromUid', 'toUid', 'message', 'createdAt', 'read']) &&
+             data.fromUid == request.auth.uid &&
+             data.toUid is string &&
+             validStringLength('message', 1, 500) &&
+             data.createdAt is timestamp &&
+             data.read is bool;
+    }
+    
+    function isValidReport() {
+      let data = request.resource.data;
+      return hasRequiredFields(['reportedUid', 'reportedByUid', 'reason', 'category', 'createdAt']) &&
+             data.reportedByUid == request.auth.uid &&
+             data.reportedUid is string &&
+             validStringLength('reason', 1, 500) &&
+             validStringLength('category', 1, 50) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidUnsaidThought() {
+      let data = request.resource.data;
+      return hasRequiredFields(['userId', 'text', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             validStringLength('text', 1, 150) &&
+             data.createdAt is timestamp &&
+             isValidOptionalString('vibe', 0, 50) &&
+             isValidOptionalBoolean('isAnonymous') &&
+             (!('expiresAt' in data) || data.expiresAt is timestamp) &&
+             (!('x' in data) || data.x is number) &&
+             (!('y' in data) || data.y is number) &&
+             (!('lat' in data) || data.lat is number) &&
+             (!('lng' in data) || data.lng is number) &&
+             (!('viewCount' in data) || data.viewCount is number) &&
+             isValidOptionalString('city', 0, 100) &&
+             isValidOptionalString('region', 0, 100) &&
+             isValidOptionalString('country', 0, 100) &&
+             (!('visibility' in data) || data.visibility in ['nearby', 'global']);
+    }
+
+    function isValidMemory() {
+      let data = request.resource.data;
+      return hasRequiredFields(['userId', 'text', 'lat', 'lng', 'region', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             validStringLength('text', 1, 500) &&
+             data.lat is number &&
+             data.lng is number &&
+             validStringLength('region', 1, 100) &&
+             data.createdAt is timestamp &&
+             (!('date' in data) || data.date is timestamp) &&
+             isValidOptionalString('vibe', 0, 50) &&
+             (!('viewCount' in data) || data.viewCount is number);
+    }
+
+    function isValidUserPrivate() {
+      let data = request.resource.data;
+      return hasRequiredFields(['email', 'createdAt']) &&
+             isValidEmail(data.email) &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser();
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUser() && areImmutableFieldsUnchanged(['uid', 'createdAt']);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /users_private/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /constellations/{constellationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidConstellation();
+      allow update: if isAuthenticated() && (request.auth.uid in resource.data.memberIds) && isValidConstellation();
+      allow delete: if isAdmin();
+    }
+
+    match /connections/{connectionId} {
+      allow read: if isAuthenticated() && (request.auth.uid in resource.data.users);
+      allow create: if isAuthenticated() && isValidConnection();
+      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.users) || isAdmin();
+    }
+
+    match /interactions/{interactionId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      allow create: if isAuthenticated() && isValidInteraction();
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.toUid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid) || isAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidReport();
+    }
+
+    match /unsaidThoughts/{thoughtId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidUnsaidThought();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /memories/{memoryId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidMemory();
+      allow update: if isOwner(resource.data.userId) && isValidMemory() && areImmutableFieldsUnchanged(['userId', 'createdAt']);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

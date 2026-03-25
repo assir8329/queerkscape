@@ -1,0 +1,217 @@
+import React, { useEffect, useState } from 'react';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth, UserProfile } from '../contexts/AuthContext';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Users, Star, MessageCircle } from 'lucide-react';
+import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
+import { getHexColor } from '../lib/colors';
+
+interface BondsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onUserClick: (user: UserProfile) => void;
+}
+
+interface Bond {
+  id: string;
+  users: string[];
+  otherUser?: UserProfile;
+}
+
+export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserClick }) => {
+  const { profile } = useAuth();
+  const [bonds, setBonds] = useState<Bond[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'bonds' | 'favorites'>('bonds');
+
+  useEffect(() => {
+    if (!profile || !isOpen) return;
+
+    const q = query(
+      collection(db, 'connections'),
+      where('users', 'array-contains', profile.uid)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Bond[];
+        
+        const enrichedData = await Promise.all(data.map(async (bond) => {
+          const otherUid = bond.users.find(uid => uid !== profile.uid);
+          if (otherUid) {
+            try {
+              const userDoc = await getDoc(doc(db, 'users', otherUid));
+              if (userDoc.exists()) {
+                bond.otherUser = userDoc.data() as UserProfile;
+              }
+            } catch (e) {
+              handleFirestoreError(e, OperationType.GET, `users/${otherUid}`);
+            }
+          }
+          return bond;
+        }));
+        
+        setBonds(enrichedData.filter(b => b.otherUser));
+        setLoading(false);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, 'connections');
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [profile, isOpen]);
+
+  const [favoriteStars, setFavoriteStars] = useState<UserProfile[]>([]);
+
+  useEffect(() => {
+    if (!profile || !isOpen || activeTab !== 'favorites') return;
+
+    const fetchFavorites = async () => {
+      if (!profile.favorites || profile.favorites.length === 0) {
+        setFavoriteStars([]);
+        return;
+      }
+
+      const stars = await Promise.all(profile.favorites.map(async (uid) => {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', uid));
+          return userDoc.exists() ? userDoc.data() as UserProfile : null;
+        } catch (e) {
+          return null;
+        }
+      }));
+
+      setFavoriteStars(stars.filter(s => s) as UserProfile[]);
+    };
+
+    fetchFavorites();
+  }, [profile, isOpen, activeTab]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="w-full max-w-lg bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0"
+          >
+            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-400" />
+                <h3 className="text-white font-semibold">My Cosmic Bonds</h3>
+              </div>
+              <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex border-b border-white/5">
+              <button 
+                onClick={() => setActiveTab('bonds')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'bonds' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/40 hover:text-white/60'}`}
+              >
+                Linked Stars ({bonds.length})
+              </button>
+              <button 
+                onClick={() => setActiveTab('favorites')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'favorites' ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-400/5' : 'text-white/40 hover:text-white/60'}`}
+              >
+                Favorite Stars ({profile?.favorites?.length || 0})
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
+              {activeTab === 'bonds' ? (
+                loading ? (
+                  <div className="flex justify-center py-10">
+                    <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : bonds.length === 0 ? (
+                  <div className="text-center py-10 text-white/40">
+                    <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                    <p>No bonds formed yet.</p>
+                    <p className="text-xs mt-1">Send signals to other stars to start a connection.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {bonds.map((bond) => (
+                      <button
+                        key={bond.id}
+                        onClick={() => {
+                          onClose();
+                          if (bond.otherUser) onUserClick(bond.otherUser);
+                        }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-left group"
+                      >
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+                          style={{
+                            backgroundColor: `${getHexColor(bond.otherUser?.color || 'purple')}20`,
+                            border: `1px solid ${getHexColor(bond.otherUser?.color || 'purple')}`,
+                            color: getHexColor(bond.otherUser?.color || 'purple'),
+                            boxShadow: `0 0 10px ${getHexColor(bond.otherUser?.color || 'purple')}40`
+                          }}
+                        >
+                          {(bond.otherUser?.nickname || bond.otherUser?.username || '?').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white truncate">{bond.otherUser?.nickname || bond.otherUser?.username}</div>
+                          <div className="text-xs text-white/40 truncate">{bond.otherUser?.vibe || 'Mysterious Star'}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )
+              ) : (
+                favoriteStars.length === 0 ? (
+                  <div className="text-center py-10 text-white/40">
+                    <Star className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                    <p>No favorite stars yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {favoriteStars.map((star) => (
+                      <button
+                        key={star.uid}
+                        onClick={() => {
+                          onClose();
+                          onUserClick(star);
+                        }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-left group"
+                      >
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+                          style={{
+                            backgroundColor: `${getHexColor(star.color)}20`,
+                            border: `1px solid ${getHexColor(star.color)}`,
+                            color: getHexColor(star.color),
+                            boxShadow: `0 0 10px ${getHexColor(star.color)}40`
+                          }}
+                        >
+                          {(star.nickname || star.username).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-white truncate">{star.nickname || star.username}</div>
+                          <div className="text-xs text-white/40 truncate">{star.vibe || 'Mysterious Star'}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};

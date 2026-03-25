@@ -1,0 +1,392 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user profile represented as a star on the map.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's chosen display name."
+        },
+        "nickname": {
+          "type": "string",
+          "description": "The user's chosen nickname."
+        },
+        "color": {
+          "type": "string",
+          "description": "The hex color code associated with the user's vibe."
+        },
+        "vibe": {
+          "type": "string",
+          "description": "The user's selected vibe (e.g., Femme, Butch)."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags describing the user's interests or identity."
+        },
+        "signal": {
+          "type": "string",
+          "description": "A short message or status."
+        },
+        "x": {
+          "type": "number",
+          "description": "X coordinate on the map."
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate on the map."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the user joined."
+        },
+        "lastActive": {
+          "type": "timestamp",
+          "description": "When the user was last active."
+        },
+        "pronouns": {
+          "type": "string",
+          "description": "User's pronouns."
+        },
+        "lookingFor": {
+          "type": "string",
+          "description": "What the user is looking for."
+        },
+        "blockedUsers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of UIDs this user has blocked."
+        },
+        "onboarded": {
+          "type": "boolean",
+          "description": "Whether the user has completed onboarding."
+        },
+        "favorites": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of UIDs this user has favorited."
+        },
+        "signalUpdatedAt": {
+          "type": "timestamp",
+          "description": "When the user last updated their signal."
+        },
+        "constellationId": {
+          "type": "string",
+          "description": "ID of the constellation the user belongs to."
+        },
+        "location": {
+          "type": "object",
+          "description": "The user's location for Earth Mode.",
+          "properties": {
+            "city": { "type": "string" },
+            "region": { "type": "string" },
+            "country": { "type": "string" },
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "hideLocation": {
+          "type": "boolean",
+          "description": "Whether the user has chosen to hide their location from Earth Mode."
+        },
+        "relationshipStatus": {
+          "type": "string",
+          "description": "User's relationship status."
+        },
+        "zodiacSign": {
+          "type": "string",
+          "description": "User's zodiac sign."
+        },
+        "mbti": {
+          "type": "string",
+          "description": "User's MBTI personality type."
+        },
+        "identity": {
+          "type": "string",
+          "description": "User's gender identity."
+        },
+        "sexualRole": {
+          "type": "string",
+          "description": "User's sexual role preference."
+        },
+        "usernameChanged": {
+          "type": "boolean",
+          "description": "Whether the user has changed their username once."
+        }
+      },
+      "required": ["uid", "username", "color", "x", "y", "createdAt", "lastActive"]
+    },
+    "UserPrivate": {
+      "title": "UserPrivate",
+      "description": "Private user information that should not be publicly accessible.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the private record was created."
+        }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Constellation": {
+      "title": "Constellation",
+      "description": "A named group of connected users.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the constellation."
+        },
+        "memberIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of UIDs of the members."
+        },
+        "createdAt": {
+          "type": "timestamp"
+        }
+      },
+      "required": ["name", "memberIds", "createdAt"]
+    },
+    "Connection": {
+      "title": "Connection",
+      "description": "A mutual connection between two users.",
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Array of exactly 2 UIDs."
+        },
+        "createdAt": {
+          "type": "timestamp"
+        }
+      },
+      "required": ["users", "createdAt"]
+    },
+    "Interaction": {
+      "title": "Interaction",
+      "description": "A signal or message sent from one user to another.",
+      "type": "object",
+      "properties": {
+        "fromUid": {
+          "type": "string",
+          "description": "UID of the sender."
+        },
+        "toUid": {
+          "type": "string",
+          "description": "UID of the recipient."
+        },
+        "message": {
+          "type": "string",
+          "description": "The content of the signal."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the interaction was sent."
+        },
+        "read": {
+          "type": "boolean",
+          "description": "Whether the recipient has read this."
+        }
+      },
+      "required": ["fromUid", "toUid", "message", "createdAt", "read"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "A report filed against a user.",
+      "type": "object",
+      "properties": {
+        "reportedUid": {
+          "type": "string",
+          "description": "UID of the user being reported."
+        },
+        "reportedByUid": {
+          "type": "string",
+          "description": "UID of the user filing the report."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for the report."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the report (e.g., spam, harassment, fake account)."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the report was filed."
+        }
+      },
+      "required": ["reportedUid", "reportedByUid", "reason", "category", "createdAt"]
+    },
+    "UnsaidThought": {
+      "title": "Unsaid Thought",
+      "description": "A public, non-targeted message shared by a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the user who shared the thought."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the thought."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the thought was shared."
+        },
+        "expiresAt": {
+          "type": "timestamp",
+          "description": "When the thought should expire."
+        },
+        "vibe": {
+          "type": "string",
+          "description": "The vibe associated with the thought."
+        },
+        "isAnonymous": {
+          "type": "boolean",
+          "description": "Whether the thought was shared anonymously."
+        },
+        "viewCount": {
+          "type": "number",
+          "description": "The number of stars who have heard this thought."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city where the thought was shared."
+        },
+        "region": {
+          "type": "string",
+          "description": "The region where the thought was shared."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country where the thought was shared."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["nearby", "global"],
+          "description": "Whether the thought is visible nearby or globally."
+        }
+      },
+      "required": ["userId", "text", "createdAt"]
+    },
+    "Memory": {
+      "title": "Memory",
+      "description": "A persistent, location-based memory shared by a user.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the user who shared the memory."
+        },
+        "text": {
+          "type": "string",
+          "description": "The content of the memory."
+        },
+        "lat": {
+          "type": "number",
+          "description": "Latitude of the memory."
+        },
+        "lng": {
+          "type": "number",
+          "description": "Longitude of the memory."
+        },
+        "region": {
+          "type": "string",
+          "description": "The region where the memory was shared."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the memory was created."
+        },
+        "date": {
+          "type": "timestamp",
+          "description": "Optional past date associated with the memory."
+        },
+        "vibe": {
+          "type": "string",
+          "description": "Optional vibe associated with the memory."
+        },
+        "viewCount": {
+          "type": "number",
+          "description": "Optional view count."
+        }
+      },
+      "required": ["userId", "text", "lat", "lng", "region", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles."
+    },
+    "/users_private/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserPrivate"
+      },
+      "description": "Stores private user data like email."
+    },
+    "/connections/{connectionId}": {
+      "schema": {
+        "$ref": "#/entities/Connection"
+      },
+      "description": "Stores mutual connections."
+    },
+    "/interactions/{interactionId}": {
+      "schema": {
+        "$ref": "#/entities/Interaction"
+      },
+      "description": "Stores signals sent between users."
+    },
+    "/reports/{reportId}": {
+      "schema": {
+        "$ref": "#/entities/Report"
+      },
+      "description": "Stores user reports."
+    },
+    "/constellations/{constellationId}": {
+      "schema": {
+        "$ref": "#/entities/Constellation"
+      },
+      "description": "Stores user constellations."
+    },
+    "/unsaidThoughts/{thoughtId}": {
+      "schema": {
+        "$ref": "#/entities/UnsaidThought"
+      },
+      "description": "Stores public unsaid thoughts."
+    },
+    "/memories/{memoryId}": {
+      "schema": {
+        "$ref": "#/entities/Memory"
+      },
+      "description": "Stores persistent location-based memories."
+    }
+  }
+}
