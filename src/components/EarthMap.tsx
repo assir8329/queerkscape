@@ -24,6 +24,8 @@ interface EarthMapProps {
   setMapMode: (mode: 'constellation' | 'earth') => void;
   isUiVisible?: boolean;
   onInteraction?: () => void;
+  isAddingMemory?: boolean;
+  setIsAddingMemory?: (adding: boolean) => void;
 }
 // ... (rest of the helper functions remain the same)
 
@@ -415,7 +417,7 @@ const MapContent: React.FC<{
   );
 };
 
-export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction }) => {
+export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction, isAddingMemory: externalIsAddingMemory, setIsAddingMemory: externalSetIsAddingMemory }) => {
   const [selectedCluster, setSelectedCluster] = useState<ClusterData | null>(null);
   const [expandedThought, setExpandedThought] = useState<UnsaidThought | null>(null);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
@@ -423,7 +425,10 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   const [map, setMap] = useState<L.Map | null>(null);
   
   // Memory specific state
-  const [isAddingMemory, setIsAddingMemory] = useState(false);
+  const [internalIsAddingMemory, setInternalIsAddingMemory] = useState(false);
+  const isAddingMemory = externalIsAddingMemory !== undefined ? externalIsAddingMemory : internalIsAddingMemory;
+  const setIsAddingMemory = externalSetIsAddingMemory !== undefined ? externalSetIsAddingMemory : setInternalIsAddingMemory;
+
   const [memoryModalOpen, setMemoryModalOpen] = useState(false);
   const [selectedMemoryLocation, setSelectedMemoryLocation] = useState<{lat: number, lng: number, region: string} | null>(null);
   const [viewingMemory, setViewingMemory] = useState<Memory | null>(null);

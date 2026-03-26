@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Globe, MessageSquare } from 'lucide-react';
+import { User, Globe, Sparkles } from 'lucide-react';
 
 interface BottomNavProps {
   activeTab: 'profile' | 'map' | 'thoughts';
@@ -33,11 +33,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
         <button
           onClick={() => setActiveTab('thoughts')}
           className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-            activeTab === 'thoughts' ? 'text-pink-400' : 'text-white/40 hover:text-white/60'
+            activeTab === 'thoughts' ? 'text-yellow-400' : 'text-white/40 hover:text-white/60'
           }`}
         >
-          <MessageSquare className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Thoughts</span>
+          <Sparkles className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Create</span>
         </button>
       </div>
     </div>

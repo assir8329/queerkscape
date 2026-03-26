@@ -13,6 +13,8 @@ import { Sidebar } from './components/Sidebar';
 import { UnsaidThoughts } from './components/UnsaidThoughts';
 import { BottomNav } from './components/BottomNav';
 import { TopCommandBar } from './components/TopCommandBar';
+import { CreateActionHub } from './components/CreateActionHub';
+import { SignalModal } from './components/SignalModal';
 import { GuideModal } from './components/GuideModal';
 import { Search, Sparkles, Star, LogIn, X, Loader2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -47,6 +49,9 @@ const MainApp: React.FC = () => {
   const [showBonds, setShowBonds] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'map' | 'thoughts'>('map');
+  const [isCreateHubOpen, setIsCreateHubOpen] = useState(false);
+  const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
+  const [isAddingMemory, setIsAddingMemory] = useState(false);
   const [isUiVisible, setIsUiVisible] = useState(true);
   const fadeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -97,6 +102,10 @@ const MainApp: React.FC = () => {
   };
 
   const handleTabChange = (tab: 'profile' | 'map' | 'thoughts') => {
+    if (tab === 'thoughts') {
+      setIsCreateHubOpen(true);
+      return;
+    }
     setActiveTab(tab);
     if (tab === 'profile') {
       if (profile) {
@@ -111,6 +120,20 @@ const MainApp: React.FC = () => {
       }
     } else if (tab === 'thoughts') {
       setSelectedUser(null);
+    }
+  };
+
+  const handleActionHub = (action: 'signal' | 'thought' | 'memory') => {
+    switch (action) {
+      case 'signal':
+        setIsSignalModalOpen(true);
+        break;
+      case 'thought':
+        setActiveTab('thoughts');
+        break;
+      case 'memory':
+        setIsAddingMemory(true);
+        break;
     }
   };
 
@@ -180,6 +203,8 @@ const MainApp: React.FC = () => {
                   setMapMode={setMapMode}
                   isUiVisible={isUiVisible}
                   onInteraction={handleMapInteraction}
+                  isAddingMemory={isAddingMemory}
+                  setIsAddingMemory={setIsAddingMemory}
                 />
               )}
               
@@ -213,6 +238,19 @@ const MainApp: React.FC = () => {
               <SettingsModal
                 isOpen={showSettings}
                 onClose={() => setShowSettings(false)}
+              />
+
+              <CreateActionHub 
+                isOpen={isCreateHubOpen}
+                onClose={() => setIsCreateHubOpen(false)}
+                onAction={handleActionHub}
+              />
+
+              <SignalModal 
+                isOpen={isSignalModalOpen}
+                onClose={() => setIsSignalModalOpen(false)}
+                dailyPrompt={dailyPrompt}
+                onSubmit={handlePromptSubmit}
               />
 
               {selectedUser && (
