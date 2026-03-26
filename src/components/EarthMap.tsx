@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { UserProfile, UnsaidThought, Memory } from '../types';
 import { incrementViewCount } from './UnsaidThoughts';
 import { MemoryModal } from './MemoryModal';
-import { MemoryViewModal } from './MemoryViewModal';
+import { MemoryCard } from './MemoryCard';
 import { RightActionStack } from './RightActionStack';
 import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -244,7 +244,8 @@ const MapContent: React.FC<{
   onMapClick: (lat: number, lng: number) => void,
   onInteraction?: () => void
 }> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick, onInteraction }) => {
-  const [zoom, setZoom] = useState(2);
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
 
   useMapEvents({
     zoomend: (e) => {
@@ -389,6 +390,7 @@ const MapContent: React.FC<{
       {showMemories && memories.map((memory) => {
         if (!memory.lat || !memory.lng) return null;
         const pos = getJitteredPosition(memory.lat, memory.lng, memory.id, zoom);
+        const user = users.find(u => u.uid === memory.userId);
         return (
           <Marker
             key={`memory-${memory.id}`}
@@ -398,7 +400,15 @@ const MapContent: React.FC<{
             eventHandlers={{
               click: () => onMemoryClick(memory)
             }}
-          />
+          >
+            <Popup className="custom-popup">
+              <MemoryCard 
+                memory={memory} 
+                user={user}
+                onClose={() => map?.closePopup()} 
+              />
+            </Popup>
+          </Marker>
         );
       })}
     </>
@@ -608,11 +618,6 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         />
       )}
 
-      <MemoryViewModal
-        memory={viewingMemory}
-        onClose={() => setViewingMemory(null)}
-      />
-
       <AnimatePresence>
         {selectedCluster && (
           <motion.div
@@ -699,7 +704,8 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
               
               <button 
                 onClick={() => setExpandedThought(null)}
-                className="absolute top-2 right-2 p-1.5 text-white/30 hover:text-white transition-colors"
+                className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-white/30 hover:text-white transition-all z-50"
+                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>

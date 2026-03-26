@@ -332,7 +332,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             }} 
           />
           
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+          <button 
+            onClick={onClose} 
+            className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-white/40 hover:text-white transition-all z-50"
+            aria-label="Close"
+          >
             <X className="w-5 h-5" />
           </button>
 
@@ -350,25 +354,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-white tracking-tight truncate flex items-center gap-1.5">
-                      {user.nickname || user.username}
-                      <span className="text-sm">✨</span>
-                    </h2>
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-semibold text-white tracking-tight truncate">
+                        {user.nickname || user.username}
+                      </h2>
+                      <span className="text-sm shrink-0">✨</span>
+                      {!isEditing && (
+                        <button 
+                          onClick={profile ? toggleFavorite : undefined} 
+                          className={`text-white/30 hover:text-yellow-400 transition-colors p-1.5 shrink-0 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
+                          title={!profile ? "Login to favorite" : ""}
+                        >
+                          <Star className={`w-4 h-4 ${profile?.favorites?.includes(user.uid) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                        </button>
+                      )}
+                    </div>
                     <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{user.username}</div>
                   </div>
-                  {!isEditing && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button 
-                        onClick={profile ? toggleFavorite : undefined} 
-                        className={`text-white/30 hover:text-yellow-400 transition-colors p-1.5 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
-                        title={!profile ? "Login to favorite" : ""}
-                      >
-                        <Star className={`w-4 h-4 ${profile?.favorites?.includes(user.uid) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] font-medium">

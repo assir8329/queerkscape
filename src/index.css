@@ -49,6 +49,25 @@
   .focus-transition {
     @apply transition-all duration-700 ease-in-out;
   }
+
+  /* Leaflet Popup Overrides */
+  .leaflet-popup-content-wrapper {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  .leaflet-popup-tip {
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  .leaflet-popup-close-button {
+    display: none !important;
+  }
+  .leaflet-popup-content {
+    margin: 0 !important;
+    width: auto !important;
+  }
 }
 
 @keyframes star-twinkle {
