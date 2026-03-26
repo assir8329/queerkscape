@@ -49,7 +49,7 @@ const getTargetLocation = (user?: UserProfile) => {
   if (country && regionCenters[country]) return regionCenters[country];
   
   // Privacy-safe fallback: round to 1 decimal place (~11km accuracy)
-  if (lat && lng) {
+  if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
      return { lat: Math.round(lat * 10) / 10, lng: Math.round(lng * 10) / 10, zoom: 8 };
   }
 
@@ -302,7 +302,7 @@ const MapContent: React.FC<{
     const clusterDistance = 50 * 360 / (256 * Math.pow(2, zoom));
 
     users.forEach(user => {
-      if (!user.location || user.hideLocation) return;
+      if (!user.location || user.hideLocation || isNaN(user.location.lat) || isNaN(user.location.lng)) return;
       
       const found = result.find(c => {
         const dist = Math.sqrt(
@@ -332,7 +332,9 @@ const MapContent: React.FC<{
         // If cluster has only one user, render as a star
         if (cluster.users.length === 1) {
           const user = cluster.users[0];
-          const pos = getJitteredPosition(user.location!.lat, user.location!.lng, user.uid, zoom);
+          if (!user.location || isNaN(user.location.lat) || isNaN(user.location.lng)) return null;
+          
+          const pos = getJitteredPosition(user.location.lat, user.location.lng, user.uid, zoom);
           
           return (
             <Marker 
@@ -347,6 +349,7 @@ const MapContent: React.FC<{
         }
 
         // Render as a cluster
+        if (isNaN(cluster.lat) || isNaN(cluster.lng)) return null;
         const color = cluster.users[0]?.color || 'purple';
         return (
           <Marker 
@@ -362,7 +365,7 @@ const MapContent: React.FC<{
 
       {/* Always render thoughts on top */}
       {showThoughts && thoughts.map((thought) => {
-        if (thought.lat == null || thought.lng == null) return null;
+        if (thought.lat == null || thought.lng == null || isNaN(thought.lat) || isNaN(thought.lng)) return null;
         // Apply jitter offset to avoid overlapping markers
         const pos = getJitteredPosition(thought.lat, thought.lng, thought.id, zoom);
         return (
@@ -382,7 +385,7 @@ const MapContent: React.FC<{
 
       {/* Render memories */}
       {showMemories && memories.map((memory) => {
-        if (memory.lat == null || memory.lng == null) return null;
+        if (memory.lat == null || memory.lng == null || isNaN(memory.lat) || isNaN(memory.lng)) return null;
         const user = users.find(u => u.uid === memory.userId);
         return (
           <Marker
@@ -492,14 +495,18 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   useEffect(() => {
     if (map && currentUser) {
       const target = getTargetLocation(currentUser);
-      map.flyTo([target.lat, target.lng], target.zoom, { duration: 1.5 });
+      if (!isNaN(target.lat) && !isNaN(target.lng)) {
+        map.flyTo([target.lat, target.lng], target.zoom, { duration: 1.5 });
+      }
     }
   }, [map, currentUser]);
 
   const handleCenterOnMe = () => {
     if (map && currentUser) {
       const target = getTargetLocation(currentUser);
-      map.flyTo([target.lat, target.lng], target.zoom, { duration: 1.5 });
+      if (!isNaN(target.lat) && !isNaN(target.lng)) {
+        map.flyTo([target.lat, target.lng], target.zoom, { duration: 1.5 });
+      }
     }
   };
 
@@ -577,7 +584,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
           isAddingMemory={isAddingMemory}
           onUserClick={onUserClick} 
           onClusterClick={(cluster) => {
-            if (map) {
+            if (map && !isNaN(cluster.lat) && !isNaN(cluster.lng)) {
               const currentZoom = map.getZoom();
               map.flyTo([cluster.lat, cluster.lng], Math.min(currentZoom + 3, 18), { duration: 1 });
             }
