@@ -5,6 +5,7 @@ import { UserProfile, UnsaidThought, Memory } from '../types';
 import { incrementViewCount } from './UnsaidThoughts';
 import { MemoryModal } from './MemoryModal';
 import { MemoryViewModal } from './MemoryViewModal';
+import { RightActionStack } from './RightActionStack';
 import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -18,7 +19,13 @@ interface EarthMapProps {
   currentUser: UserProfile;
   onUserClick: (user: UserProfile) => void;
   filterTag: string;
+  setFilterTag: (tag: string) => void;
+  mapMode: 'constellation' | 'earth';
+  setMapMode: (mode: 'constellation' | 'earth') => void;
+  isUiVisible?: boolean;
+  onInteraction?: () => void;
 }
+// ... (rest of the helper functions remain the same)
 
 const regionCenters: Record<string, { lat: number; lng: number; zoom: number }> = {
   "Bulacan": { lat: 14.7942, lng: 120.8799, zoom: 10 },
@@ -234,18 +241,24 @@ const MapContent: React.FC<{
   onClusterClick: (cluster: ClusterData) => void,
   onThoughtClick: (thought: UnsaidThought) => void,
   onMemoryClick: (memory: Memory) => void,
-  onMapClick: (lat: number, lng: number) => void
-}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick }) => {
+  onMapClick: (lat: number, lng: number) => void,
+  onInteraction?: () => void
+}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick, onInteraction }) => {
   const [zoom, setZoom] = useState(2);
 
   useMapEvents({
     zoomend: (e) => {
       setZoom(e.target.getZoom());
+      onInteraction?.();
+    },
+    moveend: () => {
+      onInteraction?.();
     },
     click: (e) => {
       if (isAddingMemory) {
         onMapClick(e.latlng.lat, e.latlng.lng);
       }
+      onInteraction?.();
     }
   });
 
@@ -392,7 +405,7 @@ const MapContent: React.FC<{
   );
 };
 
-export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag }) => {
+export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction }) => {
   const [selectedCluster, setSelectedCluster] = useState<ClusterData | null>(null);
   const [expandedThought, setExpandedThought] = useState<UnsaidThought | null>(null);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
@@ -406,9 +419,13 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   const [viewingMemory, setViewingMemory] = useState<Memory | null>(null);
 
   // Layer toggles
-  const [showStars, setShowStars] = useState(true);
-  const [showThoughts, setShowThoughts] = useState(true);
-  const [showMemories, setShowMemories] = useState(true);
+  const [activeLayers, setActiveLayers] = useState<string[]>(['stars', 'thoughts', 'memories']);
+
+  const toggleLayer = (layer: string) => {
+    setActiveLayers(prev => 
+      prev.includes(layer) ? prev.filter(l => l !== layer) : [...prev, layer]
+    );
+  };
 
   useEffect(() => {
     const q = query(
@@ -452,6 +469,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   }, [filterTag]);
 
   const filteredUsers = useMemo(() => {
+    if (!users) return [];
     return users.filter((u) => {
       if (currentUser?.blockedUsers?.includes(u.uid)) return false;
       if (u.blockedUsers?.includes(currentUser?.uid || '')) return false;
@@ -522,7 +540,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       className={`absolute inset-0 z-0 bg-[#050510] overflow-hidden ${isAddingMemory ? 'cursor-crosshair' : ''}`}
     >
       {isAddingMemory && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[1000] bg-yellow-500 text-black px-4 py-2 rounded-full font-bold shadow-[0_0_15px_rgba(234,179,8,0.5)] animate-pulse">
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] glass-dark text-yellow-400 px-6 py-3 rounded-full font-bold shadow-2xl animate-pulse border border-yellow-500/30">
           Tap anywhere on the map to pin a memory
         </div>
       )}
@@ -545,9 +563,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
           users={filteredUsers} 
           thoughts={thoughts}
           memories={memories}
-          showStars={showStars}
-          showThoughts={showThoughts}
-          showMemories={showMemories}
+          showStars={activeLayers.includes('stars')}
+          showThoughts={activeLayers.includes('thoughts')}
+          showMemories={activeLayers.includes('memories')}
           isAddingMemory={isAddingMemory}
           onUserClick={onUserClick} 
           onClusterClick={(cluster) => setSelectedCluster(cluster)} 
@@ -557,55 +575,22 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
           }}
           onMemoryClick={handleMemoryClick}
           onMapClick={handleMapClick}
+          onInteraction={onInteraction}
         />
       </MapContainer>
 
-      {/* Map Controls Container (Right Side) */}
-      <div className="absolute right-6 top-1/2 -translate-y-1/2 z-[1000] flex flex-col gap-6 pointer-events-none">
-        
-        {/* Layer Toggles Group */}
-        <div className="flex flex-col gap-2 pointer-events-auto bg-black/20 backdrop-blur-md p-2 rounded-3xl border border-white/5 shadow-2xl">
-          <button
-            onClick={() => setShowStars(!showStars)}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all border ${showStars ? 'bg-white/20 border-white/30 text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'bg-transparent border-transparent text-white/30 hover:text-white/50'}`}
-            title="Toggle Stars"
-          >
-            <Sparkles size={18} />
-          </button>
-          <button
-            onClick={() => setShowThoughts(!showThoughts)}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all border ${showThoughts ? 'bg-purple-500/20 border-purple-500/30 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'bg-transparent border-transparent text-white/30 hover:text-white/50'}`}
-            title="Toggle Thoughts"
-          >
-            <MessageSquare size={18} />
-          </button>
-          <button
-            onClick={() => setShowMemories(!showMemories)}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all border ${showMemories ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]' : 'bg-transparent border-transparent text-white/30 hover:text-white/50'}`}
-            title="Toggle Memories"
-          >
-            <MapPin size={18} />
-          </button>
-        </div>
-
-        {/* Navigation Controls Group */}
-        <div className="flex flex-col gap-2 pointer-events-auto bg-black/20 backdrop-blur-md p-2 rounded-3xl border border-white/5 shadow-2xl">
-          <button 
-            onClick={() => setIsAddingMemory(!isAddingMemory)}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all border ${isAddingMemory ? 'bg-yellow-500 text-black border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)]' : 'bg-white/5 border-white/10 text-yellow-500 hover:bg-white/10'}`}
-            title={isAddingMemory ? "Cancel Pin" : "Pin Memory"}
-          >
-            <MapPin size={20} fill={isAddingMemory ? "currentColor" : "none"} />
-          </button>
-          <button 
-            onClick={handleCenterOnMe}
-            className="w-12 h-12 flex items-center justify-center bg-white/5 backdrop-blur-md border border-white/10 text-blue-400 rounded-full shadow-lg hover:bg-white/10 transition-all active:scale-95"
-            title="Center on Me"
-          >
-            <Target size={20} />
-          </button>
-        </div>
-      </div>
+      {/* Right Action Stack */}
+      <RightActionStack 
+        onCenterMe={handleCenterOnMe}
+        onPinMemory={() => setIsAddingMemory(!isAddingMemory)}
+        onToggleLayer={toggleLayer}
+        activeLayers={activeLayers}
+        mapMode={mapMode}
+        setMapMode={setMapMode}
+        filterTag={filterTag}
+        setFilterTag={setFilterTag}
+        isVisible={isUiVisible}
+      />
 
       {/* Modals */}
       {selectedMemoryLocation && (

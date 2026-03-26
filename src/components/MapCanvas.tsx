@@ -7,6 +7,7 @@ import { Star } from './Star';
 import { ThoughtBubble } from './ThoughtBubble';
 import { UnsaidThought } from '../types';
 import { incrementViewCount } from './UnsaidThoughts';
+import { RightActionStack } from './RightActionStack';
 import { LocateFixed, ZoomIn, ZoomOut, X, Sparkles, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -18,9 +19,14 @@ interface Connection {
 interface MapCanvasProps {
   onUserClick: (user: UserProfile) => void;
   filterTag: string;
+  setFilterTag: (tag: string) => void;
+  mapMode: 'constellation' | 'earth';
+  setMapMode: (mode: 'constellation' | 'earth') => void;
+  isUiVisible?: boolean;
+  onInteraction?: () => void;
 }
 
-export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) => {
+export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction }) => {
   const { profile, updateLastActive } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -32,6 +38,15 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const hasCentered = useRef(false);
+
+  // Layer toggles
+  const [activeLayers, setActiveLayers] = useState<string[]>(['stars', 'thoughts', 'connections']);
+
+  const toggleLayer = (layer: string) => {
+    setActiveLayers(prev => 
+      prev.includes(layer) ? prev.filter(l => l !== layer) : [...prev, layer]
+    );
+  };
 
   // Debounce filterTag
   const [debouncedFilter, setDebouncedFilter] = useState(filterTag);
@@ -118,6 +133,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
         x: viewport.width / 2 - profile.x * zoom,
         y: viewport.height / 2 - profile.y * zoom,
       });
+      onInteraction?.();
     }
   };
 
@@ -131,6 +147,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    onInteraction?.();
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -139,15 +156,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y,
     });
+    onInteraction?.();
   };
 
   const handleMouseUp = () => setIsDragging(false);
 
   const handleZoom = (delta: number) => {
     setZoom((prev) => Math.min(Math.max(0.2, prev + delta), 3));
+    onInteraction?.();
   };
 
   const filteredUsers = useMemo(() => {
+    if (!users) return [];
     return users.filter((u) => {
       if (profile?.blockedUsers?.includes(u.uid)) return false;
       if (u.blockedUsers?.includes(profile?.uid || '')) return false;
@@ -218,6 +238,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onWheel={(e) => {
+        handleZoom(e.deltaY > 0 ? -0.1 : 0.1);
+      }}
     >
       <div
         className="absolute origin-top-left"
@@ -289,7 +312,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
             </radialGradient>
           </defs>
 
-          {visibleConnections.map(({ id, u1, u2 }) => (
+          {activeLayers.includes('connections') && visibleConnections.map(({ id, u1, u2 }) => (
             <line
               key={id}
               x1={u1.x}
@@ -303,7 +326,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
           ))}
         </svg>
 
-        {visibleUsers.map((user) => (
+        {activeLayers.includes('stars') && visibleUsers.map((user) => (
           <Star
             key={user.uid}
             user={user}
@@ -312,7 +335,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
           />
         ))}
 
-        {visibleThoughts.map((thought) => (
+        {activeLayers.includes('thoughts') && visibleThoughts.map((thought) => (
           <ThoughtBubble
             key={thought.id}
             thought={thought}
@@ -407,30 +430,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag }) 
         </div>
       </div>
 
-      {/* Map Controls */}
-      <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-30">
-        <button
-          onClick={() => centerOnUser()}
-          className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full text-white transition-colors shadow-lg"
-          title="Center on me"
-        >
-          <LocateFixed className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => handleZoom(0.2)}
-          className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full text-white transition-colors shadow-lg"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => handleZoom(-0.2)}
-          className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full text-white transition-colors shadow-lg"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-5 h-5" />
-        </button>
-      </div>
+      {/* Right Action Stack */}
+      <RightActionStack 
+        onCenterMe={centerOnUser}
+        onPinMemory={() => {}} // Not available in Sky View
+        onToggleLayer={toggleLayer}
+        activeLayers={activeLayers}
+        mapMode={mapMode}
+        setMapMode={setMapMode}
+        filterTag={filterTag}
+        setFilterTag={setFilterTag}
+        isVisible={isUiVisible}
+      />
     </div>
   );
 };

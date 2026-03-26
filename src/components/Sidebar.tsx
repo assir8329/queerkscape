@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Globe, User as UserIcon, Users, Bell, Settings, LogOut, MapPin, Menu, LogIn } from 'lucide-react';
+import { Share2, Globe, User as UserIcon, Users, Bell, Settings, LogOut, MapPin, Menu, LogIn, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { UserProfile } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SidebarProps {
   profile: UserProfile | null;
@@ -13,6 +14,7 @@ interface SidebarProps {
   onSettingsClick: () => void;
   onSignOut: () => void;
   onSignInClick: () => void;
+  isVisible?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -24,11 +26,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNotificationsClick,
   onSettingsClick,
   onSignOut,
-  onSignInClick
+  onSignInClick,
+  isVisible = true
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem("sidebarOpen");
-    return saved !== null ? saved === "true" : false;
+    return saved !== null ? saved === "true" : true;
   });
 
   useEffect(() => {
@@ -38,137 +41,192 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const hexColor = profile ? getHexColor(profile.color) : '#ffffff';
 
   return (
-    <div className={`hidden md:flex ${sidebarOpen ? 'w-[250px]' : 'w-[72px]'} h-full bg-black/40 backdrop-blur-xl border-r border-white/10 flex-col z-40 shrink-0 transition-all duration-300`}>
-      {/* Top Section */}
-      <div className={`p-4 border-b border-white/10 flex flex-col items-center relative transition-all duration-300 ${sidebarOpen ? 'text-center' : ''}`}>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`absolute top-4 ${sidebarOpen ? 'right-4' : 'right-0 left-0 mx-auto w-fit'} text-white/50 hover:text-white transition-colors z-10`}
-          title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <motion.div 
+      initial={false}
+      animate={{ 
+        width: sidebarOpen ? 260 : 80,
+        opacity: isVisible ? 1 : 0.4,
+        x: isVisible ? 0 : -20
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className={`hidden md:flex h-full glass-dark border-r border-white/5 flex-col z-40 shrink-0 relative focus-transition`}
+    >
+      {/* Collapse Toggle */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="absolute -right-3 top-12 w-6 h-6 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-all z-50 shadow-xl"
+      >
+        {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      </button>
 
-        <div 
-          className={`rounded-full flex items-center justify-center transition-all duration-300 ${sidebarOpen ? 'w-16 h-16 mb-4 mt-6' : 'w-10 h-10 mt-10'}`}
-          style={{
-            backgroundColor: profile ? hexColor : 'rgba(255,255,255,0.1)',
-            boxShadow: profile ? `0 0 10px ${hexColor}80` : 'none'
-          }}
+      {/* Profile Section */}
+      <div className="p-6 flex flex-col items-center">
+        <motion.div 
+          layout
+          className="relative group cursor-pointer"
+          onClick={onMyProfileClick}
         >
-          <UserIcon className={`${sidebarOpen ? 'w-8 h-8' : 'w-5 h-5'} ${profile ? 'text-white' : 'text-white/40'}`} />
-        </div>
-        
-        {sidebarOpen && profile && (
-          <>
-            <h2 className="text-xl font-bold text-white mb-1 truncate w-full px-2">{profile.nickname || profile.username}</h2>
-            <div className="text-xs text-white/40 mb-1 truncate w-full px-2">@{profile.username}</div>
-            <div className="flex items-center gap-1 text-xs text-white/60">
-              <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-              <span>Active Star</span>
-            </div>
-            {profile.location && !profile.hideLocation && (
-              <div className="flex items-center gap-1 text-xs text-white/50 mt-2 truncate w-full justify-center px-2">
-                <MapPin className="w-3 h-3 shrink-0" />
-                <span className="truncate">{profile.location.city}{profile.location.region ? `, ${profile.location.region}` : ''}</span>
-              </div>
+          <div 
+            className={`rounded-2xl flex items-center justify-center transition-all duration-500 overflow-hidden ${sidebarOpen ? 'w-20 h-20' : 'w-12 h-12'}`}
+            style={{
+              backgroundColor: profile ? `${hexColor}20` : 'rgba(255,255,255,0.05)',
+              border: `1px solid ${profile ? `${hexColor}40` : 'rgba(255,255,255,0.1)'}`,
+              boxShadow: profile ? `0 0 20px ${hexColor}20` : 'none'
+            }}
+          >
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <UserIcon className={`${sidebarOpen ? 'w-8 h-8' : 'w-5 h-5'} ${profile ? 'text-white' : 'text-white/20'}`} />
             )}
-          </>
-        )}
+          </div>
+          {profile && (
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#050510] rounded-full" />
+          )}
+        </motion.div>
+        
+        <AnimatePresence mode="wait">
+          {sidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mt-4 text-center w-full"
+            >
+              {profile ? (
+                <>
+                  <h2 className="text-lg font-semibold text-white truncate px-2">{profile.nickname || profile.username}</h2>
+                  <p className="text-xs text-white/40 font-mono mt-0.5">@{profile.username}</p>
+                </>
+              ) : (
+                <div className="py-2">
+                  <h2 className="text-sm font-medium text-white/60 uppercase tracking-widest">Lost Star</h2>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-        {sidebarOpen && !profile && (
-          <div className="mt-4">
-            <h2 className="text-lg font-bold text-white mb-1">Lost Star</h2>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest">Observing the Scape</p>
+      {/* Navigation */}
+      <div className="flex-1 px-3 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+        <div className="mb-4">
+          <p className={`text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
+            {sidebarOpen ? 'Perspective' : '•••'}
+          </p>
+          <SidebarItem 
+            icon={<Share2 size={20} />} 
+            label="Sky View" 
+            active={mapMode === 'constellation'} 
+            onClick={() => setMapMode('constellation')} 
+            collapsed={!sidebarOpen}
+          />
+          <SidebarItem 
+            icon={<Globe size={20} />} 
+            label="Ground View" 
+            active={mapMode === 'earth'} 
+            onClick={() => setMapMode('earth')} 
+            collapsed={!sidebarOpen}
+          />
+        </div>
+
+        {profile && (
+          <div>
+            <p className={`text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
+              {sidebarOpen ? 'Personal' : '•••'}
+            </p>
+            <SidebarItem 
+              icon={<UserIcon size={20} />} 
+              label="My Profile" 
+              onClick={onMyProfileClick} 
+              collapsed={!sidebarOpen}
+            />
+            <SidebarItem 
+              icon={<Users size={20} />} 
+              label="My Bonds" 
+              onClick={onBondsClick} 
+              collapsed={!sidebarOpen}
+            />
+            <SidebarItem 
+              icon={<Bell size={20} />} 
+              label="Notifications" 
+              onClick={onNotificationsClick} 
+              collapsed={!sidebarOpen}
+            />
+            <SidebarItem 
+              icon={<Settings size={20} />} 
+              label="Settings" 
+              onClick={onSettingsClick} 
+              collapsed={!sidebarOpen}
+            />
           </div>
         )}
       </div>
 
-      {/* Navigation Items */}
-      <div className="flex-1 py-6 px-3 flex flex-col gap-2 overflow-y-auto custom-scrollbar overflow-x-hidden">
-        <button
-          onClick={() => setMapMode('constellation')}
-          title={!sidebarOpen ? "Sky View" : undefined}
-          className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-xl transition-all ${mapMode === 'constellation' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-        >
-          <Share2 className="w-5 h-5 shrink-0" />
-          {sidebarOpen && <span className="font-medium truncate">Sky View</span>}
-        </button>
-        
-        <button
-          onClick={() => setMapMode('earth')}
-          title={!sidebarOpen ? "Ground View" : undefined}
-          className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-xl transition-all ${mapMode === 'earth' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-        >
-          <Globe className="w-5 h-5 shrink-0" />
-          {sidebarOpen && <span className="font-medium truncate">Ground View</span>}
-        </button>
-
-        <div className="h-px bg-white/10 my-2 mx-2 shrink-0" />
-
-        {profile && (
-          <>
-            <button
-              onClick={onMyProfileClick}
-              title={!sidebarOpen ? "My Profile" : undefined}
-              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all`}
-            >
-              <UserIcon className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="font-medium truncate">My Profile</span>}
-            </button>
-
-            <button
-              onClick={onBondsClick}
-              title={!sidebarOpen ? "My Bonds" : undefined}
-              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all`}
-            >
-              <Users className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="font-medium truncate">My Bonds</span>}
-            </button>
-
-            <button
-              onClick={onNotificationsClick}
-              title={!sidebarOpen ? "Notifications" : undefined}
-              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all`}
-            >
-              <Bell className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="font-medium truncate">Notifications</span>}
-            </button>
-
-            <button
-              onClick={onSettingsClick}
-              title={!sidebarOpen ? "Settings" : undefined}
-              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'} py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all`}
-            >
-              <Settings className="w-5 h-5 shrink-0" />
-              {sidebarOpen && <span className="font-medium truncate">Settings</span>}
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Bottom Section */}
-      <div className="p-3 border-t border-white/10">
+      {/* Bottom Actions */}
+      <div className="p-4 border-t border-white/5 flex flex-col gap-1">
+        <SidebarItem 
+          icon={<HelpCircle size={20} />} 
+          label="How it Works" 
+          onClick={() => window.dispatchEvent(new CustomEvent('open-guide'))} 
+          collapsed={!sidebarOpen}
+        />
         {profile ? (
-          <button
-            onClick={onSignOut}
-            title={!sidebarOpen ? "Logout" : undefined}
-            className={`w-full flex items-center ${sidebarOpen ? 'justify-center gap-2 px-4' : 'justify-center px-0'} py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-all font-medium`}
-          >
-            <LogOut className="w-5 h-5 shrink-0" />
-            {sidebarOpen && <span className="truncate">Logout</span>}
-          </button>
+          <SidebarItem 
+            icon={<LogOut size={20} />} 
+            label="Logout" 
+            onClick={onSignOut} 
+            collapsed={!sidebarOpen}
+            variant="danger"
+          />
         ) : (
-          <button
-            onClick={onSignInClick}
-            title={!sidebarOpen ? "Sign In" : undefined}
-            className={`w-full flex items-center ${sidebarOpen ? 'justify-center gap-2 px-4' : 'justify-center px-0'} py-3 rounded-xl text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 transition-all font-medium`}
-          >
-            <LogIn className="w-5 h-5 shrink-0" />
-            {sidebarOpen && <span className="truncate">Sign In</span>}
-          </button>
+          <SidebarItem 
+            icon={<LogIn size={20} />} 
+            label="Sign In" 
+            onClick={onSignInClick} 
+            collapsed={!sidebarOpen}
+            variant="primary"
+          />
         )}
       </div>
-    </div>
+    </motion.div>
+  );
+};
+
+interface SidebarItemProps {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+  collapsed: boolean;
+  variant?: 'default' | 'primary' | 'danger';
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, onClick, collapsed, variant = 'default' }) => {
+  const variants = {
+    default: active ? 'bg-white/10 text-white border-white/10' : 'text-white/40 hover:text-white hover:bg-white/5 border-transparent',
+    primary: 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 border-transparent',
+    danger: 'text-red-400 hover:text-red-300 hover:bg-red-500/10 border-transparent'
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 border group relative ${variants[variant]}`}
+      title={collapsed ? label : undefined}
+    >
+      <div className={`shrink-0 transition-transform duration-300 group-hover:scale-110 group-active:scale-95`}>
+        {icon}
+      </div>
+      {!collapsed && (
+        <span className="font-medium text-sm truncate">{label}</span>
+      )}
+      {active && !collapsed && (
+        <motion.div 
+          layoutId="active-pill"
+          className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_white]"
+        />
+      )}
+    </button>
   );
 };
