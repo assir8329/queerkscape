@@ -59,27 +59,52 @@ const getTargetLocation = (user?: UserProfile) => {
 // Custom icon for clusters
 const createCustomIcon = (color: string, count: number) => {
   const hex = getHexColor(color);
-  const size = 40; // Fixed size regardless of count
+  const size = 16; // Small size for clusters too
 
   const html = `
     <div style="
-      --cluster-color: ${hex};
       width: ${size}px;
       height: ${size}px;
-      background-color: ${hex}40;
-      border: 2px solid ${hex};
-      border-radius: 50%;
-      box-shadow: 0 0 15px ${hex}80;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-      backdrop-filter: blur(4px);
-      animation: pulse-cluster 2s infinite;
     ">
-      ${count > 1 ? count : ''}
+      <div style="
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, ${hex} 0%, ${hex}80 40%, transparent 80%);
+        border-radius: 50%;
+        box-shadow: 0 0 10px ${hex}, 0 0 20px ${hex}80;
+        animation: star-twinkle 2s infinite alternate ease-in-out;
+        --star-color: ${hex};
+        --star-glow: ${hex}80;
+      "></div>
+      <div style="
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #ffffff, 0 0 15px ${hex};
+      "></div>
+      ${count > 1 ? `
+        <div style="
+          position: absolute;
+          top: -10px;
+          right: -10px;
+          background: rgba(10, 10, 30, 0.8);
+          color: white;
+          font-size: 9px;
+          padding: 1px 4px;
+          border-radius: 6px;
+          border: 1px solid ${hex}40;
+          backdrop-filter: blur(2px);
+          font-weight: bold;
+          z-index: 10;
+        ">${count}</div>
+      ` : ''}
     </div>
   `;
 
@@ -144,58 +169,60 @@ const createStarIcon = (color: string) => {
 };
 
 const createThoughtIcon = () => {
+  const size = 16;
   const html = `
     <div style="
-      width: 32px;
-      height: 32px;
+      width: ${size}px;
+      height: ${size}px;
       background-color: rgba(168, 85, 247, 0.2);
-      border: 2px solid rgba(168, 85, 247, 0.6);
+      border: 1px solid rgba(168, 85, 247, 0.8);
       border-radius: 50%;
-      box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #a855f7;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(2px);
       animation: pulse-thought 3s infinite;
     ">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
     </div>
   `;
 
   return L.divIcon({
     html,
     className: 'custom-leaflet-icon',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 };
 
 const createMemoryIcon = () => {
+  const size = 16;
   const html = `
     <div style="
-      width: 24px;
-      height: 24px;
+      width: ${size}px;
+      height: ${size}px;
       background-color: rgba(234, 179, 8, 0.2);
-      border: 2px solid rgba(234, 179, 8, 0.8);
+      border: 1px solid rgba(234, 179, 8, 0.8);
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
-      box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #eab308;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(2px);
     ">
-      <div style="width: 6px; height: 6px; background: #eab308; border-radius: 50%;"></div>
+      <div style="width: 4px; height: 4px; background: #eab308; border-radius: 50%;"></div>
     </div>
   `;
 
   return L.divIcon({
     html,
     className: 'custom-leaflet-icon',
-    iconSize: [24, 24],
-    iconAnchor: [12, 24],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
   });
 };
 
@@ -677,11 +704,6 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         .custom-leaflet-icon {
           background: transparent;
           border: none;
-        }
-        @keyframes pulse-cluster {
-          0% { transform: scale(1); box-shadow: 0 0 15px var(--cluster-color); }
-          50% { transform: scale(1.05); box-shadow: 0 0 25px var(--cluster-color); }
-          100% { transform: scale(1); box-shadow: 0 0 15px var(--cluster-color); }
         }
         @keyframes pulse-thought {
           0% { transform: scale(1); box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
