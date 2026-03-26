@@ -27,7 +27,7 @@ interface MapCanvasProps {
 }
 
 export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction }) => {
-  const { profile, updateLastActive } = useAuth();
+  const { user, profile, updateLastActive } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
@@ -432,6 +432,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
       {/* Right Action Stack */}
       <RightActionStack 
+        isLoggedIn={!!user}
         onCenterMe={centerOnUser}
         onPinMemory={() => {}} // Not available in Sky View
         onToggleLayer={toggleLayer}

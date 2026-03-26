@@ -49,29 +49,27 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
         <div className={`glass rounded-[2rem] p-1.5 flex items-center gap-2 shadow-2xl transition-all duration-500 ${isExpanded ? 'rounded-[2.5rem]' : ''}`}>
           
           {/* Left: Daily Prompt Trigger */}
-          {user && (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={`flex items-center gap-3 px-5 py-2.5 rounded-full transition-all duration-500 group relative overflow-hidden ${isExpanded ? 'bg-purple-500/20 text-purple-300' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
-            >
-              <Sparkles className={`w-4 h-4 transition-transform duration-500 ${isExpanded ? 'rotate-12 scale-110 text-yellow-400' : 'group-hover:scale-110'}`} />
-              <span className="text-sm font-medium whitespace-nowrap hidden sm:inline">
-                {isExpanded ? 'Sharing Signal...' : dailyPrompt}
-              </span>
-              <span className="text-sm font-medium sm:hidden">
-                {isExpanded ? 'Signal' : 'Prompt'}
-              </span>
-              {isExpanded && (
-                <motion.div 
-                  layoutId="glow"
-                  className="absolute inset-0 bg-purple-500/10 blur-xl"
-                />
-              )}
-            </button>
-          )}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`flex items-center gap-3 px-5 py-2.5 rounded-full transition-all duration-500 group relative overflow-hidden ${isExpanded ? 'bg-purple-500/20 text-purple-300' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
+          >
+            <Sparkles className={`w-4 h-4 transition-transform duration-500 ${isExpanded ? 'rotate-12 scale-110 text-yellow-400' : 'group-hover:scale-110'}`} />
+            <span className="text-sm font-medium whitespace-nowrap hidden sm:inline">
+              {isExpanded ? 'Sharing Signal...' : dailyPrompt}
+            </span>
+            <span className="text-sm font-medium sm:hidden">
+              {isExpanded ? 'Signal' : 'Prompt'}
+            </span>
+            {isExpanded && (
+              <motion.div 
+                layoutId="glow"
+                className="absolute inset-0 bg-purple-500/10 blur-xl"
+              />
+            )}
+          </button>
 
           {/* Divider */}
-          {user && <div className="w-px h-6 bg-white/10 mx-1" />}
+          <div className="w-px h-6 bg-white/10 mx-1" />
 
           {/* Center: Search / Filter */}
           <div className="flex-1 relative group">
@@ -113,37 +111,55 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
               
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-white/40 uppercase tracking-[0.2em]">{dailyPrompt}</h3>
-                  <button onClick={() => setIsExpanded(false)} className="text-white/20 hover:text-white transition-colors">
-                    <X size={18} />
-                  </button>
-                </div>
-
-                <textarea
-                  autoFocus
-                  value={promptResponse}
-                  onChange={(e) => setPromptResponse(e.target.value)}
-                  placeholder="Type your reflection..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 resize-none h-32 text-base transition-all font-medium"
-                  maxLength={140}
-                />
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-white/20">
-                    {promptResponse.length} / 140
-                  </span>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!promptResponse.trim() || isSubmitting}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:hover:bg-purple-600 text-white rounded-full text-sm font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 group"
+              {!user ? (
+                <div className="flex flex-col items-center gap-4 py-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Join the Collective</h3>
+                    <p className="text-white/40 text-sm mt-1">Sign in to share your daily signal and connect with others.</p>
+                  </div>
+                  <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="px-8 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-full text-sm font-bold transition-all shadow-lg shadow-purple-600/20 active:scale-95"
                   >
-                    <span>Release Signal</span>
-                    <Send size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    Go to Login
                   </button>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-white/40 uppercase tracking-[0.2em]">{dailyPrompt}</h3>
+                    <button onClick={() => setIsExpanded(false)} className="text-white/20 hover:text-white transition-colors">
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <textarea
+                    autoFocus
+                    value={promptResponse}
+                    onChange={(e) => setPromptResponse(e.target.value)}
+                    placeholder="Type your reflection..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 resize-none h-32 text-base transition-all font-medium"
+                    maxLength={140}
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/20">
+                      {promptResponse.length} / 140
+                    </span>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!promptResponse.trim() || isSubmitting}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:hover:bg-purple-600 text-white rounded-full text-sm font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 group"
+                    >
+                      <span>Release Signal</span>
+                      <Send size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

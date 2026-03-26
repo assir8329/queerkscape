@@ -3,6 +3,7 @@ import { MapPin, Navigation2, Layers, ZoomIn, ZoomOut, Maximize2, Minimize2, Sta
 import { motion, AnimatePresence } from 'motion/react';
 
 interface RightActionStackProps {
+  isLoggedIn: boolean;
   onCenterMe: () => void;
   onPinMemory: () => void;
   onToggleLayer: (layer: string) => void;
@@ -15,6 +16,7 @@ interface RightActionStackProps {
 }
 
 export const RightActionStack: React.FC<RightActionStackProps> = ({
+  isLoggedIn,
   onCenterMe,
   onPinMemory,
   onToggleLayer,
@@ -40,15 +42,17 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
         <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
           <ActionButton 
             icon={<Navigation2 size={18} />} 
-            label="Center Me" 
-            onClick={onCenterMe} 
+            label={isLoggedIn ? "Center Me" : "Sign in to center"} 
+            onClick={isLoggedIn ? onCenterMe : () => {}} 
             variant="primary"
+            disabled={!isLoggedIn}
           />
           <ActionButton 
             icon={<MapPin size={18} />} 
-            label="Pin Memory" 
-            onClick={onPinMemory} 
+            label={isLoggedIn ? "Pin Memory" : "Sign in to pin"} 
+            onClick={isLoggedIn ? onPinMemory : () => {}} 
             variant="highlight"
+            disabled={!isLoggedIn}
           />
         </div>
 
@@ -93,10 +97,11 @@ interface ActionButtonProps {
   label: string;
   onClick: () => void;
   active?: boolean;
+  disabled?: boolean;
   variant?: 'default' | 'primary' | 'highlight' | 'yellow';
 }
 
-const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, active, variant = 'default' }) => {
+const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, active, disabled, variant = 'default' }) => {
   const variants = {
     default: active ? 'bg-white/10 text-white border-white/10' : 'text-white/40 hover:text-white hover:bg-white/5 border-transparent',
     primary: 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border-purple-500/20',
@@ -107,7 +112,8 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, activ
   return (
     <button
       onClick={onClick}
-      className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 border group relative ${variants[variant]}`}
+      disabled={disabled}
+      className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 border group relative ${variants[variant]} ${disabled ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
       title={label}
     >
       <div className={`shrink-0 transition-transform duration-300 group-hover:scale-110 group-active:scale-95`}>

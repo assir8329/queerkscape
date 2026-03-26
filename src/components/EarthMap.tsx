@@ -11,12 +11,12 @@ import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import L from 'leaflet';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Target, MessageSquare, Sparkles, Eye, MapPin } from 'lucide-react';
+import { X, Target, MessageSquare, Sparkles, Eye, MapPin, Clock } from 'lucide-react';
 import { getHexColor } from '../lib/colors';
 
 interface EarthMapProps {
   users: UserProfile[];
-  currentUser: UserProfile;
+  currentUser: UserProfile | null;
   onUserClick: (user: UserProfile) => void;
   filterTag: string;
   setFilterTag: (tag: string) => void;
@@ -581,6 +581,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
 
       {/* Right Action Stack */}
       <RightActionStack 
+        isLoggedIn={!!currentUser}
         onCenterMe={handleCenterOnMe}
         onPinMemory={() => setIsAddingMemory(!isAddingMemory)}
         onToggleLayer={toggleLayer}
@@ -692,53 +693,53 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-[#0a0a1a] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+              className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-4 max-w-sm w-full shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500" />
+              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500" />
               
               <button 
                 onClick={() => setExpandedThought(null)}
-                className="absolute top-4 right-4 p-2 text-white/30 hover:text-white transition-colors"
+                className="absolute top-2 right-2 p-1.5 text-white/30 hover:text-white transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
 
-              <div className="flex flex-col items-center text-center gap-6">
-                <div className="p-4 bg-purple-500/10 rounded-full">
-                  <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ repeat: Infinity, duration: 4 }}
-                  >
-                    <Sparkles className="w-8 h-8 text-purple-400" />
-                  </motion.div>
+              <div className="flex flex-col gap-3">
+                {/* Header Label */}
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${expandedThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
+                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                    {expandedThought.isAnonymous ? 'A Whisper' : 'A Soul'}
+                  </span>
                 </div>
 
-                <p className="text-xl text-white/90 leading-relaxed italic font-serif">
+                {/* Main Content */}
+                <p className="text-base text-white/90 leading-relaxed italic font-serif">
                   "{expandedThought.text}"
                 </p>
 
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${expandedThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
-                    <span className="text-xs text-white/40 uppercase tracking-widest font-bold">
-                      {expandedThought.isAnonymous ? 'Anonymous' : 'A Soul'}
-                    </span>
+                {/* Metadata Footer */}
+                <div className="flex flex-col gap-2 border-t border-white/5 pt-3 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40 font-medium">
+                    {expandedThought.region && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-2.5 h-2.5 text-purple-400/60" />
+                        <span>{expandedThought.city || expandedThought.region}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" />
+                      <span>{expandedThought.createdAt?.toMillis ? new Date(expandedThought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
+                    </div>
+
+                    {(expandedThought.viewCount !== undefined && expandedThought.viewCount > 0) && (
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-2.5 h-2.5" />
+                        <span>{expandedThought.viewCount} stars listening</span>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-[10px] text-white/20">
-                    Shared into the scape {expandedThought.createdAt?.toMillis ? new Date(expandedThought.createdAt.toMillis()).toLocaleTimeString() : 'just now'}
-                  </span>
-                  {expandedThought.region && (
-                    <div className="flex items-center gap-1 text-white/40 text-[10px] mt-1">
-                      <MapPin className="w-3 h-3 text-purple-400/60" />
-                      <span>{expandedThought.city || expandedThought.region}, {expandedThought.country}</span>
-                    </div>
-                  )}
-                  {(expandedThought.viewCount !== undefined && expandedThought.viewCount > 0) && (
-                    <div className="flex items-center gap-1.5 text-purple-400/60 text-[10px] mt-2 bg-purple-500/5 px-3 py-1 rounded-full border border-purple-500/10">
-                      <Eye className="w-3 h-3" />
-                      <span className="font-medium tracking-wider uppercase">{expandedThought.viewCount} stars listening</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </motion.div>

@@ -57,35 +57,44 @@ const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
   return (
     <motion.div
       ref={itemRef}
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 relative group hover:bg-white/[0.05] transition-colors"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 relative group hover:bg-white/[0.05] transition-colors"
     >
-      <p className="text-white/90 leading-relaxed italic">"{thought.text}"</p>
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${thought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
+      <div className="flex flex-col gap-2">
+        {/* Header Label */}
+        <div className="flex items-center gap-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${thought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
           <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">
-            {thought.isAnonymous ? 'Anonymous' : 'A Soul'}
+            {thought.isAnonymous ? 'A Whisper' : 'A Soul'}
           </span>
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Main Content */}
+        <p className="text-sm text-white/90 leading-relaxed italic line-clamp-3 max-w-[95%]">
+          "{thought.text}"
+        </p>
+
+        {/* Metadata Footer */}
+        <div className="flex items-center gap-3 text-white/40 text-[10px] font-medium border-t border-white/5 pt-2 mt-1">
           {thought.region && (
-            <div className="flex items-center gap-1 text-white/40 text-[10px]">
-              <MapPin className="w-3 h-3 text-purple-400/60" />
+            <div className="flex items-center gap-1">
+              <MapPin className="w-2.5 h-2.5 text-purple-400/60" />
               <span>{thought.city || thought.region}</span>
             </div>
           )}
-          {(thought.viewCount !== undefined && thought.viewCount > 0) && (
-            <div className="flex items-center gap-1 text-white/40 text-[10px]">
-              <Eye className="w-3 h-3" />
-              <span>{thought.viewCount} listening</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1 text-white/30 text-[10px]">
-            <Clock className="w-3 h-3" />
+          
+          <div className="flex items-center gap-1">
+            <Clock className="w-2.5 h-2.5" />
             <span>{thought.createdAt?.toMillis ? new Date(thought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
           </div>
+
+          {(thought.viewCount !== undefined && thought.viewCount > 0) && (
+            <div className="flex items-center gap-1">
+              <Eye className="w-2.5 h-2.5" />
+              <span>{thought.viewCount}</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -351,8 +360,20 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
                   </form>
                 </div>
               ) : (
-                <div className="p-8 bg-white/[0.02] border-t border-white/5 text-center">
-                  <p className="text-white/40 text-sm italic">Sign in to share your unsaid thoughts...</p>
+                <div className="p-12 bg-white/[0.02] border-t border-white/5 text-center flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-pink-500/10 flex items-center justify-center">
+                    <Ghost className="w-8 h-8 text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-bold">Whisper into the Void</h3>
+                    <p className="text-white/40 text-sm mt-1 max-w-xs mx-auto">Sign in to share your unsaid thoughts and see where they land in the collective soul.</p>
+                  </div>
+                  <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="px-8 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-pink-600/20 active:scale-95"
+                  >
+                    Go to Login
+                  </button>
                 </div>
               )}
             </motion.div>

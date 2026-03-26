@@ -147,9 +147,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     return () => unsubscribe();
   }, [profile, user]);
 
-  if (!user || !profile) return null;
+  if (!user) return null;
 
-  const isMe = user.uid === profile.uid;
+  const isMe = profile ? user.uid === profile.uid : false;
 
   const isUserActive = (lastActive: any) => {
     if (!lastActive?.toMillis) return false;
@@ -320,7 +320,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
-          className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh] mb-24 md:mb-0"
+          className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh] mb-24 md:mb-0"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Top glow */}
@@ -338,51 +338,55 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
           <div className="flex flex-col h-full overflow-hidden">
             {/* Header Section */}
-            <div className="flex items-start gap-5 mb-8 shrink-0 relative">
+            <div className="flex items-center gap-4 mb-4 shrink-0 relative">
               <div 
-                className={`relative w-20 h-20 rounded-full shrink-0 ${!active ? 'opacity-80' : ''}`}
+                className={`relative w-14 h-14 rounded-full shrink-0 ${!active ? 'opacity-80' : ''}`}
                 style={{ 
                   backgroundColor: hexColor,
-                  boxShadow: active ? `0 0 25px rgba(${rgbColor}, 0.4)` : 'none'
+                  boxShadow: active ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
                 }}
               >
-                {active && <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-[#1a1a2e]" title="Active Star" />}
+                {active && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a1a2e]" title="Active Star" />}
               </div>
               
-              <div className="flex-1 min-w-0 pt-1">
-                <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="text-2xl font-bold text-white tracking-tight truncate flex items-center gap-2">
+                    <h2 className="text-base font-semibold text-white tracking-tight truncate flex items-center gap-1.5">
                       {user.nickname || user.username}
-                      <span className="text-xl">✨</span>
+                      <span className="text-sm">✨</span>
                     </h2>
-                    <div className="text-sm text-white/40 font-medium">@{user.username}</div>
+                    <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{user.username}</div>
                   </div>
                   {!isEditing && (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={toggleFavorite} className="text-white/30 hover:text-yellow-400 transition-colors p-1">
-                        <Star className={`w-5 h-5 ${profile.favorites?.includes(user.uid) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button 
+                        onClick={profile ? toggleFavorite : undefined} 
+                        className={`text-white/30 hover:text-yellow-400 transition-colors p-1.5 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
+                        title={!profile ? "Login to favorite" : ""}
+                      >
+                        <Star className={`w-4 h-4 ${profile?.favorites?.includes(user.uid) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                       </button>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs font-medium">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] font-medium">
                   {user.location && !user.hideLocation && (
-                    <div className="flex items-center gap-1.5 text-white/60">
-                      <span className="text-white/40">📍</span>
+                    <div className="flex items-center gap-1 text-white/60">
+                      <MapPin className="w-2.5 h-2.5 text-white/30" />
                       <span>{user.location.city}</span>
                     </div>
                   )}
                   {user.relationshipStatus && (
-                    <div className="flex items-center gap-1.5 text-white/60">
-                      <span className="text-white/40">💞</span>
+                    <div className="flex items-center gap-1 text-white/60">
+                      <span className="text-white/30">💞</span>
                       <span className="capitalize">{user.relationshipStatus}</span>
                     </div>
                   )}
                   {user.pronouns && (
-                    <div className="flex items-center gap-1.5 text-white/60">
-                      <span className="text-white/40">👤</span>
+                    <div className="flex items-center gap-1 text-white/60">
+                      <span className="text-white/30">👤</span>
                       <span>{user.pronouns}</span>
                     </div>
                   )}
@@ -390,7 +394,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-4">
+            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-4 pb-2">
               {isEditing ? (
                 /* EDIT MODE */
                 <div className="space-y-6">
@@ -728,16 +732,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
               ) : (
                 /* VIEW MODE */
-                <div className="space-y-10">
+                <div className="space-y-4">
                   {/* Signal Section */}
                   {user.signal && (
                     <section className="relative group">
-                      <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-[2rem] blur-2xl opacity-50 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative bg-white/[0.03] rounded-2xl p-6 space-y-3">
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black flex items-center gap-2">
-                          <span>💭</span> Signal
+                      <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5">
+                        <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
+                          <MessageCircle className="w-2.5 h-2.5" /> Signal
                         </div>
-                        <p className="text-xl text-white/90 font-medium italic leading-relaxed tracking-tight">
+                        <p className="text-sm text-white/90 font-medium italic leading-relaxed tracking-tight">
                           "{user.signal}"
                         </p>
                       </div>
@@ -746,15 +750,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Vibe + Looking For */}
                   {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && (
-                    <section className="space-y-4">
-                      <div className="flex flex-wrap gap-2.5">
+                    <section className="space-y-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {user.vibe && (
                           <div 
-                            className="px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-2 transition-transform hover:scale-105"
+                            className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-transform hover:scale-105"
                             style={{ 
-                              backgroundColor: `rgba(${rgbColor}, 0.1)`,
+                              backgroundColor: `rgba(${rgbColor}, 0.08)`,
                               color: hexColor,
-                              boxShadow: `0 4px 20px rgba(${rgbColor}, 0.1)`
+                              border: `1px solid rgba(${rgbColor}, 0.2)`
                             }}
                           >
                             <span>✨</span> {user.vibe}
@@ -766,7 +770,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           return currentLookingFor.map((option, idx) => (
                             <div 
                               key={idx} 
-                              className="px-5 py-2.5 rounded-full text-[11px] font-bold bg-white/5 text-white/70 flex items-center gap-2 hover:bg-white/10 transition-colors"
+                              className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-white/5 text-white/60 flex items-center gap-1.5 border border-white/5 hover:bg-white/10 transition-colors"
                             >
                               <span>💫</span> {option || "Custom..."}
                             </div>
@@ -777,19 +781,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   )}
 
                   {/* Identity & Personality Grid */}
-                  <div className="grid grid-cols-1 gap-8">
+                  <div className="grid grid-cols-2 gap-4">
                     {/* Identity Section */}
                     {(user.relationshipStatus || user.identity || user.sexualRole) && (
-                      <section className="space-y-3">
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black">Identity</div>
-                        <div className="flex flex-wrap items-center gap-3">
+                      <section className="space-y-2">
+                        <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Identity</div>
+                        <div className="flex flex-col gap-1.5">
                           {[
                             user.relationshipStatus,
                             user.identity,
                             user.sexualRole
                           ].filter(Boolean).map((item, i) => (
-                            <div key={i} className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] rounded-xl text-sm text-white/80 font-medium">
-                              {i === 0 && <span className="text-white/30">💞</span>}
+                            <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
                               <span className="capitalize">{item}</span>
                             </div>
                           ))}
@@ -798,18 +801,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     )}
 
                     {/* Personality Section */}
-                    {(user.mbti || user.zodiacSign) && (
-                      <section className="space-y-3">
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black">Personality</div>
-                        <div className="flex flex-wrap gap-3">
-                          {user.mbti && (
-                            <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.03] rounded-xl text-sm text-white/80 font-medium">
-                              <span className="text-white/30">🧠</span> {user.mbti}
+                    {(user.zodiacSign || user.mbti) && (
+                      <section className="space-y-2">
+                        <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Personality</div>
+                        <div className="flex flex-col gap-1.5">
+                          {user.zodiacSign && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
+                              <span className="text-white/30">🌙</span>
+                              <span>{user.zodiacSign}</span>
                             </div>
                           )}
-                          {user.zodiacSign && (
-                            <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.03] rounded-xl text-sm text-white/80 font-medium">
-                              <span className="text-white/30">♈</span> {user.zodiacSign}
+                          {user.mbti && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
+                              <span className="text-white/30">🧠</span>
+                              <span>{user.mbti}</span>
                             </div>
                           )}
                         </div>
@@ -819,15 +824,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Tags Section */}
                   {user.tags && user.tags.length > 0 && (
-                    <section className="space-y-4">
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black">Interests</div>
-                      <div className="flex flex-wrap gap-2">
-                        {user.tags.slice(0, 10).map((tag, i) => (
-                          <span 
-                            key={i} 
-                            className="px-4 py-2 bg-white/[0.03] rounded-xl text-[11px] font-bold text-white/50 hover:text-white/80 hover:bg-white/[0.06] transition-all cursor-default"
-                          >
-                            #{tag.toLowerCase()}
+                    <section className="space-y-2">
+                      <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Interests</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {user.tags.map((tag, i) => (
+                          <span key={i} className="px-2.5 py-1 bg-purple-500/5 text-purple-300/80 text-[10px] font-bold rounded-md border border-purple-500/10">
+                            #{tag}
                           </span>
                         ))}
                       </div>
@@ -894,7 +896,17 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             {/* Actions Footer */}
             <div className="mt-6 pt-6 border-t border-white/10 shrink-0">
-              {isMe ? (
+              {!profile ? (
+                <div className="text-center py-4 px-6 bg-white/5 rounded-2xl border border-white/10">
+                  <p className="text-xs text-white/40 font-medium mb-3">Login to send signals and interact with this star</p>
+                  <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="w-full py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-xl text-xs font-bold transition-all"
+                  >
+                    Go to Login
+                  </button>
+                </div>
+              ) : isMe ? (
                 <div className="flex gap-3">
                   {isEditing ? (
                     <>

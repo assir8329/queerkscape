@@ -39,8 +39,6 @@ const MainApp: React.FC = () => {
   const location = useLocation();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [filterTag, setFilterTag] = useState('');
-  const [showPromptInput, setShowPromptInput] = useState(false);
-  const [promptResponse, setPromptResponse] = useState('');
   const [mapMode, setMapModeState] = useState<'constellation' | 'earth'>(() => {
     return (localStorage.getItem('mapMode') as 'constellation' | 'earth') || 'earth';
   });
@@ -60,12 +58,8 @@ const MainApp: React.FC = () => {
         if (location.pathname === '/login') {
           navigate('/map', { replace: true });
         }
-      } else {
-        // If not logged in and on protected page, redirect to login
-        if (location.pathname !== '/login' && location.pathname !== '/guide') {
-          navigate('/login', { replace: true });
-        }
       }
+      // Removed the redirection to /login for guest users
     }
   }, [user, loading, location.pathname, navigate]);
 
@@ -94,14 +88,12 @@ const MainApp: React.FC = () => {
 
   const dailyPrompt = getDailyPrompt();
 
-  const handlePromptSubmit = async () => {
-    if (!promptResponse.trim()) return;
+  const handlePromptSubmit = async (response: string) => {
+    if (!response.trim()) return;
     await updateProfile({
-      signal: promptResponse,
+      signal: response,
       signalUpdatedAt: serverTimestamp()
     });
-    setShowPromptInput(false);
-    setPromptResponse('');
   };
 
   const handleTabChange = (tab: 'profile' | 'map' | 'thoughts') => {
@@ -192,11 +184,11 @@ const MainApp: React.FC = () => {
               )}
               
               <TopCommandBar 
+                user={user}
+                profile={profile}
                 filterTag={filterTag}
                 setFilterTag={setFilterTag}
                 dailyPrompt={dailyPrompt}
-                promptResponse={promptResponse}
-                setPromptResponse={setPromptResponse}
                 onPromptSubmit={handlePromptSubmit}
                 isVisible={isUiVisible}
               />
@@ -245,7 +237,7 @@ const MainApp: React.FC = () => {
           </>
         } />
 
-        <Route path="*" element={<Navigate to={user ? "/map" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to="/map" replace />} />
       </Routes>
     </div>
   );
