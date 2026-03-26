@@ -49,7 +49,7 @@ export const ThoughtBubble: React.FC<ThoughtBubbleProps> = ({ thought, onExpand 
           {/* Mini Preview on Hover */}
           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             <div className="bg-[#0a0a1a]/90 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-2xl w-48 text-center">
-              <p className="text-white/80 text-[10px] italic leading-relaxed line-clamp-2">"{thought.text}"</p>
+              <p className="text-white/80 text-[10px] font-medium leading-relaxed line-clamp-2">"{thought.text}"</p>
             </div>
           </div>
         </motion.div>

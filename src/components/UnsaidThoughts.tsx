@@ -71,7 +71,7 @@ const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
         </div>
 
         {/* Main Content */}
-        <p className="text-sm text-white/90 leading-relaxed italic line-clamp-3 max-w-[95%]">
+        <p className="text-sm text-white/90 leading-relaxed font-medium line-clamp-3 max-w-[95%]">
           "{thought.text}"
         </p>
 
@@ -279,7 +279,7 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
                 {filteredThoughts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
                     <Ghost className="w-10 h-10 text-white/5 mx-auto" />
-                    <p className="text-xs text-white/30 italic">No whispers here yet.</p>
+                    <p className="text-xs text-white/30 font-medium">No whispers here yet.</p>
                   </div>
                 ) : (
                   filteredThoughts.map((thought) => (

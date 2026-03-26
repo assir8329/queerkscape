@@ -78,7 +78,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : blockedStars.length === 0 ? (
-                  <p className="text-xs text-white/40 italic">No stars are currently blocked.</p>
+                  <p className="text-xs text-white/40 font-medium">No stars are currently blocked.</p>
                 ) : (
                   <div className="space-y-2">
                     {blockedStars.map(star => (

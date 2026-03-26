@@ -66,26 +66,23 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
+            className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-5 w-full max-w-md shadow-2xl relative"
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-                <Sparkles className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Pin a Memory</h2>
-                <div className="flex items-center gap-1 text-xs text-white/50 mt-1">
-                  <MapPin className="w-3 h-3" />
-                  <span>{region}</span>
+            <div className="flex items-center justify-between mb-5 py-1 border-b border-white/5">
+              <div className="flex items-center gap-2 truncate">
+                <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold whitespace-nowrap">A Memory</span>
+                  <span className="text-white/20">·</span>
+                  <span className="text-xs text-white/60 truncate font-medium">{region}</span>
                 </div>
               </div>
+              <button
+                onClick={onClose}
+                className="p-1 text-white/30 hover:text-white transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">

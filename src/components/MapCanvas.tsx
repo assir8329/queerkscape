@@ -376,7 +376,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
                   </motion.div>
                 </div>
 
-                <p className="text-xl text-white/90 leading-relaxed italic font-serif">
+                <p className="text-sm text-white/90 leading-relaxed font-medium">
                   "{expandedThought.text}"
                 </p>
 

@@ -325,7 +325,7 @@ const MapContent: React.FC<{
                     </div>
                   )}
                   {user.signal && (
-                    <p className="text-sm text-white/80 italic mb-2">"{user.signal}"</p>
+                    <p className="text-sm text-white/80 font-medium mb-2">"{user.signal}"</p>
                   )}
                   <div className="flex flex-wrap gap-1">
                     {user.tags?.slice(0, 3).map(tag => (
@@ -369,7 +369,7 @@ const MapContent: React.FC<{
           >
             <Popup className="custom-popup">
               <div className="bg-[#0a0a1a] text-white p-4 rounded-xl border border-white/10 shadow-2xl min-w-[200px] text-center">
-                <p className="text-sm italic leading-relaxed mb-3">"{thought.text}"</p>
+                <p className="text-sm font-medium leading-relaxed mb-3">"{thought.text}"</p>
                 {thought.region && (
                   <div className="flex items-center justify-center gap-1 text-[10px] text-white/40 mb-2">
                     <MapPin className="w-3 h-3 text-purple-400/60" />
@@ -626,26 +626,26 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       <AnimatePresence>
         {selectedCluster && (
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute bottom-0 left-0 right-0 z-[1000] bg-[#0f0f1a]/90 backdrop-blur-xl border-t border-white/10 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] max-h-[50vh] flex flex-col"
+            className="fixed bottom-[80px] left-4 right-4 z-[1000] bg-[#0f0f1a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-h-[50vh] flex flex-col"
           >
-            <div className="p-4 border-b border-white/10 flex justify-between items-center shrink-0">
-              <div>
-                <h3 className="text-xl font-bold text-white">
+            <div className="py-2.5 px-4 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div className="flex items-baseline gap-2 truncate">
+                <h3 className="text-sm font-medium text-white truncate">
                   {selectedCluster.users[0].location?.city || 'Unknown Region'}
                 </h3>
-                <p className="text-sm text-white/60">
-                  {selectedCluster.users.length} {selectedCluster.users.length === 1 ? 'Star' : 'Stars'} here
-                </p>
+                <span className="text-xs text-white/60 shrink-0">
+                  · {selectedCluster.users.length} {selectedCluster.users.length === 1 ? 'star' : 'stars'}
+                </span>
               </div>
               <button 
                 onClick={() => setSelectedCluster(null)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white"
+                className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white shrink-0"
               >
-                <X size={20} />
+                <X size={16} />
               </button>
             </div>
             
@@ -658,10 +658,10 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
                       setSelectedCluster(null);
                       onUserClick(u);
                     }}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all text-left group"
+                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all text-left group"
                   >
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                      className="w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0"
                       style={{
                         backgroundColor: `${getHexColor(u.color)}20`,
                         border: `1px solid ${getHexColor(u.color)}`,
@@ -672,17 +672,13 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
                       {(u.nickname || u.username).charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white truncate group-hover:text-white transition-colors">
-                        {u.nickname || u.username}
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-sm font-medium text-white">{u.nickname || u.username}</span>
+                        {u.zodiacSign && <span className="text-sm text-white/60">· {u.zodiacSign}</span>}
+                        {u.mbti && <span className="text-sm text-white/60">· {u.mbti}</span>}
                       </div>
-                      {(u.zodiacSign || u.mbti) && (
-                        <div className="flex items-center gap-2 text-[10px] text-white/50 mt-0.5">
-                          {u.zodiacSign && <span>♈ {u.zodiacSign}</span>}
-                          {u.mbti && <span>🧠 {u.mbti}</span>}
-                        </div>
-                      )}
                       {u.signal && (
-                        <div className="text-xs text-white/50 truncate">
+                        <div className="text-xs text-white/80 truncate mt-0.5">
                           {u.signal}
                         </div>
                       )}
@@ -725,7 +721,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
                 </div>
 
                 {/* Main Content */}
-                <p className="text-base text-white/90 leading-relaxed italic font-serif">
+                <p className="text-sm text-white/90 leading-relaxed font-medium">
                   "{expandedThought.text}"
                 </p>
 

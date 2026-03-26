@@ -16,6 +16,7 @@ import { TopCommandBar } from './components/TopCommandBar';
 import { CreateActionHub } from './components/CreateActionHub';
 import { SignalModal } from './components/SignalModal';
 import { GuideModal } from './components/GuideModal';
+import { WelcomePage } from './components/WelcomePage';
 import { Search, Sparkles, Star, LogIn, X, Loader2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from './firebase';
@@ -59,8 +60,8 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        // If logged in and on login page, redirect to map
-        if (location.pathname === '/login') {
+        // If logged in and on login page or welcome page, redirect to map
+        if (location.pathname === '/login' || location.pathname === '/') {
           navigate('/map', { replace: true });
         }
       }
@@ -124,6 +125,11 @@ const MainApp: React.FC = () => {
   };
 
   const handleActionHub = (action: 'signal' | 'thought' | 'memory') => {
+    if (!user && (action === 'signal' || action === 'memory')) {
+      navigate('/login');
+      return;
+    }
+
     switch (action) {
       case 'signal':
         setIsSignalModalOpen(true);
@@ -155,6 +161,8 @@ const MainApp: React.FC = () => {
       <GuideModal />
       
       <Routes>
+        <Route path="/" element={<WelcomePage />} />
+        
         <Route path="/login" element={
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]">
             <div className="w-full max-w-md p-4">
@@ -275,7 +283,7 @@ const MainApp: React.FC = () => {
           </>
         } />
 
-        <Route path="*" element={<Navigate to="/map" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );

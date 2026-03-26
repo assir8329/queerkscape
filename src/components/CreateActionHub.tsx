@@ -43,13 +43,13 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden"
           />
 
-          {/* Bottom Sheet */}
+          {/* Bottom Sheet (Floating Card above Nav) */}
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 z-[101] md:hidden bg-[#050510]/95 backdrop-blur-2xl border-t border-white/10 rounded-t-2xl p-4 pb-safe shadow-[0_-20px_50px_rgba(0,0,0,0.5)]"
+            className="fixed bottom-[80px] left-4 right-4 z-[101] md:hidden bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
           >
             {/* Handle */}
             <div className="w-8 h-1 bg-white/10 rounded-full mx-auto mb-4" />

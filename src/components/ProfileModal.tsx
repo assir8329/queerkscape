@@ -745,7 +745,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
                           <MessageCircle className="w-2.5 h-2.5" /> Signal
                         </div>
-                        <p className="text-sm text-white/90 font-medium italic leading-relaxed tracking-tight">
+                        <p className="text-sm text-white/90 font-medium leading-relaxed tracking-tight">
                           "{user.signal}"
                         </p>
                       </div>
