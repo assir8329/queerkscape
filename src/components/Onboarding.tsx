@@ -22,7 +22,7 @@ const LOOKING_FOR_OPTIONS = [...STANDARD_OPTIONS, "custom"];
 export const Onboarding: React.FC = () => {
   const { profile, updateProfile } = useAuth();
   const [step, setStep] = useState(1);
-  const [selectedVibe, setSelectedVibe] = useState(VIBES[0]);
+  const [selectedVibe, setSelectedVibe] = useState<(typeof VIBES)[0] | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [signal, setSignal] = useState('');
@@ -86,6 +86,11 @@ export const Onboarding: React.FC = () => {
   };
 
   const handleComplete = async () => {
+    if (!selectedVibe) {
+      setStep(1);
+      return;
+    }
+
     const updateData: any = {
       color: selectedVibe.color,
       vibe: selectedVibe.label,
@@ -140,13 +145,13 @@ export const Onboarding: React.FC = () => {
                 <button
                   key={v.id}
                   onClick={() => setSelectedVibe(v)}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${selectedVibe.id === v.id ? 'bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'bg-transparent border-white/5 hover:bg-white/5 opacity-70 hover:opacity-100'}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${selectedVibe?.id === v.id ? 'bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'bg-transparent border-white/5 hover:bg-white/5 opacity-70 hover:opacity-100'}`}
                 >
                   <div 
                     className="w-4 h-4 rounded-full" 
                     style={{ 
                       backgroundColor: v.color,
-                      boxShadow: selectedVibe.id === v.id ? `0 0 10px ${v.color}` : 'none'
+                      boxShadow: selectedVibe?.id === v.id ? `0 0 10px ${v.color}` : 'none'
                     }} 
                   />
                   <span className="text-sm text-white font-medium">{v.label}</span>
@@ -155,9 +160,14 @@ export const Onboarding: React.FC = () => {
             </div>
             <button
               onClick={() => setStep(2)}
-              className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors border border-white/10"
+              disabled={!selectedVibe}
+              className={`w-full py-3 rounded-xl font-medium transition-all border ${
+                selectedVibe 
+                  ? 'bg-white/10 hover:bg-white/20 text-white border-white/10' 
+                  : 'bg-white/5 text-white/20 border-white/5 cursor-not-allowed'
+              }`}
             >
-              Next
+              {selectedVibe ? 'Next' : 'Select a vibe to continue'}
             </button>
           </motion.div>
         )}

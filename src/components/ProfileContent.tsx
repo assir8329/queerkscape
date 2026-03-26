@@ -256,6 +256,13 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
+              <div 
+                className="w-2 h-2 rounded-full" 
+                style={{ 
+                  backgroundColor: hexColor,
+                  boxShadow: `0 0 8px ${hexColor}`
+                }} 
+              />
               <h2 className="text-xl font-bold text-white tracking-tight truncate">
                 {user.nickname || user.username}
               </h2>
@@ -559,7 +566,15 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
             {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && (
               <section className="flex flex-wrap gap-1.5">
                 {user.vibe && (
-                  <div className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/5 text-white/60 border border-white/5">
+                  <div 
+                    className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border"
+                    style={{ 
+                      backgroundColor: `${hexColor}15`,
+                      borderColor: `${hexColor}40`,
+                      color: hexColor,
+                      boxShadow: `0 0 10px ${hexColor}10`
+                    }}
+                  >
                     ✨ {user.vibe}
                   </div>
                 )}

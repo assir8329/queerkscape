@@ -204,7 +204,7 @@ const MainApp: React.FC = () => {
         <Route path="/login" element={
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]">
             <div className="w-full max-w-md p-4">
-              <Auth />
+              <Auth onClose={() => navigate('/map')} />
             </div>
           </div>
         } />
@@ -240,6 +240,14 @@ const MainApp: React.FC = () => {
                   setRightPanelType('thoughts');
                 }
               }}
+              onPinMemoryClick={() => {
+                if (!user) {
+                  navigate('/login');
+                  return;
+                }
+                setIsAddingMemory(!isAddingMemory);
+              }}
+              isAddingMemory={isAddingMemory}
               onCreateClick={() => {
                 if (isMobile) {
                   setIsCreateHubOpen(true);

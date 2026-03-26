@@ -6,6 +6,7 @@ interface RightActionStackProps {
   isLoggedIn: boolean;
   onCenterMe: () => void;
   onPinMemory: () => void;
+  isAddingMemory?: boolean;
   onToggleLayer: (layer: string) => void;
   activeLayers: string[];
   mapMode: 'constellation' | 'earth';
@@ -19,6 +20,7 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
   isLoggedIn,
   onCenterMe,
   onPinMemory,
+  isAddingMemory,
   onToggleLayer,
   activeLayers,
   mapMode,
@@ -47,44 +49,23 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
             variant="primary"
             disabled={!isLoggedIn}
           />
-          <ActionButton 
-            icon={<MapPin size={18} />} 
-            label={isLoggedIn ? "Pin Memory" : "Sign in to pin"} 
-            onClick={isLoggedIn ? onPinMemory : () => {}} 
-            variant="highlight"
-            disabled={!isLoggedIn}
-          />
         </div>
 
         {/* View Controls Group */}
         <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
-          <ActionButton 
-            icon={mapMode === 'constellation' ? <Globe size={18} /> : <Star size={18} />} 
-            label={mapMode === 'constellation' ? "Ground View" : "Sky View"} 
-            onClick={() => setMapMode(mapMode === 'constellation' ? 'earth' : 'constellation')} 
-          />
+          {mapMode === 'constellation' && (
+            <ActionButton 
+              icon={<Globe size={18} />} 
+              label="Ground View" 
+              onClick={() => setMapMode('earth')} 
+            />
+          )}
           <ActionButton 
             icon={<Star size={18} fill={filterTag === 'favorites' ? "currentColor" : "none"} />} 
             label="Favorites" 
             active={filterTag === 'favorites'}
             onClick={() => setFilterTag(filterTag === 'favorites' ? '' : 'favorites')} 
             variant="yellow"
-          />
-        </div>
-
-        {/* Layers Group */}
-        <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
-          <ActionButton 
-            icon={<Layers size={18} />} 
-            label="Thoughts" 
-            active={activeLayers.includes('thoughts')}
-            onClick={() => onToggleLayer('thoughts')} 
-          />
-          <ActionButton 
-            icon={<Layers size={18} />} 
-            label="Memories" 
-            active={activeLayers.includes('memories')}
-            onClick={() => onToggleLayer('memories')} 
           />
         </div>
       </motion.div>

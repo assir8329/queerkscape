@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, ArrowRight, Loader2, X } from 'lucide-react';
 
-export const Auth: React.FC = () => {
+export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const { signIn, signInWithEmail, signUpWithEmail, loading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -79,8 +79,17 @@ export const Auth: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="z-10 w-full max-w-md flex flex-col items-center p-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl"
+        className="z-10 w-full max-w-md flex flex-col items-center p-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl relative"
       >
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors"
+            aria-label="Close login"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
         <div className="flex flex-col items-center mb-8">
           <Sparkles className="w-12 h-12 text-purple-400 mb-4" />
           <h1 className="text-3xl font-bold mb-2 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">

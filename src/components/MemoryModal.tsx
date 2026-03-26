@@ -28,19 +28,12 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
 
     setIsSubmitting(true);
     try {
-      // Redesigned location logic: City-based with random offset
-      const userCity = currentUser.location?.city || 'Manila';
-      const base = getCityBaseCoordinates(userCity);
-      
-      const finalLat = base.lat + getCityOffset();
-      const finalLng = base.lng + getCityOffset();
-
       const memoryData: any = {
         userId: currentUser.uid,
         text: text.trim(),
         type: 'memory',
-        lat: finalLat,
-        lng: finalLng,
+        lat: lat,
+        lng: lng,
         region,
         createdAt: serverTimestamp(),
         viewCount: 0,

@@ -356,12 +356,11 @@ const MapContent: React.FC<{
       {/* Render memories */}
       {showMemories && memories.map((memory) => {
         if (memory.lat == null || memory.lng == null) return null;
-        const pos = getJitteredPosition(memory.lat, memory.lng, memory.id, zoom);
         const user = users.find(u => u.uid === memory.userId);
         return (
           <Marker
             key={`memory-${memory.id}`}
-            position={[pos.lat, pos.lng]}
+            position={[memory.lat, memory.lng]}
             icon={createMemoryIcon()}
             zIndexOffset={500}
             eventHandlers={{
@@ -535,7 +534,10 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         maxZoom={18}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+          url={isAddingMemory 
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+          }
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         <MapContent 
@@ -569,6 +571,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         isLoggedIn={!!currentUser}
         onCenterMe={handleCenterOnMe}
         onPinMemory={() => setIsAddingMemory(!isAddingMemory)}
+        isAddingMemory={isAddingMemory}
         onToggleLayer={toggleLayer}
         activeLayers={activeLayers}
         mapMode={mapMode}

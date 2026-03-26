@@ -13,6 +13,8 @@ interface SidebarProps {
   onNotificationsClick: () => void;
   onSettingsClick: () => void;
   onThoughtsClick: () => void;
+  onPinMemoryClick: () => void;
+  isAddingMemory?: boolean;
   onCreateClick: () => void;
   onSignOut: () => void;
   onSignInClick: () => void;
@@ -28,6 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNotificationsClick,
   onSettingsClick,
   onThoughtsClick,
+  onPinMemoryClick,
+  isAddingMemory,
   onCreateClick,
   onSignOut,
   onSignInClick,
@@ -182,6 +186,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           title="Whispers"
         >
           <MessageCircle size={24} />
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.1, x: 5 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onPinMemoryClick}
+          className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl border transition-all duration-300 ${
+            isAddingMemory 
+              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.3)]' 
+              : 'glass-dark text-yellow-400 border-white/10 hover:bg-white/10'
+          }`}
+          title="Pin Memory"
+        >
+          <MapPin size={24} />
         </motion.button>
       </div>
 
