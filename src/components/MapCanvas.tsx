@@ -31,7 +31,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
-  const [expandedThought, setExpandedThought] = useState<UnsaidThought | null>(null);
+  const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
+  const [previewThought, setPreviewThought] = useState<UnsaidThought | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -340,16 +341,45 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
             key={thought.id}
             thought={thought}
             onExpand={(t) => {
-              setExpandedThought(t);
+              setActiveThought(t);
               incrementViewCount(t.id);
             }}
+            onHover={setPreviewThought}
           />
         ))}
+
+        {/* Preview Thought Card (on hover) */}
+        <AnimatePresence>
+          {previewThought && !activeThought && previewThought.x && previewThought.y && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              className="absolute z-50 pointer-events-none"
+              style={{ 
+                left: previewThought.x, 
+                top: previewThought.y,
+                transform: 'translate(-50%, -120%)'
+              }}
+            >
+              <div className="bg-[#0a0a1a]/90 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-[0_0_30px_rgba(168,85,247,0.3)] min-w-[200px] text-center relative">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0a0a1a]/90 border-r border-b border-white/20 rotate-45" />
+                <p className="text-sm text-white font-medium leading-relaxed mb-3">"{previewThought.text}"</p>
+                <div className="flex items-center justify-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${previewThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'}`} />
+                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                    {previewThought.isAnonymous ? 'Anonymous' : 'A Soul'}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Expanded Thought Modal */}
       <AnimatePresence>
-        {expandedThought && (
+        {activeThought && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm pointer-events-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -360,7 +390,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500" />
               
               <button 
-                onClick={() => setExpandedThought(null)}
+                onClick={() => setActiveThought(null)}
                 className="absolute top-4 right-4 p-2 text-white/30 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -377,23 +407,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
                 </div>
 
                 <p className="text-sm text-white/90 leading-relaxed font-medium">
-                  "{expandedThought.text}"
+                  "{activeThought.text}"
                 </p>
 
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${expandedThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
+                    <div className={`w-2 h-2 rounded-full ${activeThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
                     <span className="text-xs text-white/40 uppercase tracking-widest font-bold">
-                      {expandedThought.isAnonymous ? 'Anonymous' : 'A Soul'}
+                      {activeThought.isAnonymous ? 'Anonymous' : 'A Soul'}
                     </span>
                   </div>
                   <span className="text-[10px] text-white/20">
-                    Shared into the scape {expandedThought.createdAt?.toMillis ? new Date(expandedThought.createdAt.toMillis()).toLocaleTimeString() : 'just now'}
+                    Shared into the scape {activeThought.createdAt?.toMillis ? new Date(activeThought.createdAt.toMillis()).toLocaleTimeString() : 'just now'}
                   </span>
-                  {(expandedThought.viewCount !== undefined && expandedThought.viewCount > 0) && (
+                  {(activeThought.viewCount !== undefined && activeThought.viewCount > 0) && (
                     <div className="flex items-center gap-1.5 text-purple-400/60 text-[10px] mt-2 bg-purple-500/5 px-3 py-1 rounded-full border border-purple-500/10">
                       <Eye className="w-3 h-3" />
-                      <span className="font-medium tracking-wider uppercase">{expandedThought.viewCount} stars listening</span>
+                      <span className="font-medium tracking-wider uppercase">{activeThought.viewCount} stars listening</span>
                     </div>
                   )}
                 </div>

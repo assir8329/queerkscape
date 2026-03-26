@@ -17,7 +17,7 @@ import { CreateActionHub } from './components/CreateActionHub';
 import { SignalModal } from './components/SignalModal';
 import { GuideModal } from './components/GuideModal';
 import { WelcomePage } from './components/WelcomePage';
-import { Search, Sparkles, Star, LogIn, X, Loader2, Globe } from 'lucide-react';
+import { Search, Sparkles, Star, LogIn, X, Loader2, Globe, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from './firebase';
 import { serverTimestamp, collection, onSnapshot } from 'firebase/firestore';

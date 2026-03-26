@@ -241,11 +241,14 @@ const MapContent: React.FC<{
   isAddingMemory: boolean,
   onUserClick: (user: UserProfile) => void,
   onClusterClick: (cluster: ClusterData) => void,
-  onThoughtClick: (thought: UnsaidThought) => void,
+  onThoughtClick: (thought: UnsaidThought | null) => void,
+  onThoughtHover: (thought: UnsaidThought | null) => void,
   onMemoryClick: (memory: Memory) => void,
   onMapClick: (lat: number, lng: number) => void,
+  activeThought: UnsaidThought | null,
+  previewThought: UnsaidThought | null,
   onInteraction?: () => void
-}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick, onInteraction }) => {
+}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onThoughtHover, onMemoryClick, onMapClick, activeThought, previewThought, onInteraction }) => {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
 
@@ -314,27 +317,7 @@ const MapContent: React.FC<{
               eventHandlers={{
                 click: () => onUserClick(user)
               }}
-            >
-              <Popup className="custom-popup">
-                <div className="bg-[#1a1a2e] text-white p-3 rounded-lg border border-white/10 shadow-xl min-w-[150px]">
-                  <h3 className="font-bold mb-1">{user.nickname || user.username}</h3>
-                  {(user.zodiacSign || user.mbti) && (
-                    <div className="flex items-center gap-2 text-[10px] text-white/50 mb-1">
-                      {user.zodiacSign && <span>♈ {user.zodiacSign}</span>}
-                      {user.mbti && <span>🧠 {user.mbti}</span>}
-                    </div>
-                  )}
-                  {user.signal && (
-                    <p className="text-sm text-white/80 font-medium mb-2">"{user.signal}"</p>
-                  )}
-                  <div className="flex flex-wrap gap-1">
-                    {user.tags?.slice(0, 3).map(tag => (
-                      <span key={tag} className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded">#{tag}</span>
-                    ))}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
+            />
           );
         }
 
@@ -364,29 +347,42 @@ const MapContent: React.FC<{
             icon={createThoughtIcon()}
             zIndexOffset={1000}
             eventHandlers={{
-              click: () => onThoughtClick(thought)
+              click: () => {
+                onThoughtClick(thought);
+                onThoughtHover(null);
+              },
+              mouseover: () => onThoughtHover(thought),
+              mouseout: () => onThoughtHover(null)
             }}
-          >
-            <Popup className="custom-popup">
-              <div className="bg-[#0a0a1a] text-white p-4 rounded-xl border border-white/10 shadow-2xl min-w-[200px] text-center">
-                <p className="text-sm font-medium leading-relaxed mb-3">"{thought.text}"</p>
-                {thought.region && (
-                  <div className="flex items-center justify-center gap-1 text-[10px] text-white/40 mb-2">
-                    <MapPin className="w-3 h-3 text-purple-400/60" />
-                    <span>{thought.city || thought.region}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${thought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'}`} />
-                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                    {thought.isAnonymous ? 'Anonymous' : 'A Soul'}
-                  </span>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+          />
         );
       })}
+
+      {/* Single preview thought preview (on hover) */}
+      {showThoughts && previewThought && !activeThought && previewThought.lat && previewThought.lng && (
+        <Popup 
+          position={[previewThought.lat, previewThought.lng]} 
+          className="custom-popup"
+          closeButton={false}
+          autoPan={false}
+        >
+          <div className="bg-[#0a0a1a]/90 backdrop-blur-md text-white p-4 rounded-xl border border-white/10 shadow-2xl min-w-[200px] text-center pointer-events-none">
+            <p className="text-sm font-medium leading-relaxed mb-3">"{previewThought.text}"</p>
+            {previewThought.region && (
+              <div className="flex items-center justify-center gap-1 text-[10px] text-white/40 mb-2">
+                <MapPin className="w-3 h-3 text-purple-400/60" />
+                <span>{previewThought.city || previewThought.region}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${previewThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'}`} />
+              <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                {previewThought.isAnonymous ? 'Anonymous' : 'A Soul'}
+              </span>
+            </div>
+          </div>
+        </Popup>
+      )}
 
       {/* Render memories */}
       {showMemories && memories.map((memory) => {
@@ -418,8 +414,8 @@ const MapContent: React.FC<{
 };
 
 export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction, isAddingMemory: externalIsAddingMemory, setIsAddingMemory: externalSetIsAddingMemory }) => {
-  const [selectedCluster, setSelectedCluster] = useState<ClusterData | null>(null);
-  const [expandedThought, setExpandedThought] = useState<UnsaidThought | null>(null);
+  const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
+  const [previewThought, setPreviewThought] = useState<UnsaidThought | null>(null);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [map, setMap] = useState<L.Map | null>(null);
@@ -583,13 +579,21 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
           showMemories={activeLayers.includes('memories')}
           isAddingMemory={isAddingMemory}
           onUserClick={onUserClick} 
-          onClusterClick={(cluster) => setSelectedCluster(cluster)} 
+          onClusterClick={(cluster) => {
+            if (map) {
+              const currentZoom = map.getZoom();
+              map.flyTo([cluster.lat, cluster.lng], Math.min(currentZoom + 3, 18), { duration: 1 });
+            }
+          }} 
           onThoughtClick={(t) => {
-            setExpandedThought(t);
-            incrementViewCount(t.id);
+            setActiveThought(t);
+            if (t) incrementViewCount(t.id);
           }}
+          onThoughtHover={setPreviewThought}
           onMemoryClick={handleMemoryClick}
           onMapClick={handleMapClick}
+          activeThought={activeThought}
+          previewThought={previewThought}
           onInteraction={onInteraction}
         />
       </MapContainer>
@@ -623,77 +627,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         />
       )}
 
-      <AnimatePresence>
-        {selectedCluster && (
-          <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-[80px] left-4 right-4 z-[1000] bg-[#0f0f1a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-h-[50vh] flex flex-col"
-          >
-            <div className="py-2.5 px-4 border-b border-white/10 flex justify-between items-center shrink-0">
-              <div className="flex items-baseline gap-2 truncate">
-                <h3 className="text-sm font-medium text-white truncate">
-                  {selectedCluster.users[0].location?.city || 'Unknown Region'}
-                </h3>
-                <span className="text-xs text-white/60 shrink-0">
-                  · {selectedCluster.users.length} {selectedCluster.users.length === 1 ? 'star' : 'stars'}
-                </span>
-              </div>
-              <button 
-                onClick={() => setSelectedCluster(null)}
-                className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white shrink-0"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
-            <div className="p-4 overflow-y-auto custom-scrollbar flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {selectedCluster.users.map(u => (
-                  <button
-                    key={u.uid}
-                    onClick={() => {
-                      setSelectedCluster(null);
-                      onUserClick(u);
-                    }}
-                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all text-left group"
-                  >
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0"
-                      style={{
-                        backgroundColor: `${getHexColor(u.color)}20`,
-                        border: `1px solid ${getHexColor(u.color)}`,
-                        color: getHexColor(u.color),
-                        boxShadow: `0 0 10px ${getHexColor(u.color)}80`
-                      }}
-                    >
-                      {(u.nickname || u.username).charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-sm font-medium text-white">{u.nickname || u.username}</span>
-                        {u.zodiacSign && <span className="text-sm text-white/60">· {u.zodiacSign}</span>}
-                        {u.mbti && <span className="text-sm text-white/60">· {u.mbti}</span>}
-                      </div>
-                      {u.signal && (
-                        <div className="text-xs text-white/80 truncate mt-0.5">
-                          {u.signal}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Expanded Thought Modal */}
       <AnimatePresence>
-        {expandedThought && (
+        {activeThought && (
           <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm pointer-events-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -704,7 +640,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
               <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500" />
               
               <button 
-                onClick={() => setExpandedThought(null)}
+                onClick={() => setActiveThought(null)}
                 className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-white/30 hover:text-white transition-all z-50"
                 aria-label="Close"
               >
@@ -714,36 +650,36 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
               <div className="flex flex-col gap-3">
                 {/* Header Label */}
                 <div className="flex items-center gap-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${expandedThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${activeThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
                   <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                    {expandedThought.isAnonymous ? 'A Whisper' : 'A Soul'}
+                    {activeThought.isAnonymous ? 'A Whisper' : 'A Soul'}
                   </span>
                 </div>
 
                 {/* Main Content */}
                 <p className="text-sm text-white/90 leading-relaxed font-medium">
-                  "{expandedThought.text}"
+                  "{activeThought.text}"
                 </p>
 
                 {/* Metadata Footer */}
                 <div className="flex flex-col gap-2 border-t border-white/5 pt-3 mt-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40 font-medium">
-                    {expandedThought.region && (
+                    {activeThought.region && (
                       <div className="flex items-center gap-1">
                         <MapPin className="w-2.5 h-2.5 text-purple-400/60" />
-                        <span>{expandedThought.city || expandedThought.region}</span>
+                        <span>{activeThought.city || activeThought.region}</span>
                       </div>
                     )}
                     
                     <div className="flex items-center gap-1">
                       <Clock className="w-2.5 h-2.5" />
-                      <span>{expandedThought.createdAt?.toMillis ? new Date(expandedThought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
+                      <span>{activeThought.createdAt?.toMillis ? new Date(activeThought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
                     </div>
 
-                    {(expandedThought.viewCount !== undefined && expandedThought.viewCount > 0) && (
+                    {(activeThought.viewCount !== undefined && activeThought.viewCount > 0) && (
                       <div className="flex items-center gap-1">
                         <Eye className="w-2.5 h-2.5" />
-                        <span>{expandedThought.viewCount} stars listening</span>
+                        <span>{activeThought.viewCount} stars listening</span>
                       </div>
                     )}
                   </div>
