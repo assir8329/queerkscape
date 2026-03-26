@@ -38,11 +38,11 @@ export const ThoughtBubble: React.FC<ThoughtBubbleProps> = ({ thought, onExpand 
           }}
         >
           {/* Glowing Pulse */}
-          <div className="absolute -inset-4 bg-purple-500/20 rounded-full blur-xl animate-pulse group-hover:bg-purple-500/40 transition-all" />
+          <div className="absolute -inset-2 bg-purple-500/20 rounded-full blur-lg animate-pulse group-hover:bg-purple-500/40 transition-all" />
           
           {/* Icon/Bubble */}
-          <div className="relative bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.3)] hover:scale-110 transition-transform">
-            <MessageSquare className="w-3 h-3 text-purple-300" />
+          <div className="relative bg-purple-500/20 backdrop-blur-md border-2 border-purple-500/60 p-1.5 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.6)] hover:scale-110 transition-transform">
+            <MessageSquare className="w-3 h-3 text-purple-400" />
           </div>
         </motion.div>
       )}

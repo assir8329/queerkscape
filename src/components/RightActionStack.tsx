@@ -6,6 +6,8 @@ interface RightActionStackProps {
   isLoggedIn: boolean;
   onCenterMe: () => void;
   onPinMemory: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
   isAddingMemory?: boolean;
   onToggleLayer: (layer: string) => void;
   activeLayers: string[];
@@ -20,6 +22,8 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
   isLoggedIn,
   onCenterMe,
   onPinMemory,
+  onZoomIn,
+  onZoomOut,
   isAddingMemory,
   onToggleLayer,
   activeLayers,
@@ -49,6 +53,20 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
             variant="primary"
             disabled={!isLoggedIn}
           />
+          {mapMode === 'constellation' && (
+            <>
+              <ActionButton 
+                icon={<ZoomIn size={18} />} 
+                label="Zoom In" 
+                onClick={onZoomIn || (() => {})} 
+              />
+              <ActionButton 
+                icon={<ZoomOut size={18} />} 
+                label="Zoom Out" 
+                onClick={onZoomOut || (() => {})} 
+              />
+            </>
+          )}
         </div>
 
         {/* View Controls Group */}

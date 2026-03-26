@@ -59,7 +59,7 @@ const getTargetLocation = (user?: UserProfile) => {
 // Custom icon for clusters
 const createCustomIcon = (color: string, count: number) => {
   const hex = getHexColor(color);
-  const size = Math.min(40 + count * 5, 80); // Scale size based on count
+  const size = 40; // Fixed size regardless of count
 
   const html = `
     <div style="
@@ -75,7 +75,7 @@ const createCustomIcon = (color: string, count: number) => {
       justify-content: center;
       color: white;
       font-weight: bold;
-      font-size: ${Math.max(12, size / 3)}px;
+      font-size: 14px;
       backdrop-filter: blur(4px);
       animation: pulse-cluster 2s infinite;
     ">

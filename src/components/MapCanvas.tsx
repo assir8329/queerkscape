@@ -8,7 +8,7 @@ import { ThoughtBubble } from './ThoughtBubble';
 import { UnsaidThought } from '../types';
 import { incrementViewCount } from './UnsaidThoughts';
 import { RightActionStack } from './RightActionStack';
-import { LocateFixed, ZoomIn, ZoomOut, X, Sparkles, Eye } from 'lucide-react';
+import { LocateFixed, ZoomIn, ZoomOut, X, Sparkles, Eye, MapPin, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Connection {
@@ -36,7 +36,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
+  const [touchStartScale, setTouchStartScale] = useState(1);
   const hasCentered = useRef(false);
 
   // Layer toggles
@@ -130,8 +132,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const centerOnUser = () => {
     if (profile && viewport.width > 0) {
       setPosition({
-        x: viewport.width / 2 - profile.x * zoom,
-        y: viewport.height / 2 - profile.y * zoom,
+        x: viewport.width / 2 - profile.x * scale,
+        y: viewport.height / 2 - profile.y * scale,
       });
       onInteraction?.();
     }
@@ -142,7 +144,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
       centerOnUser();
       hasCentered.current = true;
     }
-  }, [profile, zoom, viewport]);
+  }, [profile, scale, viewport]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -161,9 +163,70 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const handleMouseUp = () => setIsDragging(false);
 
-  const handleZoom = (delta: number) => {
-    setZoom((prev) => Math.min(Math.max(0.2, prev + delta), 3));
+  const handleZoom = (delta: number, centerX?: number, centerY?: number) => {
+    setScale((prev) => {
+      const newScale = Math.min(Math.max(0.2, prev + delta), 3);
+      
+      if (centerX !== undefined && centerY !== undefined) {
+        // Zoom towards the cursor/pinch center
+        const zoomFactor = newScale / prev;
+        setPosition(pos => ({
+          x: centerX - (centerX - pos.x) * zoomFactor,
+          y: centerY - (centerY - pos.y) * zoomFactor,
+        }));
+      }
+      
+      return newScale;
+    });
     onInteraction?.();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
+    } else if (e.touches.length === 2) {
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      setTouchStartDistance(distance);
+      setTouchStartScale(scale);
+    }
+    onInteraction?.();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDragging) {
+      setPosition({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    } else if (e.touches.length === 2 && touchStartDistance !== null) {
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = distance / touchStartDistance;
+      const newScale = Math.min(Math.max(0.2, touchStartScale * delta), 3);
+      
+      // Calculate pinch center
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      
+      const zoomFactor = newScale / scale;
+      setPosition(pos => ({
+        x: centerX - (centerX - pos.x) * zoomFactor,
+        y: centerY - (centerY - pos.y) * zoomFactor,
+      }));
+      setScale(newScale);
+    }
+    onInteraction?.();
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setTouchStartDistance(null);
   };
 
   const filteredUsers = useMemo(() => {
@@ -185,29 +248,29 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   // Virtualization logic
   const visibleUsers = useMemo(() => {
     if (viewport.width === 0) return [];
-    const buffer = 200 / zoom; // 200px buffer
-    const minX = -position.x / zoom - buffer;
-    const maxX = (-position.x + viewport.width) / zoom + buffer;
-    const minY = -position.y / zoom - buffer;
-    const maxY = (-position.y + viewport.height) / zoom + buffer;
+    const buffer = 200 / scale; // 200px buffer
+    const minX = -position.x / scale - buffer;
+    const maxX = (-position.x + viewport.width) / scale + buffer;
+    const minY = -position.y / scale - buffer;
+    const maxY = (-position.y + viewport.height) / scale + buffer;
 
     return filteredUsers.filter(u => 
       u.x >= minX && u.x <= maxX && u.y >= minY && u.y <= maxY
     );
-  }, [filteredUsers, position, zoom, viewport]);
+  }, [filteredUsers, position, scale, viewport]);
 
   const visibleThoughts = useMemo(() => {
     if (viewport.width === 0) return [];
-    const buffer = 100 / zoom;
-    const minX = -position.x / zoom - buffer;
-    const maxX = (-position.x + viewport.width) / zoom + buffer;
-    const minY = -position.y / zoom - buffer;
-    const maxY = (-position.y + viewport.height) / zoom + buffer;
+    const buffer = 100 / scale;
+    const minX = -position.x / scale - buffer;
+    const maxX = (-position.x + viewport.width) / scale + buffer;
+    const minY = -position.y / scale - buffer;
+    const maxY = (-position.y + viewport.height) / scale + buffer;
 
     return thoughts.filter(t => 
       t.x != null && t.y != null && t.x >= minX && t.x <= maxX && t.y >= minY && t.y <= maxY
     );
-  }, [thoughts, position, zoom, viewport]);
+  }, [thoughts, position, scale, viewport]);
 
   // Render connections
   const visibleConnections = useMemo(() => {
@@ -233,13 +296,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-[#050510] cursor-grab active:cursor-grabbing"
+      className="relative w-full h-full overflow-hidden bg-[#050510] cursor-grab active:cursor-grabbing touch-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       onWheel={(e) => {
-        handleZoom(e.deltaY > 0 ? -0.1 : 0.1);
+        handleZoom(e.deltaY > 0 ? -0.1 : 0.1, e.clientX, e.clientY);
       }}
     >
       <div
@@ -247,7 +313,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         style={{
           width: 5000,
           height: 5000,
-          transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+          transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
           transition: isDragging ? 'none' : 'transform 0.1s ease-out',
         }}
       >
@@ -350,52 +416,59 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
       {/* Expanded Thought Modal */}
       <AnimatePresence>
         {activeThought && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm pointer-events-auto">
+          <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm pointer-events-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-[#0a0a1a] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+              className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-4 max-w-sm w-full shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500" />
+              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500" />
               
               <button 
                 onClick={() => setActiveThought(null)}
-                className="absolute top-4 right-4 p-2 text-white/30 hover:text-white transition-colors"
+                className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-white/30 hover:text-white transition-all z-50"
+                aria-label="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
 
-              <div className="flex flex-col items-center text-center gap-6">
-                <div className="p-4 bg-purple-500/10 rounded-full">
-                  <motion.div
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ repeat: Infinity, duration: 4 }}
-                  >
-                    <Sparkles className="w-8 h-8 text-purple-400" />
-                  </motion.div>
+              <div className="flex flex-col gap-3">
+                {/* Header Label */}
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${activeThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
+                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                    {activeThought.isAnonymous ? 'A Whisper' : 'A Soul'}
+                  </span>
                 </div>
 
+                {/* Main Content */}
                 <p className="text-sm text-white/90 leading-relaxed font-medium">
                   "{activeThought.text}"
                 </p>
 
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${activeThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
-                    <span className="text-xs text-white/40 uppercase tracking-widest font-bold">
-                      {activeThought.isAnonymous ? 'Anonymous' : 'A Soul'}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-white/20">
-                    Shared into the scape {activeThought.createdAt?.toMillis ? new Date(activeThought.createdAt.toMillis()).toLocaleTimeString() : 'just now'}
-                  </span>
-                  {(activeThought.viewCount !== undefined && activeThought.viewCount > 0) && (
-                    <div className="flex items-center gap-1.5 text-purple-400/60 text-[10px] mt-2 bg-purple-500/5 px-3 py-1 rounded-full border border-purple-500/10">
-                      <Eye className="w-3 h-3" />
-                      <span className="font-medium tracking-wider uppercase">{activeThought.viewCount} stars listening</span>
+                {/* Metadata Footer */}
+                <div className="flex flex-col gap-2 border-t border-white/5 pt-3 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40 font-medium">
+                    {activeThought.region && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-2.5 h-2.5 text-purple-400/60" />
+                        <span>{activeThought.city || activeThought.region}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-2.5 h-2.5" />
+                      <span>{activeThought.createdAt?.toMillis ? new Date(activeThought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
                     </div>
-                  )}
+
+                    {(activeThought.viewCount !== undefined && activeThought.viewCount > 0) && (
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-2.5 h-2.5" />
+                        <span>{activeThought.viewCount} stars listening</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -421,10 +494,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           <div
             className="absolute border border-purple-500/50 bg-purple-500/10 pointer-events-none"
             style={{
-              left: `${Math.max(0, (-position.x / zoom / 5000) * 100)}%`,
-              top: `${Math.max(0, (-position.y / zoom / 5000) * 100)}%`,
-              width: `${Math.min(100, (viewport.width / zoom / 5000) * 100)}%`,
-              height: `${Math.min(100, (viewport.height / zoom / 5000) * 100)}%`,
+              left: `${Math.max(0, (-position.x / scale / 5000) * 100)}%`,
+              top: `${Math.max(0, (-position.y / scale / 5000) * 100)}%`,
+              width: `${Math.min(100, (viewport.width / scale / 5000) * 100)}%`,
+              height: `${Math.min(100, (viewport.height / scale / 5000) * 100)}%`,
             }}
           />
         </div>
@@ -435,6 +508,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         isLoggedIn={!!user}
         onCenterMe={centerOnUser}
         onPinMemory={() => {}} // Not available in Sky View
+        onZoomIn={() => handleZoom(0.2, viewport.width / 2, viewport.height / 2)}
+        onZoomOut={() => handleZoom(-0.2, viewport.width / 2, viewport.height / 2)}
         onToggleLayer={toggleLayer}
         activeLayers={activeLayers}
         mapMode={mapMode}

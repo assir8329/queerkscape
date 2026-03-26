@@ -38,7 +38,6 @@ const getDailyPrompt = () => {
 };
 
 import { RightPanel } from './components/RightPanel';
-import { ProfileContent } from './components/ProfileContent';
 import { CreateActionHubContent } from './components/CreateActionHubContent';
 import { UnsaidThoughtsContent } from './components/UnsaidThoughtsContent';
 
@@ -63,7 +62,7 @@ const MainApp: React.FC = () => {
   const fadeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Right Panel State
-  const [rightPanelType, setRightPanelType] = useState<'profile' | 'create' | 'thoughts' | null>(null);
+  const [rightPanelType, setRightPanelType] = useState<'create' | 'thoughts' | null>(null);
   const [rightPanelData, setRightPanelData] = useState<any>(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -143,12 +142,7 @@ const MainApp: React.FC = () => {
   };
 
   const handleUserClick = (userProfile: UserProfile) => {
-    if (isMobile) {
-      setSelectedUser(userProfile);
-    } else {
-      setRightPanelType('profile');
-      setRightPanelData(userProfile);
-    }
+    setSelectedUser(userProfile);
   };
 
   const handleActionHub = (action: 'signal' | 'thought' | 'memory') => {
@@ -220,12 +214,7 @@ const MainApp: React.FC = () => {
               setMapMode={setMapMode} 
               onMyProfileClick={() => {
                 if (profile) {
-                  if (isMobile) {
-                    setSelectedUser(profile);
-                  } else {
-                    setRightPanelType('profile');
-                    setRightPanelData(profile);
-                  }
+                  setSelectedUser(profile);
                 } else {
                   navigate('/login');
                 }
@@ -335,8 +324,8 @@ const MainApp: React.FC = () => {
                   onSubmit={handlePromptSubmit}
                 />
 
-                {/* Mobile Profile Modal */}
-                {isMobile && selectedUser && (
+                {/* Profile Modal (All Devices) */}
+                {selectedUser && (
                   <ProfileModal
                     user={selectedUser}
                     onClose={() => {
@@ -359,21 +348,10 @@ const MainApp: React.FC = () => {
                   isOpen={rightPanelType !== null}
                   onClose={() => setRightPanelType(null)}
                   title={
-                    rightPanelType === 'profile' ? 'Profile' :
                     rightPanelType === 'create' ? 'Create' :
                     rightPanelType === 'thoughts' ? 'Whispers' : ''
                   }
                 >
-                  {rightPanelType === 'profile' && rightPanelData && (
-                    <ProfileContent 
-                      user={rightPanelData} 
-                      onClose={() => setRightPanelType(null)}
-                      onBondsClick={() => setShowBonds(true)}
-                      onNotificationsClick={() => setShowNotifications(true)}
-                      onSettingsClick={() => setShowSettings(true)}
-                      onSignOut={signOut}
-                    />
-                  )}
                   {rightPanelType === 'create' && (
                     <CreateActionHubContent onAction={handleActionHub} />
                   )}
