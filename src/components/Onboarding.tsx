@@ -2,7 +2,22 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'motion/react';
 import { Sparkles, Check, X, MapPin } from 'lucide-react';
+import { getCityBaseCoordinates } from '../lib/locations';
 import { VIBES } from '../lib/colors';
+
+const STANDARD_OPTIONS = [
+  "Friendship",
+  "Something casual",
+  "Serious relationship",
+  "Just exploring",
+  "New connections",
+  "Conversations",
+  "Community",
+  "Slow connections",
+  "See where it goes"
+];
+
+const LOOKING_FOR_OPTIONS = [...STANDARD_OPTIONS, "custom"];
 
 export const Onboarding: React.FC = () => {
   const { profile, updateProfile } = useAuth();
@@ -15,6 +30,14 @@ export const Onboarding: React.FC = () => {
   const [region, setRegion] = useState('');
   const [country, setCountry] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+
+  // New personalization fields
+  const [identity, setIdentity] = useState('');
+  const [sexualRole, setSexualRole] = useState('');
+  const [relationshipStatus, setRelationshipStatus] = useState('');
+  const [zodiacSign, setZodiacSign] = useState('');
+  const [mbti, setMbti] = useState('');
+  const [lookingFor, setLookingFor] = useState<string[]>([]);
 
   if (!profile || profile.onboarded) return null;
 
@@ -68,31 +91,25 @@ export const Onboarding: React.FC = () => {
       vibe: selectedVibe.label,
       tags,
       signal: signal || 'Just joined the constellation.',
+      identity,
+      sexualRole,
+      relationshipStatus,
+      zodiacSign,
+      mbti,
+      lookingFor,
       onboarded: true,
     };
 
     if (city || region || country) {
-      let lat = 0;
-      let lng = 0;
+      const userCity = city.trim();
+      const base = getCityBaseCoordinates(userCity);
       
-      try {
-        const query = [city, region, country].filter(Boolean).join(', ');
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
-        const data = await response.json();
-        if (data && data.length > 0) {
-          lat = parseFloat(data[0].lat);
-          lng = parseFloat(data[0].lon);
-        }
-      } catch (e) {
-        console.error("Failed to geocode location", e);
-      }
-
       updateData.location = {
-        city: city.trim(),
+        city: userCity,
         region: region.trim(),
         country: country.trim(),
-        lat,
-        lng,
+        lat: base.lat,
+        lng: base.lng,
       };
     }
 
@@ -104,7 +121,7 @@ export const Onboarding: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+        className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
       >
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500" />
         
@@ -210,6 +227,167 @@ export const Onboarding: React.FC = () => {
 
         {step === 3 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+            <h3 className="text-white font-semibold mb-2 text-center">Your Identity</h3>
+            <p className="text-white/40 text-xs text-center mb-4">Help others understand who you are.</p>
+            
+            <div className="space-y-4 mb-8">
+              <select
+                value={identity}
+                onChange={(e) => setIdentity(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 appearance-none"
+              >
+                <option value="">Select Identity</option>
+                <option value="Cis-Woman">Cis-Woman</option>
+                <option value="Trans-Woman">Trans-Woman</option>
+                <option value="Non-Binary">Non-Binary</option>
+                <option value="Genderfluid">Genderfluid</option>
+                <option value="Genderqueer">Genderqueer</option>
+                <option value="Agender">Agender</option>
+              </select>
+
+              <select
+                value={sexualRole}
+                onChange={(e) => setSexualRole(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 appearance-none"
+              >
+                <option value="">Select Sexual Role</option>
+                <option value="Stone Top">Stone Top</option>
+                <option value="Pillow Princess">Pillow Princess</option>
+                <option value="Switch/Versa">Switch/Versa</option>
+                <option value="Switch (top leaning)">Switch (top leaning)</option>
+                <option value="Switch (bottom leaning)">Switch (bottom leaning)</option>
+              </select>
+
+              <select
+                value={relationshipStatus}
+                onChange={(e) => setRelationshipStatus(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 appearance-none"
+              >
+                <option value="">Select Relationship Status</option>
+                <option value="single">Single</option>
+                <option value="taken">Taken</option>
+                <option value="in a situationship">In a situationship</option>
+                <option value="non-monogamous">Non-monogamous</option>
+              </select>
+
+              <div className="space-y-2">
+                <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Looking For (Max 3)</label>
+                <div className="flex flex-wrap gap-2">
+                  {STANDARD_OPTIONS.map(option => {
+                    const isSelected = lookingFor.includes(option);
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setLookingFor(lookingFor.filter(o => o !== option));
+                          } else {
+                            if (lookingFor.length >= 3) return;
+                            setLookingFor([...lookingFor, option]);
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+                          isSelected 
+                            ? 'bg-purple-500/10 border-purple-500/50 text-purple-300' 
+                            : 'bg-white/[0.03] border-transparent text-white/40 hover:bg-white/[0.06] hover:text-white/60'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(2)}
+                className="flex-1 py-3 bg-transparent hover:bg-white/5 text-white/70 rounded-xl font-medium transition-colors border border-white/10"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep(4)}
+                className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors border border-white/10"
+              >
+                Next
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 4 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+            <h3 className="text-white font-semibold mb-2 text-center">Personality</h3>
+            <p className="text-white/40 text-xs text-center mb-4">Share your cosmic traits.</p>
+            
+            <div className="space-y-4 mb-8">
+              <select
+                value={zodiacSign}
+                onChange={(e) => setZodiacSign(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 appearance-none"
+              >
+                <option value="">Select Zodiac</option>
+                <option value="Aries">Aries</option>
+                <option value="Taurus">Taurus</option>
+                <option value="Gemini">Gemini</option>
+                <option value="Cancer">Cancer</option>
+                <option value="Leo">Leo</option>
+                <option value="Virgo">Virgo</option>
+                <option value="Libra">Libra</option>
+                <option value="Scorpio">Scorpio</option>
+                <option value="Sagittarius">Sagittarius</option>
+                <option value="Capricorn">Capricorn</option>
+                <option value="Aquarius">Aquarius</option>
+                <option value="Pisces">Pisces</option>
+              </select>
+
+              <select
+                value={mbti}
+                onChange={(e) => setMbti(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 appearance-none"
+              >
+                <option value="">Select MBTI</option>
+                <option value="INTJ">INTJ</option>
+                <option value="INTP">INTP</option>
+                <option value="ENTJ">ENTJ</option>
+                <option value="ENTP">ENTP</option>
+                <option value="INFJ">INFJ</option>
+                <option value="INFP">INFP</option>
+                <option value="ENFJ">ENFJ</option>
+                <option value="ENFP">ENFP</option>
+                <option value="ISTJ">ISTJ</option>
+                <option value="ISFJ">ISFJ</option>
+                <option value="ESTJ">ESTJ</option>
+                <option value="ESFJ">ESFJ</option>
+                <option value="ISTP">ISTP</option>
+                <option value="ISFP">ISFP</option>
+                <option value="ESTP">ESTP</option>
+                <option value="ESFP">ESFP</option>
+              </select>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(3)}
+                className="flex-1 py-3 bg-transparent hover:bg-white/5 text-white/70 rounded-xl font-medium transition-colors border border-white/10"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep(5)}
+                className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors border border-white/10"
+              >
+                Next
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 5 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <h3 className="text-white font-semibold mb-2 text-center">What are your interests?</h3>
             <p className="text-white/40 text-xs text-center mb-4">Add up to 5 tags (press Enter)</p>
             
@@ -234,13 +412,13 @@ export const Onboarding: React.FC = () => {
             
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(4)}
                 className="flex-1 py-3 bg-transparent hover:bg-white/5 text-white/70 rounded-xl font-medium transition-colors border border-white/10"
               >
                 Back
               </button>
               <button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(6)}
                 className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors border border-white/10"
               >
                 Next
@@ -249,7 +427,7 @@ export const Onboarding: React.FC = () => {
           </motion.div>
         )}
 
-        {step === 4 && (
+        {step === 6 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <h3 className="text-white font-semibold mb-2 text-center">Broadcast your first signal</h3>
             <p className="text-white/40 text-xs text-center mb-4">A short message visible to others.</p>
@@ -264,7 +442,7 @@ export const Onboarding: React.FC = () => {
             
             <div className="flex gap-3">
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(5)}
                 className="flex-1 py-3 bg-transparent hover:bg-white/5 text-white/70 rounded-xl font-medium transition-colors border border-white/10"
               >
                 Back

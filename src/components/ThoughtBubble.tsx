@@ -6,27 +6,23 @@ import { MessageSquare } from 'lucide-react';
 interface ThoughtBubbleProps {
   thought: UnsaidThought;
   onExpand: (thought: UnsaidThought) => void;
-  onHover?: (thought: UnsaidThought | null) => void;
 }
 
-export const ThoughtBubble: React.FC<ThoughtBubbleProps> = ({ thought, onExpand, onHover }) => {
+export const ThoughtBubble: React.FC<ThoughtBubbleProps> = ({ thought, onExpand }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Random delay to make them appear organically
-    const delay = Math.random() * 5000;
-    const timer = setTimeout(() => setIsVisible(true), delay);
+    setIsVisible(true);
     
     // Fading out after some time
-    const fadeOutTimer = setTimeout(() => setIsVisible(false), 20000 + Math.random() * 10000);
+    const fadeOutTimer = setTimeout(() => setIsVisible(false), 60000 + Math.random() * 30000);
 
     return () => {
-      clearTimeout(timer);
       clearTimeout(fadeOutTimer);
     };
   }, []);
 
-  if (!thought.x || !thought.y) return null;
+  if (thought.x == null || thought.y == null) return null;
 
   return (
     <AnimatePresence>
@@ -39,10 +35,7 @@ export const ThoughtBubble: React.FC<ThoughtBubbleProps> = ({ thought, onExpand,
           style={{ left: thought.x, top: thought.y }}
           onClick={() => {
             onExpand(thought);
-            onHover?.(null);
           }}
-          onMouseEnter={() => onHover?.(thought)}
-          onMouseLeave={() => onHover?.(null)}
         >
           {/* Glowing Pulse */}
           <div className="absolute -inset-4 bg-purple-500/20 rounded-full blur-xl animate-pulse group-hover:bg-purple-500/40 transition-all" />

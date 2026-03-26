@@ -242,13 +242,11 @@ const MapContent: React.FC<{
   onUserClick: (user: UserProfile) => void,
   onClusterClick: (cluster: ClusterData) => void,
   onThoughtClick: (thought: UnsaidThought | null) => void,
-  onThoughtHover: (thought: UnsaidThought | null) => void,
   onMemoryClick: (memory: Memory) => void,
   onMapClick: (lat: number, lng: number) => void,
   activeThought: UnsaidThought | null,
-  previewThought: UnsaidThought | null,
   onInteraction?: () => void
-}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onThoughtHover, onMemoryClick, onMapClick, activeThought, previewThought, onInteraction }) => {
+}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick, activeThought, onInteraction }) => {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
 
@@ -337,7 +335,7 @@ const MapContent: React.FC<{
 
       {/* Always render thoughts on top */}
       {showThoughts && thoughts.map((thought) => {
-        if (!thought.lat || !thought.lng) return null;
+        if (thought.lat == null || thought.lng == null) return null;
         // Apply jitter offset to avoid overlapping markers
         const pos = getJitteredPosition(thought.lat, thought.lng, thought.id, zoom);
         return (
@@ -349,44 +347,15 @@ const MapContent: React.FC<{
             eventHandlers={{
               click: () => {
                 onThoughtClick(thought);
-                onThoughtHover(null);
-              },
-              mouseover: () => onThoughtHover(thought),
-              mouseout: () => onThoughtHover(null)
+              }
             }}
           />
         );
       })}
 
-      {/* Single preview thought preview (on hover) */}
-      {showThoughts && previewThought && !activeThought && previewThought.lat && previewThought.lng && (
-        <Popup 
-          position={[previewThought.lat, previewThought.lng]} 
-          className="custom-popup"
-          closeButton={false}
-          autoPan={false}
-        >
-          <div className="bg-[#0a0a1a]/90 backdrop-blur-md text-white p-4 rounded-xl border border-white/10 shadow-2xl min-w-[200px] text-center pointer-events-none">
-            <p className="text-sm font-medium leading-relaxed mb-3">"{previewThought.text}"</p>
-            {previewThought.region && (
-              <div className="flex items-center justify-center gap-1 text-[10px] text-white/40 mb-2">
-                <MapPin className="w-3 h-3 text-purple-400/60" />
-                <span>{previewThought.city || previewThought.region}</span>
-              </div>
-            )}
-            <div className="flex items-center justify-center gap-2">
-              <div className={`w-1.5 h-1.5 rounded-full ${previewThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'}`} />
-              <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                {previewThought.isAnonymous ? 'Anonymous' : 'A Soul'}
-              </span>
-            </div>
-          </div>
-        </Popup>
-      )}
-
       {/* Render memories */}
       {showMemories && memories.map((memory) => {
-        if (!memory.lat || !memory.lng) return null;
+        if (memory.lat == null || memory.lng == null) return null;
         const pos = getJitteredPosition(memory.lat, memory.lng, memory.id, zoom);
         const user = users.find(u => u.uid === memory.userId);
         return (
@@ -415,7 +384,6 @@ const MapContent: React.FC<{
 
 export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction, isAddingMemory: externalIsAddingMemory, setIsAddingMemory: externalSetIsAddingMemory }) => {
   const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
-  const [previewThought, setPreviewThought] = useState<UnsaidThought | null>(null);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [map, setMap] = useState<L.Map | null>(null);
@@ -442,7 +410,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
     const q = query(
       collection(db, 'unsaidThoughts'),
       orderBy('createdAt', 'desc'),
-      limit(50)
+      limit(100)
     );
     const unsubscribe = onSnapshot(
       q,
@@ -589,11 +557,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
             setActiveThought(t);
             if (t) incrementViewCount(t.id);
           }}
-          onThoughtHover={setPreviewThought}
           onMemoryClick={handleMemoryClick}
           onMapClick={handleMapClick}
           activeThought={activeThought}
-          previewThought={previewThought}
           onInteraction={onInteraction}
         />
       </MapContainer>

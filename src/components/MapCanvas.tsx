@@ -32,7 +32,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const [connections, setConnections] = useState<Connection[]>([]);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
   const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
-  const [previewThought, setPreviewThought] = useState<UnsaidThought | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -94,7 +93,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     const q = query(
       collection(db, 'unsaidThoughts'),
       orderBy('createdAt', 'desc'),
-      limit(50)
+      limit(100)
     );
     const unsubscribe = onSnapshot(
       q,
@@ -206,7 +205,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     const maxY = (-position.y + viewport.height) / zoom + buffer;
 
     return thoughts.filter(t => 
-      t.x && t.y && t.x >= minX && t.x <= maxX && t.y >= minY && t.y <= maxY
+      t.x != null && t.y != null && t.x >= minX && t.x <= maxX && t.y >= minY && t.y <= maxY
     );
   }, [thoughts, position, zoom, viewport]);
 
@@ -344,37 +343,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
               setActiveThought(t);
               incrementViewCount(t.id);
             }}
-            onHover={setPreviewThought}
           />
         ))}
-
-        {/* Preview Thought Card (on hover) */}
-        <AnimatePresence>
-          {previewThought && !activeThought && previewThought.x && previewThought.y && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              className="absolute z-50 pointer-events-none"
-              style={{ 
-                left: previewThought.x, 
-                top: previewThought.y,
-                transform: 'translate(-50%, -120%)'
-              }}
-            >
-              <div className="bg-[#0a0a1a]/90 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-[0_0_30px_rgba(168,85,247,0.3)] min-w-[200px] text-center relative">
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0a0a1a]/90 border-r border-b border-white/20 rotate-45" />
-                <p className="text-sm text-white font-medium leading-relaxed mb-3">"{previewThought.text}"</p>
-                <div className="flex items-center justify-center gap-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${previewThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'}`} />
-                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                    {previewThought.isAnonymous ? 'Anonymous' : 'A Soul'}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Expanded Thought Modal */}

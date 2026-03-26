@@ -254,6 +254,11 @@
           "type": "string",
           "description": "The content of the thought."
         },
+        "type": {
+          "type": "string",
+          "enum": ["whisper"],
+          "description": "The type of thought."
+        },
         "createdAt": {
           "type": "timestamp",
           "description": "When the thought was shared."
@@ -306,6 +311,11 @@
         "text": {
           "type": "string",
           "description": "The content of the memory."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["memory"],
+          "description": "The type of memory."
         },
         "lat": {
           "type": "number",

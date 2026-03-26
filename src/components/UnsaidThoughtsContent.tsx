@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { Send, Sparkles, Ghost, Clock, Eye, MapPin, Globe, Navigation } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { UnsaidThought } from '../types';
+import { getCityBaseCoordinates, getCityOffset } from '../lib/locations';
 import { incrementViewCount } from './UnsaidThoughts';
 
 const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
@@ -47,7 +48,7 @@ const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${thought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
           <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">
-            {thought.isAnonymous ? 'A Whisper' : 'A Soul'}
+            {thought.isAnonymous ? "An Echo" : thought.username || "A Soul"}
           </span>
         </div>
 
@@ -123,28 +124,30 @@ export const UnsaidThoughtsContent: React.FC = () => {
     try {
       const x = Math.floor(Math.random() * 4000) + 500;
       const y = Math.floor(Math.random() * 4000) + 500;
-      let lat = (Math.random() * 140) - 70;
-      let lng = (Math.random() * 360) - 180;
-
-      if (!isAnonymous && profile?.location && !profile.hideLocation) {
-        lat = profile.location.lat + (Math.random() * 0.1 - 0.05);
-        lng = profile.location.lng + (Math.random() * 0.1 - 0.05);
-      }
+      
+      // Redesigned location logic: City-based with random offset
+      const userCity = profile?.location?.city || 'Manila';
+      const base = getCityBaseCoordinates(userCity);
+      
+      const lat = base.lat + getCityOffset();
+      const lng = base.lng + getCityOffset();
 
       const thoughtData: any = {
         userId: user.uid,
+        username: profile?.username || 'Anonymous',
         text: newThought.trim(),
+        type: 'whisper',
         createdAt: serverTimestamp(),
         isAnonymous,
         vibe: profile?.vibe || 'neutral',
         x, y, lat, lng,
+        city: userCity,
         viewCount: 0,
         visibility,
         expiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000)
       };
 
-      if (!isAnonymous && profile?.location) {
-        thoughtData.city = profile.location.city;
+      if (profile?.location) {
         thoughtData.region = profile.location.region;
         thoughtData.country = profile.location.country;
       }

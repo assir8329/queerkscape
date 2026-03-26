@@ -33,16 +33,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSignInClick,
   isVisible = true
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const sidebarOpen = isHovered;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const hexColor = profile ? getHexColor(profile.color) : '#ffffff';
 
   return (
     <motion.div 
       initial={false}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       animate={{ 
         width: sidebarOpen ? 260 : 72,
         opacity: isVisible ? 1 : 0.4,
@@ -51,6 +48,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={`hidden md:flex h-full glass-dark border-r border-white/5 flex-col z-40 shrink-0 relative focus-transition`}
     >
+      {/* Toggle Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-[#1a1a2e] border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors z-50 shadow-lg"
+      >
+        {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      </button>
+
       {/* Profile Section */}
       <div className="p-4 flex flex-col items-center">
         <motion.div 
@@ -122,25 +127,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
 
-        <div className="mb-4">
-          <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
-            {sidebarOpen ? 'Explore' : '•••'}
-          </p>
-          <SidebarItem 
-            icon={<Plus size={18} />} 
-            label="Create" 
-            onClick={onCreateClick} 
-            collapsed={!sidebarOpen}
-            variant="primary"
-          />
-          <SidebarItem 
-            icon={<MessageCircle size={18} />} 
-            label="Whispers" 
-            onClick={onThoughtsClick} 
-            collapsed={!sidebarOpen}
-          />
-        </div>
-
         {profile && (
           <div>
             <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
@@ -172,6 +158,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
         )}
+      </div>
+
+      {/* Floating Action Buttons (Desktop Only) */}
+      <div 
+        className="absolute left-full ml-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50"
+        style={{ pointerEvents: 'auto' }}
+      >
+        <motion.button
+          whileHover={{ scale: 1.1, x: 5 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onCreateClick}
+          className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30 hover:bg-purple-500 transition-colors"
+          title="Create"
+        >
+          <Plus size={24} />
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.1, x: 5 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onThoughtsClick}
+          className="w-12 h-12 rounded-2xl glass-dark text-white flex items-center justify-center shadow-xl border border-white/10 hover:bg-white/10 transition-colors"
+          title="Whispers"
+        >
+          <MessageCircle size={24} />
+        </motion.button>
       </div>
 
       {/* Bottom Actions */}

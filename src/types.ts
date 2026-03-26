@@ -39,6 +39,8 @@ export interface UnsaidThought {
   id: string;
   userId: string;
   text: string;
+  type: 'whisper';
+  username?: string;
   createdAt: Timestamp;
   expiresAt?: Timestamp;
   vibe?: string;
@@ -58,6 +60,7 @@ export interface Memory {
   id: string;
   userId: string;
   text: string;
+  type: 'memory';
   lat: number;
   lng: number;
   region: string;

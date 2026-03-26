@@ -7,6 +7,7 @@ import { MessageSquare, Send, X, Sparkles, Ghost, Clock, Eye, MapPin, Globe, Nav
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 import { UnsaidThought } from '../types';
+import { getCityBaseCoordinates, getCityOffset } from '../lib/locations';
 
 export const incrementViewCount = async (thoughtId: string) => {
   try {
@@ -167,18 +168,17 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
       const x = Math.floor(Math.random() * 4000) + 500;
       const y = Math.floor(Math.random() * 4000) + 500;
 
-      // Use user's location for Earth map if available and not anonymous
-      let lat = (Math.random() * 140) - 70; // Random fallback
-      let lng = (Math.random() * 360) - 180; // Random fallback
-
-      if (!isAnonymous && profile?.location && !profile.hideLocation) {
-        lat = profile.location.lat + (Math.random() * 0.1 - 0.05);
-        lng = profile.location.lng + (Math.random() * 0.1 - 0.05);
-      }
+      // Redesigned location logic: City-based with random offset
+      const userCity = profile?.location?.city || 'Manila';
+      const base = getCityBaseCoordinates(userCity);
+      
+      const lat = base.lat + getCityOffset();
+      const lng = base.lng + getCityOffset();
 
       const thoughtData: any = {
         userId: user.uid,
         text: newThought.trim(),
+        type: 'whisper',
         createdAt: serverTimestamp(),
         isAnonymous,
         vibe: profile?.vibe || 'neutral',
@@ -186,13 +186,13 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
         y,
         lat,
         lng,
+        city: userCity,
         viewCount: 0,
         visibility,
         expiresAt: Timestamp.fromMillis(Date.now() + 24 * 60 * 60 * 1000)
       };
 
-      if (!isAnonymous && profile?.location) {
-        thoughtData.city = profile.location.city;
+      if (profile?.location) {
         thoughtData.region = profile.location.region;
         thoughtData.country = profile.location.country;
       }

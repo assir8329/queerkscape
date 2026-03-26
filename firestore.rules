@@ -63,6 +63,7 @@ service cloud.firestore {
     // Fields:
     //   - userId: string (required, immutable)
     //   - text: string (required, max 150 chars)
+    //   - type: string (required, 'whisper')
     //   - createdAt: timestamp (required, immutable)
     //   - expiresAt: timestamp (optional)
     //   - vibe: string (optional, max 50 chars)
@@ -82,6 +83,7 @@ service cloud.firestore {
     // Fields:
     //   - userId: string (required, immutable)
     //   - text: string (required, max 500 chars)
+    //   - type: string (required, 'memory')
     //   - lat: number (required)
     //   - lng: number (required)
     //   - region: string (required, max 100 chars)
@@ -249,8 +251,9 @@ service cloud.firestore {
 
     function isValidUnsaidThought() {
       let data = request.resource.data;
-      return hasRequiredFields(['userId', 'text', 'createdAt']) &&
+      return hasRequiredFields(['userId', 'text', 'type', 'createdAt']) &&
              data.userId == request.auth.uid &&
+             data.type == 'whisper' &&
              validStringLength('text', 1, 150) &&
              data.createdAt is timestamp &&
              isValidOptionalString('vibe', 0, 50) &&
@@ -269,8 +272,9 @@ service cloud.firestore {
 
     function isValidMemory() {
       let data = request.resource.data;
-      return hasRequiredFields(['userId', 'text', 'lat', 'lng', 'region', 'createdAt']) &&
+      return hasRequiredFields(['userId', 'text', 'type', 'lat', 'lng', 'region', 'createdAt']) &&
              data.userId == request.auth.uid &&
+             data.type == 'memory' &&
              validStringLength('text', 1, 500) &&
              data.lat is number &&
              data.lng is number &&

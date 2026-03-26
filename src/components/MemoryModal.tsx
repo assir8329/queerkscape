@@ -5,6 +5,7 @@ import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firesto
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { UserProfile, Memory } from '../types';
+import { getCityBaseCoordinates, getCityOffset } from '../lib/locations';
 
 interface MemoryModalProps {
   isOpen: boolean;
@@ -27,11 +28,19 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
 
     setIsSubmitting(true);
     try {
+      // Redesigned location logic: City-based with random offset
+      const userCity = currentUser.location?.city || 'Manila';
+      const base = getCityBaseCoordinates(userCity);
+      
+      const finalLat = base.lat + getCityOffset();
+      const finalLng = base.lng + getCityOffset();
+
       const memoryData: any = {
         userId: currentUser.uid,
         text: text.trim(),
-        lat,
-        lng,
+        type: 'memory',
+        lat: finalLat,
+        lng: finalLng,
         region,
         createdAt: serverTimestamp(),
         viewCount: 0,
