@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Globe, User as UserIcon, Users, Bell, Settings, LogOut, MapPin, Menu, LogIn, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
+import { Share2, Globe, User as UserIcon, Users, Bell, Settings, LogOut, MapPin, Menu, LogIn, ChevronLeft, ChevronRight, HelpCircle, Plus, MessageCircle } from 'lucide-react';
 import { UserProfile } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
 import { motion, AnimatePresence } from 'motion/react';
@@ -12,6 +12,8 @@ interface SidebarProps {
   onBondsClick: () => void;
   onNotificationsClick: () => void;
   onSettingsClick: () => void;
+  onThoughtsClick: () => void;
+  onCreateClick: () => void;
   onSignOut: () => void;
   onSignInClick: () => void;
   isVisible?: boolean;
@@ -25,49 +27,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onBondsClick,
   onNotificationsClick,
   onSettingsClick,
+  onThoughtsClick,
+  onCreateClick,
   onSignOut,
   onSignInClick,
   isVisible = true
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem("sidebarOpen");
-    return saved !== null ? saved === "true" : true;
-  });
-
-  useEffect(() => {
-    localStorage.setItem("sidebarOpen", String(sidebarOpen));
-  }, [sidebarOpen]);
+  const [isHovered, setIsHovered] = useState(false);
+  const sidebarOpen = isHovered;
 
   const hexColor = profile ? getHexColor(profile.color) : '#ffffff';
 
   return (
     <motion.div 
       initial={false}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       animate={{ 
-        width: sidebarOpen ? 260 : 80,
+        width: sidebarOpen ? 260 : 72,
         opacity: isVisible ? 1 : 0.4,
         x: isVisible ? 0 : -20
       }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className={`hidden md:flex h-full glass-dark border-r border-white/5 flex-col z-40 shrink-0 relative focus-transition`}
     >
-      {/* Collapse Toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="absolute -right-3 top-12 w-6 h-6 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-all z-50 shadow-xl"
-      >
-        {sidebarOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-      </button>
-
       {/* Profile Section */}
-      <div className="p-6 flex flex-col items-center">
+      <div className="p-4 flex flex-col items-center">
         <motion.div 
           layout
           className="relative group cursor-pointer"
           onClick={onMyProfileClick}
         >
           <div 
-            className={`rounded-2xl flex items-center justify-center transition-all duration-500 overflow-hidden ${sidebarOpen ? 'w-20 h-20' : 'w-12 h-12'}`}
+            className={`rounded-2xl flex items-center justify-center transition-all duration-500 overflow-hidden ${sidebarOpen ? 'w-16 h-16' : 'w-10 h-10'}`}
             style={{
               backgroundColor: profile ? `${hexColor}20` : 'rgba(255,255,255,0.05)',
               border: `1px solid ${profile ? `${hexColor}40` : 'rgba(255,255,255,0.1)'}`,
@@ -77,11 +69,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {profile?.avatarUrl ? (
               <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
-              <UserIcon className={`${sidebarOpen ? 'w-8 h-8' : 'w-5 h-5'} ${profile ? 'text-white' : 'text-white/20'}`} />
+              <UserIcon className={`${sidebarOpen ? 'w-7 h-7' : 'w-5 h-5'} ${profile ? 'text-white' : 'text-white/20'}`} />
             )}
           </div>
           {profile && (
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#050510] rounded-full" />
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-[#050510] rounded-full" />
           )}
         </motion.div>
         
@@ -95,12 +87,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               {profile ? (
                 <>
-                  <h2 className="text-lg font-semibold text-white truncate px-2">{profile.nickname || profile.username}</h2>
-                  <p className="text-xs text-white/40 font-mono mt-0.5">@{profile.username}</p>
+                  <h2 className="text-base font-semibold text-white truncate px-2">{profile.nickname || profile.username}</h2>
+                  <p className="text-[10px] text-white/40 font-mono mt-0.5">@{profile.username}</p>
                 </>
               ) : (
                 <div className="py-2">
-                  <h2 className="text-sm font-medium text-white/60 uppercase tracking-widest">Lost Star</h2>
+                  <h2 className="text-xs font-medium text-white/60 uppercase tracking-widest">Lost Star</h2>
                 </div>
               )}
             </motion.div>
@@ -109,20 +101,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 px-3 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 px-2 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
         <div className="mb-4">
-          <p className={`text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
+          <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
             {sidebarOpen ? 'Perspective' : '•••'}
           </p>
           <SidebarItem 
-            icon={<Share2 size={20} />} 
+            icon={<Share2 size={18} />} 
             label="Sky View" 
             active={mapMode === 'constellation'} 
             onClick={() => setMapMode('constellation')} 
             collapsed={!sidebarOpen}
           />
           <SidebarItem 
-            icon={<Globe size={20} />} 
+            icon={<Globe size={18} />} 
             label="Ground View" 
             active={mapMode === 'earth'} 
             onClick={() => setMapMode('earth')} 
@@ -130,31 +122,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
 
+        <div className="mb-4">
+          <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
+            {sidebarOpen ? 'Explore' : '•••'}
+          </p>
+          <SidebarItem 
+            icon={<Plus size={18} />} 
+            label="Create" 
+            onClick={onCreateClick} 
+            collapsed={!sidebarOpen}
+            variant="primary"
+          />
+          <SidebarItem 
+            icon={<MessageCircle size={18} />} 
+            label="Whispers" 
+            onClick={onThoughtsClick} 
+            collapsed={!sidebarOpen}
+          />
+        </div>
+
         {profile && (
           <div>
-            <p className={`text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
+            <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
               {sidebarOpen ? 'Personal' : '•••'}
             </p>
             <SidebarItem 
-              icon={<UserIcon size={20} />} 
+              icon={<UserIcon size={18} />} 
               label="My Profile" 
               onClick={onMyProfileClick} 
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
-              icon={<Users size={20} />} 
+              icon={<Users size={18} />} 
               label="My Bonds" 
               onClick={onBondsClick} 
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
-              icon={<Bell size={20} />} 
+              icon={<Bell size={18} />} 
               label="Notifications" 
               onClick={onNotificationsClick} 
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
-              icon={<Settings size={20} />} 
+              icon={<Settings size={18} />} 
               label="Settings" 
               onClick={onSettingsClick} 
               collapsed={!sidebarOpen}
@@ -164,16 +175,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-white/5 flex flex-col gap-1">
+      <div className="p-2 border-t border-white/5 flex flex-col gap-1">
         <SidebarItem 
-          icon={<HelpCircle size={20} />} 
+          icon={<HelpCircle size={18} />} 
           label="How it Works" 
           onClick={() => window.dispatchEvent(new CustomEvent('open-guide'))} 
           collapsed={!sidebarOpen}
         />
         {profile ? (
           <SidebarItem 
-            icon={<LogOut size={20} />} 
+            icon={<LogOut size={18} />} 
             label="Logout" 
             onClick={onSignOut} 
             collapsed={!sidebarOpen}
@@ -181,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         ) : (
           <SidebarItem 
-            icon={<LogIn size={20} />} 
+            icon={<LogIn size={18} />} 
             label="Sign In" 
             onClick={onSignInClick} 
             collapsed={!sidebarOpen}

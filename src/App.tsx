@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, UserProfile } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
@@ -36,6 +37,11 @@ const getDailyPrompt = () => {
   return DAILY_PROMPTS[dayOfYear % DAILY_PROMPTS.length];
 };
 
+import { RightPanel } from './components/RightPanel';
+import { ProfileContent } from './components/ProfileContent';
+import { CreateActionHubContent } from './components/CreateActionHubContent';
+import { UnsaidThoughtsContent } from './components/UnsaidThoughtsContent';
+
 const MainApp: React.FC = () => {
   const { user, profile, loading, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +61,18 @@ const MainApp: React.FC = () => {
   const [isAddingMemory, setIsAddingMemory] = useState(false);
   const [isUiVisible, setIsUiVisible] = useState(true);
   const fadeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Right Panel State
+  const [rightPanelType, setRightPanelType] = useState<'profile' | 'create' | 'thoughts' | null>(null);
+  const [rightPanelData, setRightPanelData] = useState<any>(null);
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auth Redirect Logic
   useEffect(() => {
@@ -124,22 +142,42 @@ const MainApp: React.FC = () => {
     }
   };
 
+  const handleUserClick = (userProfile: UserProfile) => {
+    if (isMobile) {
+      setSelectedUser(userProfile);
+    } else {
+      setRightPanelType('profile');
+      setRightPanelData(userProfile);
+    }
+  };
+
   const handleActionHub = (action: 'signal' | 'thought' | 'memory') => {
     if (!user && (action === 'signal' || action === 'memory')) {
       navigate('/login');
       return;
     }
 
-    switch (action) {
-      case 'signal':
+    if (isMobile) {
+      switch (action) {
+        case 'signal':
+          setIsSignalModalOpen(true);
+          break;
+        case 'thought':
+          setActiveTab('thoughts');
+          break;
+        case 'memory':
+          setIsAddingMemory(true);
+          break;
+      }
+    } else {
+      // Desktop actions
+      if (action === 'thought') {
+        setRightPanelType('thoughts');
+      } else if (action === 'signal') {
         setIsSignalModalOpen(true);
-        break;
-      case 'thought':
-        setActiveTab('thoughts');
-        break;
-      case 'memory':
+      } else if (action === 'memory') {
         setIsAddingMemory(true);
-        break;
+      }
     }
   };
 
@@ -180,101 +218,161 @@ const MainApp: React.FC = () => {
               profile={profile} 
               mapMode={mapMode} 
               setMapMode={setMapMode} 
-              onMyProfileClick={() => profile && setSelectedUser(profile)}
+              onMyProfileClick={() => {
+                if (profile) {
+                  if (isMobile) {
+                    setSelectedUser(profile);
+                  } else {
+                    setRightPanelType('profile');
+                    setRightPanelData(profile);
+                  }
+                } else {
+                  navigate('/login');
+                }
+              }}
               onBondsClick={() => setShowBonds(true)}
               onNotificationsClick={() => setShowNotifications(true)}
               onSettingsClick={() => setShowSettings(true)}
+              onThoughtsClick={() => {
+                if (isMobile) {
+                  setActiveTab('thoughts');
+                } else {
+                  setRightPanelType('thoughts');
+                }
+              }}
+              onCreateClick={() => {
+                if (isMobile) {
+                  setIsCreateHubOpen(true);
+                } else {
+                  setRightPanelType('create');
+                }
+              }}
               onSignOut={signOut}
               onSignInClick={() => navigate('/login')}
             />
 
             {/* Main Content */}
-            <div className="flex-1 relative h-full">
-              {mapMode === 'constellation' ? (
-                <MapCanvas 
-                  onUserClick={setSelectedUser} 
+            <div className="flex-1 relative h-full flex min-w-0">
+              <div className="flex-1 relative h-full">
+                {mapMode === 'constellation' ? (
+                  <MapCanvas 
+                    onUserClick={handleUserClick} 
+                    filterTag={filterTag}
+                    setFilterTag={setFilterTag}
+                    mapMode={mapMode}
+                    setMapMode={setMapMode}
+                    isUiVisible={isUiVisible}
+                    onInteraction={handleMapInteraction}
+                  />
+                ) : (
+                  <EarthMap 
+                    users={allUsers}
+                    currentUser={profile}
+                    onUserClick={handleUserClick} 
+                    filterTag={filterTag}
+                    setFilterTag={setFilterTag}
+                    mapMode={mapMode}
+                    setMapMode={setMapMode}
+                    isUiVisible={isUiVisible}
+                    onInteraction={handleMapInteraction}
+                    isAddingMemory={isAddingMemory}
+                    setIsAddingMemory={setIsAddingMemory}
+                  />
+                )}
+                
+                <TopCommandBar 
+                  user={user}
+                  profile={profile}
                   filterTag={filterTag}
                   setFilterTag={setFilterTag}
-                  mapMode={mapMode}
-                  setMapMode={setMapMode}
-                  isUiVisible={isUiVisible}
-                  onInteraction={handleMapInteraction}
+                  dailyPrompt={dailyPrompt}
+                  onPromptSubmit={handlePromptSubmit}
+                  isVisible={isUiVisible}
                 />
-              ) : (
-                <EarthMap 
-                  users={allUsers}
-                  currentUser={profile}
-                  onUserClick={setSelectedUser} 
-                  filterTag={filterTag}
-                  setFilterTag={setFilterTag}
-                  mapMode={mapMode}
-                  setMapMode={setMapMode}
-                  isUiVisible={isUiVisible}
-                  onInteraction={handleMapInteraction}
-                  isAddingMemory={isAddingMemory}
-                  setIsAddingMemory={setIsAddingMemory}
+
+                {/* Unsaid Thoughts (Mobile only modal) */}
+                {isMobile && (
+                  <UnsaidThoughts 
+                    isOpen={activeTab === 'thoughts' ? true : undefined} 
+                    onClose={activeTab === 'thoughts' ? () => setActiveTab('map') : undefined} 
+                  />
+                )}
+
+                <Notifications 
+                  isOpen={showNotifications} 
+                  onClose={() => setShowNotifications(false)} 
                 />
-              )}
-              
-              <TopCommandBar 
-                user={user}
-                profile={profile}
-                filterTag={filterTag}
-                setFilterTag={setFilterTag}
-                dailyPrompt={dailyPrompt}
-                onPromptSubmit={handlePromptSubmit}
-                isVisible={isUiVisible}
-              />
 
-              {/* Unsaid Thoughts (Desktop: Floating Button, Mobile: Tab) */}
-              <UnsaidThoughts 
-                isOpen={activeTab === 'thoughts' ? true : undefined} 
-                onClose={activeTab === 'thoughts' ? () => setActiveTab('map') : undefined} 
-              />
-
-              <Notifications 
-                isOpen={showNotifications} 
-                onClose={() => setShowNotifications(false)} 
-              />
-
-              <BondsModal
-                isOpen={showBonds}
-                onClose={() => setShowBonds(false)}
-                onUserClick={setSelectedUser}
-              />
-
-              <SettingsModal
-                isOpen={showSettings}
-                onClose={() => setShowSettings(false)}
-              />
-
-              <CreateActionHub 
-                isOpen={isCreateHubOpen}
-                onClose={() => setIsCreateHubOpen(false)}
-                onAction={handleActionHub}
-              />
-
-              <SignalModal 
-                isOpen={isSignalModalOpen}
-                onClose={() => setIsSignalModalOpen(false)}
-                dailyPrompt={dailyPrompt}
-                onSubmit={handlePromptSubmit}
-              />
-
-              {selectedUser && (
-                <ProfileModal
-                  user={selectedUser}
-                  onClose={() => {
-                    setSelectedUser(null);
-                    if (activeTab === 'profile') {
-                      setActiveTab('map');
-                    }
-                  }}
-                  onBondsClick={() => setShowBonds(true)}
-                  onNotificationsClick={() => setShowNotifications(true)}
-                  onSettingsClick={() => setShowSettings(true)}
-                  onSignOut={signOut}
+                <BondsModal
+                  isOpen={showBonds}
+                  onClose={() => setShowBonds(false)}
+                  onUserClick={setSelectedUser}
                 />
+
+                <SettingsModal
+                  isOpen={showSettings}
+                  onClose={() => setShowSettings(false)}
+                />
+
+                <CreateActionHub 
+                  isOpen={isCreateHubOpen}
+                  onClose={() => setIsCreateHubOpen(false)}
+                  onAction={handleActionHub}
+                />
+
+                <SignalModal 
+                  isOpen={isSignalModalOpen}
+                  onClose={() => setIsSignalModalOpen(false)}
+                  dailyPrompt={dailyPrompt}
+                  onSubmit={handlePromptSubmit}
+                />
+
+                {/* Mobile Profile Modal */}
+                {isMobile && selectedUser && (
+                  <ProfileModal
+                    user={selectedUser}
+                    onClose={() => {
+                      setSelectedUser(null);
+                      if (activeTab === 'profile') {
+                        setActiveTab('map');
+                      }
+                    }}
+                    onBondsClick={() => setShowBonds(true)}
+                    onNotificationsClick={() => setShowNotifications(true)}
+                    onSettingsClick={() => setShowSettings(true)}
+                    onSignOut={signOut}
+                  />
+                )}
+              </div>
+
+              {/* Right Context Panel (Desktop only) */}
+              {!isMobile && (
+                <RightPanel
+                  isOpen={rightPanelType !== null}
+                  onClose={() => setRightPanelType(null)}
+                  title={
+                    rightPanelType === 'profile' ? 'Profile' :
+                    rightPanelType === 'create' ? 'Create' :
+                    rightPanelType === 'thoughts' ? 'Whispers' : ''
+                  }
+                >
+                  {rightPanelType === 'profile' && rightPanelData && (
+                    <ProfileContent 
+                      user={rightPanelData} 
+                      onClose={() => setRightPanelType(null)}
+                      onBondsClick={() => setShowBonds(true)}
+                      onNotificationsClick={() => setShowNotifications(true)}
+                      onSettingsClick={() => setShowSettings(true)}
+                      onSignOut={signOut}
+                    />
+                  )}
+                  {rightPanelType === 'create' && (
+                    <CreateActionHubContent onAction={handleActionHub} />
+                  )}
+                  {rightPanelType === 'thoughts' && (
+                    <UnsaidThoughtsContent />
+                  )}
+                </RightPanel>
               )}
             </div>
 
@@ -294,6 +392,7 @@ export default function App() {
     <Router>
       <AuthProvider>
         <MainApp />
+        <Analytics />
       </AuthProvider>
     </Router>
   );

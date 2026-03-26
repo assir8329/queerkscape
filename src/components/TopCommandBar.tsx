@@ -46,18 +46,18 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
         transition={{ type: "spring", stiffness: 200, damping: 25 }}
         className="pointer-events-auto"
       >
-        <div className={`glass rounded-[2rem] p-1.5 flex items-center gap-2 shadow-2xl transition-all duration-500 ${isExpanded ? 'rounded-[2.5rem]' : ''}`}>
+        <div className={`glass rounded-[2rem] p-1 flex items-center gap-2 shadow-2xl transition-all duration-500 ${isExpanded ? 'rounded-[2.5rem]' : ''}`}>
           
           {/* Left: Daily Prompt Trigger */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className={`flex items-center gap-3 px-5 py-2.5 rounded-full transition-all duration-500 group relative overflow-hidden ${isExpanded ? 'bg-purple-500/20 text-purple-300' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
+            className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all duration-500 group relative overflow-hidden ${isExpanded ? 'bg-purple-500/20 text-purple-300' : 'hover:bg-white/5 text-white/60 hover:text-white'}`}
           >
-            <Sparkles className={`w-4 h-4 transition-transform duration-500 ${isExpanded ? 'rotate-12 scale-110 text-yellow-400' : 'group-hover:scale-110'}`} />
-            <span className="text-sm font-medium whitespace-nowrap hidden sm:inline">
+            <Sparkles className={`w-3.5 h-3.5 transition-transform duration-500 ${isExpanded ? 'rotate-12 scale-110 text-yellow-400' : 'group-hover:scale-110'}`} />
+            <span className="text-xs font-medium whitespace-nowrap hidden sm:inline">
               {isExpanded ? 'Sharing Signal...' : dailyPrompt}
             </span>
-            <span className="text-sm font-medium sm:hidden">
+            <span className="text-xs font-medium sm:hidden">
               {isExpanded ? 'Signal' : 'Prompt'}
             </span>
             {isExpanded && (
@@ -69,24 +69,24 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
           </button>
 
           {/* Divider */}
-          <div className="w-px h-6 bg-white/10 mx-1" />
+          <div className="w-px h-5 bg-white/10 mx-1" />
 
           {/* Center: Search / Filter */}
           <div className="flex-1 relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-purple-400 transition-colors" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20 group-focus-within:text-purple-400 transition-colors" />
             <input
               type="text"
               placeholder="Filter by vibe..."
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
-              className="w-full bg-transparent border-none py-2.5 pl-11 pr-4 text-white placeholder:text-white/20 focus:outline-none text-sm font-medium"
+              className="w-full bg-transparent border-none py-2 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none text-xs font-medium"
             />
             {filterTag && (
               <button 
                 onClick={() => setFilterTag('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
               >
-                <X size={14} />
+                <X size={12} />
               </button>
             )}
           </div>
