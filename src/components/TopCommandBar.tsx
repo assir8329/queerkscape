@@ -55,10 +55,10 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
           >
             <Sparkles className={`w-3.5 h-3.5 transition-transform duration-500 ${isExpanded ? 'rotate-12 scale-110 text-yellow-400' : 'group-hover:scale-110'}`} />
             <span className="text-xs font-medium whitespace-nowrap hidden sm:inline">
-              {isExpanded ? 'Sharing Magparamdam...' : dailyPrompt}
+              {isExpanded ? 'Sharing Sambit...' : dailyPrompt}
             </span>
             <span className="text-xs font-medium sm:hidden">
-              {isExpanded ? 'Magparamdam' : 'Prompt'}
+              {isExpanded ? 'Sambit' : 'Prompt'}
             </span>
             {isExpanded && (
               <motion.div 
@@ -118,7 +118,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
                   </div>
                   <div>
                     <h3 className="text-white font-bold">Join the Collective</h3>
-                    <p className="text-white/40 text-sm mt-1">Sign in to share your daily magparamdam and connect with others.</p>
+                    <p className="text-white/40 text-sm mt-1">Sign in to share your daily sambit and connect with others.</p>
                   </div>
                   <button 
                     onClick={() => window.location.href = '/login'}
@@ -154,7 +154,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
                       disabled={!promptResponse.trim() || isSubmitting}
                       className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:hover:bg-purple-600 text-white rounded-full text-sm font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-95 group"
                     >
-                      <span>Magparamdam</span>
+                      <span>Sambit</span>
                       <Send size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     </button>
                   </div>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Clock, Star, MapPin, Users, Bell, Settings, LogOut } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Star, MapPin, Users, Bell, Settings, LogOut } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { VIBES, getHexColor } from '../lib/colors';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -26,29 +26,24 @@ const LOOKING_FOR_OPTIONS = [...STANDARD_OPTIONS, "custom"];
 interface ProfileModalProps {
   user: UserProfile | null;
   onClose: () => void;
-  onBondsClick?: () => void;
-  onNotificationsClick?: () => void;
   onSettingsClick?: () => void;
+  onChatClick?: (user: UserProfile) => void;
   onSignOut?: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ 
   user, 
   onClose,
-  onBondsClick,
-  onNotificationsClick,
   onSettingsClick,
+  onChatClick,
   onSignOut
 }) => {
   const { profile, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<UserProfile>>({});
-  const [signalMessage, setSignalMessage] = useState('');
-  const [sending, setSending] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportCategory, setReportCategory] = useState('spam');
   const [isReporting, setIsReporting] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
   const [connectionCount, setConnectionCount] = useState<number | null>(null);
   const [constellationName, setConstellationName] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -124,30 +119,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     fetchConstellation();
   }, [user]);
 
-  useEffect(() => {
-    if (!profile || !user || profile.uid === user.uid) return;
-
-    const q = query(
-      collection(db, 'interactions'),
-      where('fromUid', 'in', [profile.uid, user.uid])
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const msgs = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter((m: any) => m.toUid === profile.uid || m.toUid === user.uid)
-          .sort((a: any, b: any) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
-        setMessages(msgs);
-      },
-      (error) => {
-        handleFirestoreError(error, OperationType.GET, 'interactions');
-      }
-    );
-
-    return () => unsubscribe();
-  }, [profile, user]);
 
   if (!user) return null;
 
@@ -159,36 +130,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     return lastActive.toMillis() > fiveMinutesAgo;
   };
 
-  const [constellationNameInput, setConstellationNameInput] = useState('');
-  const [isCreatingConstellation, setIsCreatingConstellation] = useState(false);
 
   // ... existing code ...
 
-  const handleCreateConstellation = async () => {
-    if (!constellationNameInput.trim() || !profile) return;
-    try {
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-      const docRef = await addDoc(collection(db, 'constellations'), {
-        name: constellationNameInput,
-        memberIds: [profile.uid, user.uid], // Start with these two
-        createdAt: serverTimestamp(),
-      });
-      
-      // Update both users with the new constellation ID
-      await updateProfile({ constellationId: docRef.id });
-      
-      // We can't easily update the other user's profile directly from the client securely without a cloud function,
-      // but for this prototype, we'll just update our own. A real app would use a Cloud Function or allow users to join.
-      // Actually, we can update the other user if we change the rules, but let's just let them join later or use a cloud function.
-      // For now, let's just set it for ourselves.
-      
-      setConstellationName(constellationNameInput);
-      setIsCreatingConstellation(false);
-      setConstellationNameInput('');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'constellations');
-    }
-  };
 
   const handleSave = async () => {
     const updates = { ...editData };
@@ -209,59 +153,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleSendSignal = async () => {
-    if (!signalMessage.trim()) return;
-    
-    // Basic rate limiting: check if last message was sent < 10 seconds ago
-    const myLastMsg = messages.filter(m => m.fromUid === profile.uid).pop();
-    if (myLastMsg && myLastMsg.createdAt) {
-      const timeSinceLast = Date.now() - myLastMsg.createdAt.toMillis();
-      if (timeSinceLast < 10000) {
-        alert('Please wait a moment before sending another signal.');
-        return;
-      }
-    }
-
-    setSending(true);
-    try {
-      await addDoc(collection(db, 'interactions'), {
-        fromUid: profile.uid,
-        toUid: user.uid,
-        message: signalMessage,
-        createdAt: serverTimestamp(),
-        read: false,
-      });
-      
-      // Check if they have sent us a message before. If so, create a connection if it doesn't exist.
-      const hasReceived = messages.some(m => m.fromUid === user.uid);
-      if (hasReceived) {
-        const connId = profile.uid < user.uid ? `${profile.uid}_${user.uid}` : `${user.uid}_${profile.uid}`;
-        try {
-          // We use setDoc with merge: true to avoid errors if it already exists,
-          // but our rules don't allow update. So we should check if it exists first.
-          // Since we can't easily check without a getDoc, let's just do a getDoc.
-          const { getDoc, doc, setDoc } = await import('firebase/firestore');
-          const connRef = doc(db, 'connections', connId);
-          const connSnap = await getDoc(connRef);
-          if (!connSnap.exists()) {
-            await setDoc(connRef, {
-              users: [profile.uid, user.uid].sort(),
-              createdAt: serverTimestamp(),
-            });
-          }
-        } catch (err) {
-          handleFirestoreError(err, OperationType.CREATE, `connections/${connId}`);
-          // Ignore errors if it already exists or fails
-        }
-      }
-      
-      setSignalMessage('');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'interactions');
-    } finally {
-      setSending(false);
-    }
-  };
 
   const handleReport = async () => {
     if (!reportReason.trim()) return;
@@ -486,7 +377,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Magparamdam</label>
+                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Sambit</label>
                         <textarea
                           value={editData.signal ?? user.signal}
                           onChange={(e) => setEditData({ ...editData, signal: e.target.value })}
@@ -746,7 +637,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
                       <div className="relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5">
                         <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
-                          <MessageCircle className="w-2.5 h-2.5" /> Magparamdam
+                          <MessageCircle className="w-2.5 h-2.5" /> Sambit
                         </div>
                         <p className="text-sm text-white/90 font-medium leading-relaxed tracking-tight">
                           "{user.signal}"
@@ -843,60 +734,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </section>
                   )}
 
-                  {/* Conversation History (only in view mode) */}
-                  {!isMe && messages.length > 0 && (
-                    <section className="pt-4 border-t border-white/5">
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="text-[10px] uppercase tracking-widest text-white/30 font-bold flex items-center gap-2">
-                          <MessageCircle className="w-3 h-3" /> History
-                        </div>
-                        {!profile.constellationId && !user.constellationId && (
-                          <button 
-                            onClick={() => setIsCreatingConstellation(!isCreatingConstellation)}
-                            className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 font-bold"
-                          >
-                            <Star className="w-3 h-3" /> Form Constellation
-                          </button>
-                        )}
-                      </div>
-
-                      {isCreatingConstellation && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-4 space-y-2 bg-purple-500/5 p-4 rounded-2xl border border-purple-500/10">
-                          <p className="text-[10px] text-purple-200/50 uppercase tracking-wider font-bold">New Constellation</p>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={constellationNameInput}
-                              onChange={(e) => setConstellationNameInput(e.target.value)}
-                              placeholder="Name your star cluster..."
-                              className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                              maxLength={30}
-                            />
-                            <button 
-                              onClick={handleCreateConstellation} 
-                              disabled={!constellationNameInput.trim()} 
-                              className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-50 text-purple-300 rounded-xl text-sm font-bold transition-colors"
-                            >
-                              Form
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      <div className="space-y-3 bg-black/20 rounded-2xl p-4 max-h-48 overflow-y-auto custom-scrollbar">
-                        {messages.map((msg: any) => (
-                          <div key={msg.id} className={`flex flex-col ${msg.fromUid === profile.uid ? 'items-end' : 'items-start'}`}>
-                            <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${msg.fromUid === profile.uid ? 'bg-purple-500/20 text-purple-100 border border-purple-500/20' : 'bg-white/5 text-white/90 border border-white/5'}`}>
-                              {msg.message}
-                            </div>
-                            <span className="text-[9px] text-white/20 mt-1 px-2 font-medium">
-                              {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
                 </div>
               )}
             </div>
@@ -944,16 +781,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       
                       {/* Mobile Actions Menu */}
                       <div className="md:hidden grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
-                        {onBondsClick && (
-                          <button onClick={onBondsClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                            <Users className="w-4 h-4" /> Kindreds
-                          </button>
-                        )}
-                        {onNotificationsClick && (
-                          <button onClick={onNotificationsClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                            <Bell className="w-4 h-4" /> Signals
-                          </button>
-                        )}
                         {onSettingsClick && (
                           <button onClick={onSettingsClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
                             <Settings className="w-4 h-4" /> Settings
@@ -970,24 +797,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={signalMessage}
-                      onChange={(e) => setSignalMessage(e.target.value)}
-                      placeholder="Magparamdam..."
-                      className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
-                      maxLength={100}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendSignal()}
-                    />
-                    <button
-                      onClick={handleSendSignal}
-                      disabled={sending || !signalMessage.trim()}
-                      className="w-12 h-12 bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20 transition-all active:scale-95"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => onChatClick && onChatClick(user)}
+                    className="w-full py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
+                  >
+                    <Send className="w-4 h-4" /> Send Signal
+                  </button>
                   
                   <div className="flex justify-between items-center px-1">
                     <button onClick={() => setIsReporting(!isReporting)} className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 flex items-center gap-1.5 transition-colors font-bold">

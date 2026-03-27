@@ -25,8 +25,8 @@ export const GuideModal: React.FC = () => {
     },
     {
       icon: <Sparkles className="w-6 h-6 text-purple-400" />,
-      title: "Daily Paramdam",
-      description: "Broadcast a short 'magparamdam' each day to share what's on your mind with the sky."
+      title: "Daily Sambit",
+      description: "Broadcast a short 'sambit' each day to share what's on your mind with the sky."
     },
     {
       icon: <MessageSquare className="w-6 h-6 text-blue-400" />,
@@ -73,7 +73,7 @@ export const GuideModal: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">GABAY</h2>
-                  <p className="text-xs text-white/40 uppercase tracking-widest font-bold">The Unsaid Constellation</p>
+                  <p className="text-xs text-white/40 uppercase tracking-widest font-bold">ANG ATING TAGPUAN</p>
                 </div>
               </div>
               <button 

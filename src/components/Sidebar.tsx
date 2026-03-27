@@ -19,6 +19,7 @@ interface SidebarProps {
   onSignOut: () => void;
   onSignInClick: () => void;
   isVisible?: boolean;
+  hasNewSignals?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -35,7 +36,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCreateClick,
   onSignOut,
   onSignInClick,
-  isVisible = true
+  isVisible = true,
+  hasNewSignals = false
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -144,13 +146,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
             <SidebarItem 
               icon={<Users size={18} />} 
-              label="Kindreds" 
+              label="Ugnayan" 
               onClick={onBondsClick} 
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
-              icon={<Bell size={18} />} 
-              label="Signals" 
+              icon={
+                <div className="relative">
+                  <Bell size={18} />
+                  {hasNewSignals && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                  )}
+                </div>
+              } 
+              label="Siklab" 
               onClick={onNotificationsClick} 
               collapsed={!sidebarOpen}
             />

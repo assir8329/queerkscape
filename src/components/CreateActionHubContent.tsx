@@ -9,7 +9,7 @@ export const CreateActionHubContent: React.FC<CreateActionHubContentProps> = ({ 
   const actions = [
     {
       id: 'signal' as const,
-      title: 'Magparamdam',
+      title: 'Sambit',
       description: 'Share your presence with the universe.',
       icon: <Sparkles className="w-5 h-5 text-blue-400" />,
       color: 'blue'

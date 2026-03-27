@@ -6,8 +6,7 @@ import { Auth } from './components/Auth';
 import { MapCanvas } from './components/MapCanvas';
 import { EarthMap } from './components/EarthMap';
 import { ProfileModal } from './components/ProfileModal';
-import { Notifications } from './components/Notifications';
-import { BondsModal } from './components/BondsModal';
+import { SiklabInbox } from './components/SiklabInbox';
 import { SettingsModal } from './components/SettingsModal';
 import { Onboarding } from './components/Onboarding';
 import { Sidebar } from './components/Sidebar';
@@ -21,7 +20,7 @@ import { WelcomePage } from './components/WelcomePage';
 import { Search, Sparkles, Star, LogIn, X, Loader2, Globe, Plus, CircleHelp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from './firebase';
-import { serverTimestamp, collection, onSnapshot } from 'firebase/firestore';
+import { serverTimestamp, collection, onSnapshot, query, where } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestore-errors';
 
 const DAILY_PROMPTS = [
@@ -51,12 +50,13 @@ const MainApp: React.FC = () => {
     return (localStorage.getItem('mapMode') as 'constellation' | 'earth') || 'earth';
   });
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showBonds, setShowBonds] = useState(false);
+  const [showSiklab, setShowSiklab] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'map' | 'thoughts'>('map');
+  const [activeTab, setActiveTab] = useState<'profile' | 'map' | 'siklab' | 'thoughts'>('map');
+  const [hasNewSignals, setHasNewSignals] = useState(false);
   const [isCreateHubOpen, setIsCreateHubOpen] = useState(false);
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
+  const [siklabTargetUser, setSiklabTargetUser] = useState<UserProfile | null>(null);
   const [isAddingMemory, setIsAddingMemory] = useState(false);
   const [isUiVisible, setIsUiVisible] = useState(true);
   const fadeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -119,9 +119,29 @@ const MainApp: React.FC = () => {
     });
   };
 
-  const handleTabChange = (tab: 'profile' | 'map' | 'thoughts') => {
+  useEffect(() => {
+    if (!profile) return;
+    const q = query(
+      collection(db, 'interactions'),
+      where('toUid', '==', profile.uid),
+      where('read', '==', false)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setHasNewSignals(!snapshot.empty);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'interactions');
+    });
+    return () => unsubscribe();
+  }, [profile]);
+
+  const handleTabChange = (tab: 'profile' | 'map' | 'siklab' | 'thoughts') => {
     if (tab === 'thoughts') {
       setIsCreateHubOpen(true);
+      return;
+    }
+    if (tab === 'siklab') {
+      setShowSiklab(true);
+      setActiveTab('siklab');
       return;
     }
     setActiveTab(tab);
@@ -146,6 +166,7 @@ const MainApp: React.FC = () => {
   };
 
   const handleActionHub = (action: 'signal' | 'thought' | 'memory') => {
+    setIsCreateHubOpen(false);
     if (!user && (action === 'signal' || action === 'memory')) {
       navigate('/login');
       return;
@@ -219,8 +240,11 @@ const MainApp: React.FC = () => {
                   navigate('/login');
                 }
               }}
-              onBondsClick={() => setShowBonds(true)}
-              onNotificationsClick={() => setShowNotifications(true)}
+              onBondsClick={() => {
+                setShowSiklab(true);
+                // We can potentially set a tab here if needed, but Siklab handles its own tabs
+              }}
+              onNotificationsClick={() => setShowSiklab(true)}
               onSettingsClick={() => setShowSettings(true)}
               onThoughtsClick={() => {
                 if (isMobile) {
@@ -246,6 +270,7 @@ const MainApp: React.FC = () => {
               }}
               onSignOut={signOut}
               onSignInClick={() => navigate('/login')}
+              hasNewSignals={hasNewSignals}
             />
 
             {/* Main Content */}
@@ -313,15 +338,18 @@ const MainApp: React.FC = () => {
                   />
                 )}
 
-                <Notifications 
-                  isOpen={showNotifications} 
-                  onClose={() => setShowNotifications(false)} 
-                />
-
-                <BondsModal
-                  isOpen={showBonds}
-                  onClose={() => setShowBonds(false)}
-                  onUserClick={setSelectedUser}
+                <SiklabInbox 
+                  isOpen={showSiklab} 
+                  onClose={() => {
+                    setShowSiklab(false);
+                    setSiklabTargetUser(null);
+                    if (activeTab === 'siklab') setActiveTab('map');
+                  }} 
+                  initialUser={siklabTargetUser}
+                  onUserClick={(user) => {
+                    setSelectedUser(user);
+                    setShowSiklab(false);
+                  }}
                 />
 
                 <SettingsModal
@@ -352,9 +380,12 @@ const MainApp: React.FC = () => {
                         setActiveTab('map');
                       }
                     }}
-                    onBondsClick={() => setShowBonds(true)}
-                    onNotificationsClick={() => setShowNotifications(true)}
                     onSettingsClick={() => setShowSettings(true)}
+                    onChatClick={(user) => {
+                      setSiklabTargetUser(user);
+                      setShowSiklab(true);
+                      setSelectedUser(null);
+                    }}
                     onSignOut={signOut}
                   />
                 )}
@@ -381,7 +412,11 @@ const MainApp: React.FC = () => {
             </div>
 
             {/* Bottom Navigation (Mobile Only) */}
-            <BottomNav activeTab={activeTab} setActiveTab={handleTabChange} />
+            <BottomNav 
+              activeTab={activeTab} 
+              setActiveTab={handleTabChange} 
+              hasNewSignals={hasNewSignals}
+            />
           </>
         } />
 

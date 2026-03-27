@@ -14,7 +14,7 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
   const actions = [
     {
       id: 'signal' as const,
-      title: 'Magparamdam',
+      title: 'Sambit',
       description: 'Share your vibe',
       icon: <Sparkles className="w-4 h-4 text-blue-400" />,
     },

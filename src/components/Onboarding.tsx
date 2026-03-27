@@ -439,13 +439,13 @@ export const Onboarding: React.FC = () => {
 
         {step === 6 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h3 className="text-white font-semibold mb-2 text-center">Broadcast your first magparamdam</h3>
+            <h3 className="text-white font-semibold mb-2 text-center">Broadcast your first sambit</h3>
             <p className="text-white/40 text-xs text-center mb-4">A short message visible to others.</p>
             
             <textarea
               value={signal}
               onChange={(e) => setSignal(e.target.value)}
-              placeholder="Magparamdam..."
+              placeholder="Sambit..."
               maxLength={100}
               className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white mb-8 focus:outline-none focus:border-purple-500 resize-none h-24"
             />

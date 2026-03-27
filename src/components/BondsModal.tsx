@@ -13,6 +13,7 @@ interface BondsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUserClick: (user: UserProfile) => void;
+  onChatClick?: (user: UserProfile) => void;
 }
 
 interface Bond {
@@ -21,7 +22,7 @@ interface Bond {
   otherUser?: UserProfile;
 }
 
-export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserClick }) => {
+export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserClick, onChatClick }) => {
   const { profile } = useAuth();
   const [bonds, setBonds] = useState<Bond[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,13 +133,13 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
                 onClick={() => setActiveTab('bonds')}
                 className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'bonds' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/40 hover:text-white/60'}`}
               >
-                Linked Stars ({bonds.length})
+                Ugnayan ({bonds.length})
               </button>
               <button 
                 onClick={() => setActiveTab('favorites')}
                 className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'favorites' ? 'text-yellow-400 border-b-2 border-yellow-400 bg-yellow-400/5' : 'text-white/40 hover:text-white/60'}`}
               >
-                Favorite Stars ({profile?.favorites?.length || 0})
+                Hinahangaan ({profile?.favorites?.length || 0})
               </button>
             </div>
 
@@ -161,30 +162,57 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
                     {bonds.map((bond) => (
-                      <button
+                      <div
                         key={bond.id}
-                        onClick={() => {
-                          onClose();
-                          if (bond.otherUser) onUserClick(bond.otherUser);
-                        }}
                         className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-left group"
                       >
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
-                          style={{
-                            backgroundColor: `${getHexColor(bond.otherUser?.color || 'purple')}20`,
-                            border: `1px solid ${getHexColor(bond.otherUser?.color || 'purple')}`,
-                            color: getHexColor(bond.otherUser?.color || 'purple'),
-                            boxShadow: `0 0 10px ${getHexColor(bond.otherUser?.color || 'purple')}40`
+                        <button 
+                          onClick={() => {
+                            if (bond.otherUser && onChatClick) {
+                              onChatClick(bond.otherUser);
+                            }
                           }}
+                          className="flex items-center gap-3 flex-1 min-w-0"
                         >
-                          {(bond.otherUser?.nickname || bond.otherUser?.username || '?').charAt(0).toUpperCase()}
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+                            style={{
+                              backgroundColor: `${getHexColor(bond.otherUser?.color || 'purple')}20`,
+                              border: `1px solid ${getHexColor(bond.otherUser?.color || 'purple')}`,
+                              color: getHexColor(bond.otherUser?.color || 'purple'),
+                              boxShadow: `0 0 10px ${getHexColor(bond.otherUser?.color || 'purple')}40`
+                            }}
+                          >
+                            {(bond.otherUser?.nickname || bond.otherUser?.username || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-white truncate">{bond.otherUser?.nickname || bond.otherUser?.username}</div>
+                            <div className="text-xs text-white/40 truncate">{bond.otherUser?.vibe || 'Mysterious Star'}</div>
+                          </div>
+                        </button>
+                        
+                        <div className="flex items-center gap-2">
+                          {bond.otherUser && (
+                            <button
+                              onClick={() => onUserClick(bond.otherUser!)}
+                              className="p-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl transition-all"
+                              title="View Profile"
+                            >
+                              <Users className="w-4 h-4" />
+                            </button>
+                          )}
+                          
+                          {onChatClick && bond.otherUser && (
+                            <button
+                              onClick={() => onChatClick!(bond.otherUser!)}
+                              className="p-2 bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 rounded-xl transition-colors"
+                              title="Send Signal"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-white truncate">{bond.otherUser?.nickname || bond.otherUser?.username}</div>
-                          <div className="text-xs text-white/40 truncate">{bond.otherUser?.vibe || 'Mysterious Star'}</div>
-                        </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 )
@@ -197,30 +225,55 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
                     {favoriteStars.map((star) => (
-                      <button
+                      <div
                         key={star.uid}
-                        onClick={() => {
-                          onClose();
-                          onUserClick(star);
-                        }}
                         className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-left group"
                       >
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
-                          style={{
-                            backgroundColor: `${getHexColor(star.color)}20`,
-                            border: `1px solid ${getHexColor(star.color)}`,
-                            color: getHexColor(star.color),
-                            boxShadow: `0 0 10px ${getHexColor(star.color)}40`
+                        <button 
+                          onClick={() => {
+                            if (onChatClick) {
+                              onChatClick(star);
+                            }
                           }}
+                          className="flex items-center gap-3 flex-1 min-w-0"
                         >
-                          {(star.nickname || star.username).charAt(0).toUpperCase()}
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+                            style={{
+                              backgroundColor: `${getHexColor(star.color)}20`,
+                              border: `1px solid ${getHexColor(star.color)}`,
+                              color: getHexColor(star.color),
+                              boxShadow: `0 0 10px ${getHexColor(star.color)}40`
+                            }}
+                          >
+                            {(star.nickname || star.username).charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-white truncate">{star.nickname || star.username}</div>
+                            <div className="text-xs text-white/40 truncate">{star.vibe || 'Mysterious Star'}</div>
+                          </div>
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onUserClick(star)}
+                            className="p-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl transition-all"
+                            title="View Profile"
+                          >
+                            <Users className="w-4 h-4" />
+                          </button>
+
+                          {onChatClick && (
+                            <button
+                              onClick={() => onChatClick(star)}
+                              className="p-2 bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 rounded-xl transition-colors"
+                              title="Send Signal"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-white truncate">{star.nickname || star.username}</div>
-                          <div className="text-xs text-white/40 truncate">{star.vibe || 'Mysterious Star'}</div>
-                        </div>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 )
