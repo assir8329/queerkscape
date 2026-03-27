@@ -553,7 +553,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
     >
       {isAddingMemory && (
         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] glass-dark text-yellow-400 px-6 py-3 rounded-full font-bold shadow-2xl animate-pulse border border-yellow-500/30">
-          Tap anywhere on the map to pin a memory
+          Tap anywhere on the map to leave a Bakás
         </div>
       )}
 

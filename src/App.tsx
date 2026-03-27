@@ -18,7 +18,7 @@ import { CreateActionHub } from './components/CreateActionHub';
 import { SignalModal } from './components/SignalModal';
 import { GuideModal } from './components/GuideModal';
 import { WelcomePage } from './components/WelcomePage';
-import { Search, Sparkles, Star, LogIn, X, Loader2, Globe, Plus } from 'lucide-react';
+import { Search, Sparkles, Star, LogIn, X, Loader2, Globe, Plus, CircleHelp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from './firebase';
 import { serverTimestamp, collection, onSnapshot } from 'firebase/firestore';
@@ -287,6 +287,24 @@ const MainApp: React.FC = () => {
                   isVisible={isUiVisible}
                 />
 
+                {/* Mobile Guide Button */}
+                {isMobile && (
+                  <div className="fixed top-6 right-6 z-50 pointer-events-none">
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ 
+                        opacity: isUiVisible ? 1 : 0.2,
+                        scale: isUiVisible ? 1 : 0.9,
+                        y: isUiVisible ? 0 : -5
+                      }}
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-guide'))}
+                      className="pointer-events-auto w-10 h-10 glass rounded-full flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90 shadow-2xl border border-white/10"
+                    >
+                      <CircleHelp size={20} />
+                    </motion.button>
+                  </div>
+                )}
+
                 {/* Unsaid Thoughts (Mobile only modal) */}
                 {isMobile && (
                   <UnsaidThoughts 
@@ -348,8 +366,8 @@ const MainApp: React.FC = () => {
                   isOpen={rightPanelType !== null}
                   onClose={() => setRightPanelType(null)}
                   title={
-                    rightPanelType === 'create' ? 'Create' :
-                    rightPanelType === 'thoughts' ? 'Whispers' : ''
+                    rightPanelType === 'create' ? 'Maglikha' :
+                    rightPanelType === 'thoughts' ? 'Bulong' : ''
                   }
                 >
                   {rightPanelType === 'create' && (

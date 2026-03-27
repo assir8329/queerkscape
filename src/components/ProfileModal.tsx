@@ -7,6 +7,8 @@ import { db } from '../firebase';
 import { VIBES, getHexColor } from '../lib/colors';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
+import { ModalPortal } from './ModalPortal';
+
 const STANDARD_OPTIONS = [
   "Friendship",
   "Something casual",
@@ -309,13 +311,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      >
+      <ModalPortal zIndex={1000}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
@@ -1032,6 +1035,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </div>
         </motion.div>
       </motion.div>
+      </ModalPortal>
     </AnimatePresence>
   );
 };

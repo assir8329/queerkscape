@@ -186,7 +186,7 @@ export const UnsaidThoughtsContent: React.FC = () => {
         {filteredThoughts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
             <Ghost className="w-12 h-12 text-white/5 mx-auto" />
-            <p className="text-xs text-white/30 font-bold uppercase tracking-widest">No whispers here yet.</p>
+            <p className="text-xs text-white/30 font-bold uppercase tracking-widest">Wala pang bulong dito.</p>
           </div>
         ) : (
           filteredThoughts.map((thought) => (
@@ -207,7 +207,7 @@ export const UnsaidThoughtsContent: React.FC = () => {
                   e.target.style.height = 'auto';
                   e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
                 }}
-                placeholder="Whisper something to the universe..."
+                placeholder="Magbulong sa sanlibutan..."
                 className="w-full bg-transparent border-none p-0 text-sm text-white placeholder:text-white/20 focus:outline-none resize-none min-h-[40px] max-h-[120px] leading-relaxed font-medium"
                 rows={1}
               />
@@ -258,7 +258,7 @@ export const UnsaidThoughtsContent: React.FC = () => {
         </div>
       ) : (
         <div className="p-8 bg-white/[0.02] border-t border-white/5 text-center flex flex-col items-center gap-4">
-          <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Sign in to share your unsaid thoughts.</p>
+          <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Mag-login para magbahagi ng iyong mga bulong.</p>
           <button 
             onClick={() => window.location.href = '/login'}
             className="px-8 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-pink-600/20"

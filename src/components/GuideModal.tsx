@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, MapPin, MessageSquare, Users, Globe, Star } from 'lucide-react';
 
+import { ModalPortal } from './ModalPortal';
+
 export const GuideModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -23,22 +25,22 @@ export const GuideModal: React.FC = () => {
     },
     {
       icon: <Sparkles className="w-6 h-6 text-purple-400" />,
-      title: "Daily Magparamdam",
+      title: "Daily Paramdam",
       description: "Broadcast a short 'magparamdam' each day to share what's on your mind with the sky."
     },
     {
       icon: <MessageSquare className="w-6 h-6 text-blue-400" />,
-      title: "Unsaid Thoughts",
+      title: "Bulong",
       description: "Leave anonymous reflections floating in the sky for others to discover."
     },
     {
       icon: <MapPin className="w-6 h-6 text-red-400" />,
-      title: "The World",
+      title: "Bakás",
       description: "Switch to The World to pin memories to real-world locations on the globe."
     },
     {
       icon: <Users className="w-6 h-6 text-green-400" />,
-      title: "Form Bonds",
+      title: "Kindred Souls",
       description: "Connect with other stars to see their signals more clearly and build a constellation."
     }
   ];
@@ -46,21 +48,22 @@ export const GuideModal: React.FC = () => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeGuide}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-[#1a1a2e] border border-white/10 rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
-          >
+        <ModalPortal zIndex={2000}>
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeGuide}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-[#1a1a2e] border border-white/10 rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
+            >
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500" />
             
             <div className="flex items-center justify-between mb-8">
@@ -69,7 +72,7 @@ export const GuideModal: React.FC = () => {
                   <Globe className="w-6 h-6 text-purple-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">How it Works</h2>
+                  <h2 className="text-xl font-bold text-white">GABAY</h2>
                   <p className="text-xs text-white/40 uppercase tracking-widest font-bold">The Unsaid Constellation</p>
                 </div>
               </div>
@@ -109,6 +112,7 @@ export const GuideModal: React.FC = () => {
             </button>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

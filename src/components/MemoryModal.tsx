@@ -7,6 +7,8 @@ import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { UserProfile, Memory } from '../types';
 import { getCityBaseCoordinates, getCityOffset } from '../lib/locations';
 
+import { ModalPortal } from './ModalPortal';
+
 interface MemoryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -63,18 +65,19 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-5 w-full max-w-md shadow-2xl relative"
-          >
+        <ModalPortal zIndex={2000}>
+          <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative"
+            >
             <div className="flex items-center justify-between mb-5 py-1 border-b border-white/5">
               <div className="flex items-center gap-2 truncate">
                 <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                 <div className="flex items-center gap-1.5 truncate">
-                  <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold whitespace-nowrap">A Memory</span>
+                  <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold whitespace-nowrap">Bakás</span>
                   <span className="text-white/20">·</span>
                   <span className="text-xs text-white/60 truncate font-medium">{region}</span>
                 </div>
@@ -90,14 +93,14 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-white/60 mb-1 uppercase tracking-wider">
-                  What happened here?
+                  Anong nangyari rito?
                 </label>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   maxLength={500}
-                  placeholder="Leave a piece of your history..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 resize-none h-32"
+                  placeholder="Mag-iwan ng bakás ng iyong kasaysayan..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 resize-none h-28 leading-relaxed"
                   required
                 />
                 <div className="text-right text-[10px] text-white/40 mt-1">
@@ -141,11 +144,12 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
                 disabled={!text.trim() || isSubmitting}
                 className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
               >
-                {isSubmitting ? 'Pinning...' : 'Pin Memory'}
+                {isSubmitting ? 'Nagbabakás...' : 'Mag-iwan ng Bakás'}
               </button>
             </form>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

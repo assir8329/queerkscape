@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, X, Send } from 'lucide-react';
 
+import { ModalPortal } from './ModalPortal';
+
 interface SignalModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,21 +29,22 @@ export const SignalModal: React.FC<SignalModalProps> = ({ isOpen, onClose, daily
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-[#050510]/60 backdrop-blur-sm pointer-events-auto"
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-lg bg-[#1a1a2e]/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col pointer-events-auto"
-          >
+        <ModalPortal zIndex={2000}>
+          <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="absolute inset-0 bg-[#050510]/60 backdrop-blur-sm"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-[#1a1a2e]/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
+            >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
             
             <div className="p-8 pb-4 flex items-center justify-between">
@@ -97,6 +100,7 @@ export const SignalModal: React.FC<SignalModalProps> = ({ isOpen, onClose, daily
             </form>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Send, X, Sparkles, Ghost, Clock, Eye, MapPin, Globe, Navigation } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
+import { ModalPortal } from './ModalPortal';
+
 import { UnsaidThought } from '../types';
 import { getCityBaseCoordinates, getCityOffset } from '../lib/locations';
 
@@ -210,24 +212,24 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+        <ModalPortal zIndex={2000}>
+          <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleClose}
-              className="absolute inset-0 bg-[#050510]/60 backdrop-blur-sm pointer-events-auto"
+              className="absolute inset-0 bg-[#050510]/60 backdrop-blur-sm"
             />
             
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-[#1a1a2e]/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto max-h-[80vh]"
+              className="relative w-full max-w-lg bg-[#1a1a2e]/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
-              {/* Header */}
               <div className="p-4 pb-2 flex items-center justify-between border-b border-white/5">
-                <h2 className="text-base font-semibold text-white tracking-tight">Unsaid Thoughts</h2>
+                <h2 className="text-base font-semibold text-white tracking-tight">Bulong</h2>
                 <button
                   onClick={handleClose}
                   className="p-1.5 hover:bg-white/5 rounded-full transition-colors text-white/40 hover:text-white"
@@ -259,7 +261,7 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
                 {filteredThoughts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
                     <Ghost className="w-10 h-10 text-white/5 mx-auto" />
-                    <p className="text-xs text-white/30 font-medium">No whispers here yet.</p>
+                    <p className="text-xs text-white/30 font-medium">Wala pang bulong dito.</p>
                   </div>
                 ) : (
                   filteredThoughts.map((thought) => (
@@ -280,7 +282,7 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
                           e.target.style.height = 'auto';
                           e.target.style.height = `${Math.min(e.target.scrollHeight, 100)}px`;
                         }}
-                        placeholder="Whisper something..."
+                        placeholder="Magbulong sa sanlibutan..."
                         className="flex-1 bg-transparent border-none p-1 text-sm text-white placeholder:text-white/20 focus:outline-none resize-none min-h-[32px] max-h-[100px] leading-relaxed"
                         rows={1}
                       />
@@ -329,7 +331,7 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
                 </div>
               ) : (
                 <div className="p-6 bg-white/[0.02] border-t border-white/5 text-center flex flex-col items-center gap-2">
-                  <p className="text-xs text-white/40">Sign in to share your unsaid thoughts.</p>
+                  <p className="text-xs text-white/40">Mag-login para magbahagi ng iyong mga bulong.</p>
                   <button 
                     onClick={() => window.location.href = '/login'}
                     className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl font-bold text-xs transition-all active:scale-95"
@@ -340,7 +342,8 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
               )}
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </ModalPortal>
+      )}
+    </AnimatePresence>
   );
 };

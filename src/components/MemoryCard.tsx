@@ -19,7 +19,7 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, user, onClose })
                  (memory.createdAt?.toDate ? memory.createdAt.toDate().toLocaleDateString() : 'Recently');
 
   return (
-    <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-xl p-3 w-[280px] shadow-2xl relative flex flex-col gap-2 group pointer-events-auto">
+    <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-xl p-2 w-[280px] shadow-2xl relative flex flex-col gap-2 group pointer-events-auto">
       {/* Subtle Glow */}
       <div className="absolute -inset-1 bg-yellow-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       

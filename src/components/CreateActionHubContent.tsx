@@ -33,7 +33,7 @@ export const CreateActionHubContent: React.FC<CreateActionHubContentProps> = ({ 
   return (
     <div className="p-6 space-y-3">
       <div className="mb-6">
-        <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 px-1">What's on your mind?</h3>
+        <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 px-1">Ano ang iyong niloloob?</h3>
         <div className="grid grid-cols-1 gap-3">
           {actions.map((action) => (
             <button

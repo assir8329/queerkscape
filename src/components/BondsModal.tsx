@@ -7,6 +7,8 @@ import { X, Users, Star, MessageCircle } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { getHexColor } from '../lib/colors';
 
+import { ModalPortal } from './ModalPortal';
+
 interface BondsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,6 +26,16 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
   const [bonds, setBonds] = useState<Bond[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'bonds' | 'favorites'>('bonds');
+
+  const emptyMessages = [
+    "Ang langit ay tahimik pa... Wait for a soul to reach out",
+    "Searching for frequencies. No signals have reached your star yet",
+    "Your light is shining bright. Someone will notice soon"
+  ];
+
+  const randomEmptyMessage = React.useMemo(() => {
+    return emptyMessages[Math.floor(Math.random() * emptyMessages.length)];
+  }, [isOpen, activeTab]);
 
   useEffect(() => {
     if (!profile || !isOpen) return;
@@ -97,13 +109,14 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-lg bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0"
-          >
+        <ModalPortal zIndex={2000}>
+          <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-lg bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0"
+            >
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-purple-400" />
@@ -136,10 +149,14 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
                     <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : bonds.length === 0 ? (
-                  <div className="text-center py-10 text-white/40">
-                    <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                    <p>No kindreds found yet.</p>
-                    <p className="text-xs mt-1">Send signals to other stars to start a connection.</p>
+                  <div className="text-center py-12 px-6 flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                      <MessageCircle className="w-8 h-8 text-white/20" />
+                    </div>
+                    <p className="text-sm text-white/60 leading-relaxed italic max-w-[240px]">
+                      {randomEmptyMessage}
+                    </p>
+                    <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold">No kindreds found yet</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
@@ -211,6 +228,7 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
             </div>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

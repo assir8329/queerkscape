@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Bell, X } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
+import { ModalPortal } from './ModalPortal';
+
 interface Interaction {
   id: string;
   fromUid: string;
@@ -24,6 +26,16 @@ interface NotificationsProps {
 export const Notifications: React.FC<NotificationsProps> = ({ isOpen, onClose }) => {
   const { profile } = useAuth();
   const [interactions, setInteractions] = useState<Interaction[]>([]);
+
+  const emptyMessages = [
+    "Ang langit ay tahimik pa... Wait for a soul to reach out",
+    "Searching for frequencies. No signals have reached your star yet",
+    "Your light is shining bright. Someone will notice soon"
+  ];
+
+  const randomEmptyMessage = React.useMemo(() => {
+    return emptyMessages[Math.floor(Math.random() * emptyMessages.length)];
+  }, [isOpen]);
 
   useEffect(() => {
     if (!profile) return;
@@ -88,13 +100,14 @@ export const Notifications: React.FC<NotificationsProps> = ({ isOpen, onClose })
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed top-4 right-4 z-50">
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="w-80 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
-          >
+        <ModalPortal zIndex={2000}>
+          <div className="fixed top-4 right-4 pointer-events-auto">
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="w-80 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            >
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <h3 className="text-white font-semibold">Signals</h3>
               <button onClick={onClose} className="text-white/50 hover:text-white">
@@ -103,8 +116,13 @@ export const Notifications: React.FC<NotificationsProps> = ({ isOpen, onClose })
             </div>
             <div className="max-h-96 overflow-y-auto custom-scrollbar">
               {interactions.length === 0 ? (
-                <div className="p-6 text-center text-white/50 text-sm">
-                  No signals yet. Keep exploring!
+                <div className="p-8 text-center flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                    <Bell className="w-6 h-6 text-white/20" />
+                  </div>
+                  <p className="text-sm text-white/60 leading-relaxed italic">
+                    {randomEmptyMessage}
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y divide-white/5">
@@ -130,6 +148,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ isOpen, onClose })
             </div>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

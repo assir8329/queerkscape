@@ -174,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           whileTap={{ scale: 0.95 }}
           onClick={onCreateClick}
           className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)] border border-purple-400/30 hover:bg-purple-500 transition-colors"
-          title="Create"
+          title="Maglikha"
         >
           <Plus size={24} />
         </motion.button>
@@ -183,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           whileTap={{ scale: 0.95 }}
           onClick={onThoughtsClick}
           className="w-12 h-12 rounded-2xl glass-dark text-white flex items-center justify-center shadow-xl border border-white/10 hover:bg-white/10 transition-colors"
-          title="Whispers"
+          title="Bulong"
         >
           <MessageCircle size={24} />
         </motion.button>
@@ -196,7 +196,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.3)]' 
               : 'glass-dark text-yellow-400 border-white/10 hover:bg-white/10'
           }`}
-          title="Pin Memory"
+          title="Bakás"
         >
           <MapPin size={24} />
         </motion.button>

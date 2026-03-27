@@ -37,7 +37,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
           }`}
         >
           <Sparkles className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Create</span>
+          <span className="text-[10px] font-medium">Sambit</span>
         </button>
       </div>
     </div>

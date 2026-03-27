@@ -2,6 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, MessageSquare, MapPin, X } from 'lucide-react';
 
+import { ModalPortal } from './ModalPortal';
+
 interface CreateActionHubProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,13 +20,13 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
     },
     {
       id: 'thought' as const,
-      title: 'Whisper Thought',
+      title: 'Bulong',
       description: 'Collective whisper',
       icon: <MessageSquare className="w-4 h-4 text-purple-400" />,
     },
     {
       id: 'memory' as const,
-      title: 'Pin Memory',
+      title: 'Bakás',
       description: 'Mark a location',
       icon: <MapPin className="w-4 h-4 text-yellow-400" />,
     },
@@ -33,14 +35,14 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <ModalPortal zIndex={1500}>
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm md:hidden"
           />
 
           {/* Bottom Sheet (Floating Card above Nav) */}
@@ -49,13 +51,13 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-[80px] left-4 right-4 z-[101] md:hidden bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            className="fixed bottom-[80px] left-4 right-4 md:hidden bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
           >
             {/* Handle */}
             <div className="w-8 h-1 bg-white/10 rounded-full mx-auto mb-4" />
 
             <div className="flex justify-between items-center mb-3 px-1">
-              <h2 className="text-sm font-bold text-white/40 uppercase tracking-widest">Create</h2>
+              <h2 className="text-sm font-bold text-white/40 uppercase tracking-widest">Sambit</h2>
               <button 
                 onClick={onClose}
                 className="p-1.5 hover:bg-white/5 rounded-full transition-colors text-white/20"
@@ -85,7 +87,7 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
               ))}
             </div>
           </motion.div>
-        </>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );
