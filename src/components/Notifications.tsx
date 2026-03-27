@@ -96,7 +96,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ isOpen, onClose })
             className="w-80 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
-              <h3 className="text-white font-semibold">Signals Received</h3>
+              <h3 className="text-white font-semibold">Signals</h3>
               <button onClick={onClose} className="text-white/50 hover:text-white">
                 <X className="w-4 h-4" />
               </button>

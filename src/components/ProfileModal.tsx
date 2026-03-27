@@ -483,7 +483,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Signal</label>
+                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Magparamdam</label>
                         <textarea
                           value={editData.signal ?? user.signal}
                           onChange={(e) => setEditData({ ...editData, signal: e.target.value })}
@@ -743,7 +743,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
                       <div className="relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5">
                         <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
-                          <MessageCircle className="w-2.5 h-2.5" /> Signal
+                          <MessageCircle className="w-2.5 h-2.5" /> Magparamdam
                         </div>
                         <p className="text-sm text-white/90 font-medium leading-relaxed tracking-tight">
                           "{user.signal}"
@@ -936,19 +936,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         onClick={() => setIsEditing(true)} 
                         className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
                       >
-                        <Edit2 className="w-4 h-4" /> Edit Profile
+                        <Edit2 className="w-4 h-4" /> Edit Star
                       </button>
                       
                       {/* Mobile Actions Menu */}
                       <div className="md:hidden grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
                         {onBondsClick && (
                           <button onClick={onBondsClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                            <Users className="w-4 h-4" /> Bonds
+                            <Users className="w-4 h-4" /> Kindreds
                           </button>
                         )}
                         {onNotificationsClick && (
                           <button onClick={onNotificationsClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                            <Bell className="w-4 h-4" /> Alerts
+                            <Bell className="w-4 h-4" /> Signals
                           </button>
                         )}
                         {onSettingsClick && (
@@ -972,7 +972,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       type="text"
                       value={signalMessage}
                       onChange={(e) => setSignalMessage(e.target.value)}
-                      placeholder="Send a signal..."
+                      placeholder="Magparamdam..."
                       className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
                       maxLength={100}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendSignal()}

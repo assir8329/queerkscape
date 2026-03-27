@@ -18,13 +18,13 @@ export const GuideModal: React.FC = () => {
   const steps = [
     {
       icon: <Star className="w-6 h-6 text-yellow-400" />,
-      title: "The Constellation",
+      title: "The Sky",
       description: "Every user is a star. Your color and position reflect your 'vibe' and interests."
     },
     {
       icon: <Sparkles className="w-6 h-6 text-purple-400" />,
-      title: "Daily Signals",
-      description: "Broadcast a short 'signal' each day to share what's on your mind with the sky."
+      title: "Daily Magparamdam",
+      description: "Broadcast a short 'magparamdam' each day to share what's on your mind with the sky."
     },
     {
       icon: <MessageSquare className="w-6 h-6 text-blue-400" />,
@@ -33,8 +33,8 @@ export const GuideModal: React.FC = () => {
     },
     {
       icon: <MapPin className="w-6 h-6 text-red-400" />,
-      title: "Ground Memories",
-      description: "Switch to Ground View to pin memories to real-world locations on the globe."
+      title: "The World",
+      description: "Switch to The World to pin memories to real-world locations on the globe."
     },
     {
       icon: <Users className="w-6 h-6 text-green-400" />,

@@ -50,8 +50,8 @@ export const SignalModal: React.FC<SignalModalProps> = ({ isOpen, onClose, daily
                   <Sparkles className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">Send Signal</h2>
-                  <p className="text-white/40 text-xs mt-0.5">Share your vibe with the collective</p>
+                  <h2 className="text-xl font-bold text-white tracking-tight">Magparamdam</h2>
+                  <p className="text-white/40 text-xs mt-0.5">Share your presence with the universe.</p>
                 </div>
               </div>
               <button
@@ -87,7 +87,7 @@ export const SignalModal: React.FC<SignalModalProps> = ({ isOpen, onClose, daily
                 disabled={!response.trim() || isSubmitting}
                 className="w-full flex items-center justify-center gap-3 py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:hover:bg-purple-600 text-white rounded-2xl font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)] active:scale-[0.98] group"
               >
-                <span>Release Signal</span>
+                <span>Magparamdam</span>
                 {isSubmitting ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (

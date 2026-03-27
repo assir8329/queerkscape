@@ -22,8 +22,8 @@ export default defineConfig(({ mode }) => {
         ],
 
         manifest: {
-          name: 'Queerkscape',
-          short_name: 'Queerkscape',
+          name: 'Hiraya',
+          short_name: 'Hiraya',
 
           start_url: '/',        // ✅ REQUIRED
           scope: '/',            // ✅ IMPORTANT

@@ -107,7 +107,7 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-purple-400" />
-                <h3 className="text-white font-semibold">My Cosmic Bonds</h3>
+                <h3 className="text-white font-semibold">Kindreds</h3>
               </div>
               <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
@@ -138,7 +138,7 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
                 ) : bonds.length === 0 ? (
                   <div className="text-center py-10 text-white/40">
                     <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                    <p>No bonds formed yet.</p>
+                    <p>No kindreds found yet.</p>
                     <p className="text-xs mt-1">Send signals to other stars to start a connection.</p>
                   </div>
                 ) : (

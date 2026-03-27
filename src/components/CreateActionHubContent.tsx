@@ -9,22 +9,22 @@ export const CreateActionHubContent: React.FC<CreateActionHubContentProps> = ({ 
   const actions = [
     {
       id: 'signal' as const,
-      title: 'Send Signal',
-      description: 'Share your current vibe with the universe',
+      title: 'Magparamdam',
+      description: 'Share your presence with the universe.',
       icon: <Sparkles className="w-5 h-5 text-blue-400" />,
       color: 'blue'
     },
     {
       id: 'thought' as const,
-      title: 'Whisper Thought',
-      description: 'Add to the collective stream of whispers',
+      title: 'Bulong',
+      description: "Share what's often left unsaid.",
       icon: <MessageSquare className="w-5 h-5 text-purple-400" />,
       color: 'purple'
     },
     {
       id: 'memory' as const,
-      title: 'Pin Memory',
-      description: 'Mark a significant location on the map',
+      title: 'Bakás',
+      description: 'Mark a place that holds your history.',
       icon: <MapPin className="w-5 h-5 text-yellow-400" />,
       color: 'yellow'
     },
@@ -55,7 +55,7 @@ export const CreateActionHubContent: React.FC<CreateActionHubContentProps> = ({ 
       
       <div className="pt-6 border-t border-white/5">
         <p className="text-[10px] text-white/20 font-medium leading-relaxed px-1">
-          Each action creates a new point of light on the map, connecting your journey with others.
+          Bawat nilikha ay isang bagong bituin sa ating mapa. Connecting our journeys, one soul at a time.
         </p>
       </div>
     </div>

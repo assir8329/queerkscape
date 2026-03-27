@@ -361,7 +361,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Signal</label>
+                <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Magparamdam</label>
                 <textarea
                   value={editData.signal ?? user.signal}
                   onChange={(e) => setEditData({ ...editData, signal: e.target.value })}
@@ -552,7 +552,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
           <div className="space-y-6">
             {user.signal && (
               <section className="space-y-2">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Signal</div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Magparamdam</div>
                 <div className="bg-white/[0.03] rounded-2xl p-4 border border-white/5 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-purple-500/50" />
                   <p className="text-sm text-white/90 font-medium leading-relaxed italic">
@@ -645,7 +645,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
             {/* Interaction Area */}
             {profile && !isMe && (
               <section className="space-y-3 pt-4 border-t border-white/5">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Send a Signal</div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Magparamdam</div>
                 <div className="space-y-3">
                   <textarea
                     value={signalMessage}
@@ -659,7 +659,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
                     className="w-full py-3 bg-white text-[#050510] rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:bg-white/90 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     <Send size={14} />
-                    Send Signal
+                    Magparamdam
                   </button>
                 </div>
               </section>
@@ -671,7 +671,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
                 className="w-full py-3.5 bg-white/5 hover:bg-white/10 text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all border border-white/10 flex items-center justify-center gap-2"
               >
                 <Edit2 size={14} />
-                Edit Profile
+                Edit Star
               </button>
             )}
           </div>

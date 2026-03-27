@@ -68,16 +68,15 @@ export const WelcomePage: React.FC = () => {
 
         {/* Title & Tagline */}
         <h1 className="text-5xl md:text-7xl font-semibold text-white tracking-tighter mb-2 min-h-[1.2em] flex items-center justify-center">
-          <ScrambleText from="Queerkscape" to="Queerkspace" delay={2000} duration={1200} />
+          Hiraya
         </h1>
         <p className="text-lg md:text-xl text-purple-300/60 font-medium tracking-widest uppercase mb-6">
-          A constellation of souls
+          Ang ating tagpuan sa mga bituin.
         </p>
 
         {/* Description */}
         <p className="text-base md:text-lg text-white/60 leading-relaxed mb-10 max-w-md mx-auto">
-          Explore thoughts, signals, and memories across the world. 
-          Connect with a global community in an atmospheric, safe space.
+          Isang santuwaryo para sa mga salitang hindi masabi. Map your internal world, leave whispers across the archipelago, and find your constellation.
         </p>
 
         {/* CTA Buttons */}
@@ -88,7 +87,7 @@ export const WelcomePage: React.FC = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-purple-400/20 to-purple-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             <Globe className="w-5 h-5" />
-            Enter the Map
+            Find your Constellation
           </button>
 
           <button
@@ -96,7 +95,7 @@ export const WelcomePage: React.FC = () => {
             className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 active:scale-95 w-full sm:w-auto"
           >
             <LogIn className="w-5 h-5 text-white/60" />
-            Sign In
+            Reignite your Star
           </button>
         </div>
 

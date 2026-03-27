@@ -17,7 +17,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
           }`}
         >
           <User className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Profile</span>
+          <span className="text-[10px] font-medium">My Star</span>
         </button>
         
         <button

@@ -71,11 +71,17 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
 
         {/* View Controls Group */}
         <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
-          {mapMode === 'constellation' && (
+          {mapMode === 'constellation' ? (
             <ActionButton 
               icon={<Globe size={18} />} 
-              label="Ground View" 
+              label="The World" 
               onClick={() => setMapMode('earth')} 
+            />
+          ) : (
+            <ActionButton 
+              icon={<Star size={18} />} 
+              label="The Sky" 
+              onClick={() => setMapMode('constellation')} 
             />
           )}
           <ActionButton 

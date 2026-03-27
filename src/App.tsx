@@ -28,7 +28,7 @@ const DAILY_PROMPTS = [
   "What made you smile today?",
   "What's a small win you had recently?",
   "What are you looking forward to?",
-  "Send a signal to the universe...",
+  "Share your presence with the universe...",
   "What's something you're grateful for?",
 ];
 

@@ -507,7 +507,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
       <RightActionStack 
         isLoggedIn={!!user}
         onCenterMe={centerOnUser}
-        onPinMemory={() => {}} // Not available in Sky View
+        onPinMemory={() => {}} // Not available in The Sky
         onZoomIn={() => handleZoom(0.2, viewport.width / 2, viewport.height / 2)}
         onZoomOut={() => handleZoom(-0.2, viewport.width / 2, viewport.height / 2)}
         onToggleLayer={toggleLayer}

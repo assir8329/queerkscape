@@ -113,18 +113,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 px-2 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
         <div className="mb-4">
           <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
-            {sidebarOpen ? 'Perspective' : '•••'}
+            {sidebarOpen ? 'Visions' : '•••'}
           </p>
           <SidebarItem 
             icon={<Share2 size={18} />} 
-            label="Sky View" 
+            label="The Sky" 
             active={mapMode === 'constellation'} 
             onClick={() => setMapMode('constellation')} 
             collapsed={!sidebarOpen}
           />
           <SidebarItem 
             icon={<Globe size={18} />} 
-            label="Ground View" 
+            label="The World" 
             active={mapMode === 'earth'} 
             onClick={() => setMapMode('earth')} 
             collapsed={!sidebarOpen}
@@ -134,23 +134,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {profile && (
           <div>
             <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
-              {sidebarOpen ? 'Personal' : '•••'}
+              {sidebarOpen ? 'Inner Circle' : '•••'}
             </p>
             <SidebarItem 
               icon={<UserIcon size={18} />} 
-              label="My Profile" 
+              label="My Star" 
               onClick={onMyProfileClick} 
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
               icon={<Users size={18} />} 
-              label="My Bonds" 
+              label="Kindreds" 
               onClick={onBondsClick} 
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
               icon={<Bell size={18} />} 
-              label="Notifications" 
+              label="Signals" 
               onClick={onNotificationsClick} 
               collapsed={!sidebarOpen}
             />

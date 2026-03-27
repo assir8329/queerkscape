@@ -93,10 +93,10 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
         <div className="flex flex-col items-center mb-8">
           <Sparkles className="w-12 h-12 text-purple-400 mb-4" />
           <h1 className="text-3xl font-bold mb-2 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-            QUEERKSCAPE
+            HIRAYA
           </h1>
           <p className="text-white/60 text-center text-sm">
-            {isSignUp ? 'Create your star in the glowing universe.' : 'Welcome back to your constellation.'}
+            {isSignUp ? 'Find your place among the stars.' : 'Welcome back to your constellation.'}
           </p>
         </div>
 
@@ -184,7 +184,7 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all flex items-center justify-center gap-3 font-medium text-sm"
         >
           <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
-          Continue with Google
+          Sign in with Google
         </button>
 
         <p className="mt-8 text-white/40 text-sm">

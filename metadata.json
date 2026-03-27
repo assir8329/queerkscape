@@ -1,6 +1,6 @@
 {
-  "name": "QUEERKSCAPE",
-  "description": "A 2D interactive map of users represented as stars, featuring profiles, signals, and connections.",
+  "name": "Hiraya",
+  "description": "Isang santuwaryo para sa mga salitang hindi masabi. Map your internal world, leave whispers across the archipelago, and find your constellation.",
   "requestFramePermissions": [
     "geolocation"
   ]
