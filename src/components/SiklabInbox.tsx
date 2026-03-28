@@ -232,7 +232,7 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
       if (hasReceived) {
         const connId = profile.uid < selectedUser.uid ? `${profile.uid}_${selectedUser.uid}` : `${selectedUser.uid}_${profile.uid}`;
         try {
-          const { getDoc, doc, setDoc } = await import('firebase/firestore');
+          const { getDoc, doc, setDoc, addDoc, updateDoc } = await import('firebase/firestore');
           const connRef = doc(db, 'connections', connId);
           const connSnap = await getDoc(connRef);
           if (!connSnap.exists()) {
@@ -240,6 +240,19 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
               users: [profile.uid, selectedUser.uid].sort(),
               createdAt: serverTimestamp(),
             });
+          }
+
+          // Automatically form a constellation if neither is in one
+          if (!profile.constellationId && !selectedUser.constellationId) {
+            const constellationRef = await addDoc(collection(db, 'constellations'), {
+              name: `${profile.nickname || profile.username} & ${selectedUser.nickname || selectedUser.username}'s Constellation`,
+              memberIds: [profile.uid, selectedUser.uid],
+              createdAt: serverTimestamp(),
+            });
+            
+            // Update both users
+            await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
+            await updateDoc(doc(db, 'users', selectedUser.uid), { constellationId: constellationRef.id });
           }
         } catch (err) {
           handleFirestoreError(err, OperationType.CREATE, `connections/${connId}`);
@@ -420,38 +433,6 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                   <div className="text-[8px] text-white/40 uppercase tracking-[0.2em] font-bold">{selectedUser.vibe}</div>
                 </div>
                 
-                {/* Form Constellation Button */}
-                {bonds.some(b => b.users.includes(selectedUser.uid)) && !selectedUser.constellationId && (
-                  <button
-                    onClick={async () => {
-                      if (!profile || !selectedUser) return;
-                      const name = window.prompt("Pangalan ng inyong Constellation:", `${selectedUser.nickname || selectedUser.username}'s Constellation`);
-                      if (!name) return;
-                      
-                      try {
-                        const { addDoc, collection, serverTimestamp, doc, updateDoc } = await import('firebase/firestore');
-                        const constellationRef = await addDoc(collection(db, 'constellations'), {
-                          name,
-                          memberIds: [profile.uid, selectedUser.uid],
-                          createdAt: serverTimestamp(),
-                        });
-                        
-                        // Update both users
-                        await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
-                        await updateDoc(doc(db, 'users', selectedUser.uid), { constellationId: constellationRef.id });
-                        
-                        alert(`Nabuo na ang constellation: ${name}`);
-                      } catch (err) {
-                        handleFirestoreError(err, OperationType.CREATE, 'constellations');
-                      }
-                    }}
-                    className="ml-2 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 border border-purple-500/30"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Form Constellation
-                  </button>
-                )}
-
                 <button 
                   onClick={() => onUserClick(selectedUser)}
                   className="ml-auto p-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl transition-all"

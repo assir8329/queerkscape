@@ -198,7 +198,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
       if (hasReceived) {
         const connId = profile.uid < user.uid ? `${profile.uid}_${user.uid}` : `${user.uid}_${profile.uid}`;
         try {
-          const { getDoc, doc, setDoc } = await import('firebase/firestore');
+          const { getDoc, doc, setDoc, addDoc, updateDoc } = await import('firebase/firestore');
           const connRef = doc(db, 'connections', connId);
           const connSnap = await getDoc(connRef);
           if (!connSnap.exists()) {
@@ -206,6 +206,19 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
               users: [profile.uid, user.uid].sort(),
               createdAt: serverTimestamp(),
             });
+          }
+
+          // Automatically form a constellation if neither is in one
+          if (!profile.constellationId && !user.constellationId) {
+            const constellationRef = await addDoc(collection(db, 'constellations'), {
+              name: `${profile.nickname || profile.username} & ${user.nickname || user.username}'s Constellation`,
+              memberIds: [profile.uid, user.uid],
+              createdAt: serverTimestamp(),
+            });
+            
+            // Update both users
+            await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
+            await updateDoc(doc(db, 'users', user.uid), { constellationId: constellationRef.id });
           }
         } catch (err) {
           handleFirestoreError(err, OperationType.CREATE, `connections/${connId}`);

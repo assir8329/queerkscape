@@ -803,36 +803,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {isMutualConnection && !user.constellationId && !profile?.constellationId && (
-                    <button
-                      onClick={async () => {
-                        if (!profile || !user) return;
-                        const name = window.prompt("Pangalan ng inyong Constellation:", `${user.nickname || user.username}'s Constellation`);
-                        if (!name) return;
-                        
-                        try {
-                          const { addDoc, collection, serverTimestamp, doc, updateDoc } = await import('firebase/firestore');
-                          const constellationRef = await addDoc(collection(db, 'constellations'), {
-                            name,
-                            memberIds: [profile.uid, user.uid],
-                            createdAt: serverTimestamp(),
-                          });
-                          
-                          // Update both users
-                          await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
-                          await updateDoc(doc(db, 'users', user.uid), { constellationId: constellationRef.id });
-                          
-                          alert(`Nabuo na ang constellation: ${name}`);
-                          setConstellationName(name);
-                        } catch (err) {
-                          handleFirestoreError(err, OperationType.CREATE, 'constellations');
-                        }
-                      }}
-                      className="w-full py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
-                    >
-                      <Sparkles className="w-4 h-4" /> Form Constellation
-                    </button>
-                  )}
                   <button
                     onClick={() => onChatClick && onChatClick(user)}
                     className="w-full py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
