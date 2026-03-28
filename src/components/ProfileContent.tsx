@@ -173,31 +173,29 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
   };
 
   const handleSendSignal = async () => {
-    if (!signalMessage.trim() || !profile) return;
+    if (!signalMessage.trim() || !profile || sending) return;
     
-    const myLastMsg = messages.filter(m => m.fromUid === profile.uid).pop();
-    if (myLastMsg && myLastMsg.createdAt) {
-      const timeSinceLast = Date.now() - myLastMsg.createdAt.toMillis();
-      if (timeSinceLast < 10000) {
-        alert('Please wait a moment before sending another signal.');
-        return;
-      }
-    }
+    const messageContent = signalMessage.trim();
+    setSignalMessage(''); // Clear immediately
+    
+    // Optimistic UI update
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      fromUid: profile.uid,
+      toUid: user.uid,
+      message: messageContent,
+      createdAt: { toMillis: () => Date.now() },
+      isOptimistic: true
+    };
+    
+    setMessages(prev => [...prev, optimisticMsg]);
 
-    setSending(true);
-    try {
-      await addDoc(collection(db, 'interactions'), {
-        fromUid: profile.uid,
-        toUid: user.uid,
-        message: signalMessage,
-        createdAt: serverTimestamp(),
-        read: false,
-      });
-      
-      // Message-Triggered Ugnayan logic
+    // Background connection logic
+    const ensureConnection = async () => {
       const ugnayanId = profile.uid < user.uid ? `${profile.uid}-${user.uid}` : `${user.uid}-${profile.uid}`;
       try {
-        const { getDoc, doc, setDoc } = await import('firebase/firestore');
+        const { getDoc, doc, setDoc, addDoc, updateDoc, collection } = await import('firebase/firestore');
         const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
         const ugnayanSnap = await getDoc(ugnayanRef);
         
@@ -209,15 +207,10 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
             to_coord: { x: user.x, y: user.y, color: user.color }
           });
         }
-      } catch (err) {
-        handleFirestoreError(err, OperationType.CREATE, `ugnayan/${ugnayanId}`);
-      }
 
-      const hasReceived = messages.some(m => m.fromUid === user.uid);
-      if (hasReceived) {
-        const connId = profile.uid < user.uid ? `${profile.uid}_${user.uid}` : `${user.uid}_${profile.uid}`;
-        try {
-          const { getDoc, doc, setDoc, addDoc, updateDoc } = await import('firebase/firestore');
+        const hasReceived = messages.some(m => m.fromUid === user.uid);
+        if (hasReceived) {
+          const connId = profile.uid < user.uid ? `${profile.uid}_${user.uid}` : `${user.uid}_${profile.uid}`;
           const connRef = doc(db, 'connections', connId);
           const connSnap = await getDoc(connRef);
           if (!connSnap.exists()) {
@@ -227,26 +220,37 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
             });
           }
 
-          // Automatically form a constellation if neither is in one
           if (!profile.constellationId && !user.constellationId) {
             const constellationRef = await addDoc(collection(db, 'constellations'), {
               name: `${profile.nickname || profile.username} & ${user.nickname || user.username}'s Constellation`,
               memberIds: [profile.uid, user.uid],
               createdAt: serverTimestamp(),
             });
-            
-            // Update both users
             await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
             await updateDoc(doc(db, 'users', user.uid), { constellationId: constellationRef.id });
           }
-        } catch (err) {
-          handleFirestoreError(err, OperationType.CREATE, `connections/${connId}`);
         }
+      } catch (err) {
+        console.error("Background connection error:", err);
       }
-      
-      setSignalMessage('');
+    };
+
+    // Trigger background connection
+    ensureConnection();
+
+    setSending(true);
+    try {
+      await addDoc(collection(db, 'interactions'), {
+        fromUid: profile.uid,
+        toUid: user.uid,
+        message: messageContent,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'interactions');
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
     } finally {
       setSending(false);
     }

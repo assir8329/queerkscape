@@ -50,6 +50,7 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   // Chat states
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [isBonding, setIsBonding] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -169,6 +170,26 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     }
 
     setChatLoading(true);
+    
+    // Check if ugnayan exists to determine "bonding" state
+    const ugnayanId = profile.uid < selectedUser.uid ? `${profile.uid}-${selectedUser.uid}` : `${selectedUser.uid}-${profile.uid}`;
+    const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
+    
+    getDoc(ugnayanRef).then(snap => {
+      if (!snap.exists()) {
+        setIsBonding(true);
+      } else {
+        setIsBonding(false);
+      }
+    }).catch(() => setIsBonding(false));
+
+    // Listen for ugnayan creation to refresh/clear bonding state
+    const unsubscribeUgnayan = onSnapshot(ugnayanRef, (snap) => {
+      if (snap.exists()) {
+        setIsBonding(false);
+      }
+    });
+
     const q = query(
       collection(db, 'interactions'),
       where('fromUid', 'in', [profile.uid, selectedUser.uid]),
@@ -204,7 +225,10 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeUgnayan();
+    };
   }, [profile, selectedUser]);
 
   // Scroll to bottom of chat
@@ -217,20 +241,28 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   const handleSend = async () => {
     if (!newMessage.trim() || sending || !selectedUser || !profile) return;
 
-    setSending(true);
-    try {
-      await addDoc(collection(db, 'interactions'), {
-        fromUid: profile.uid,
-        toUid: selectedUser.uid,
-        message: newMessage.trim(),
-        createdAt: serverTimestamp(),
-        read: false,
-      });
-      
-      // Message-Triggered Ugnayan logic
+    const messageContent = newMessage.trim();
+    setNewMessage(''); // Clear immediately for better UX
+    
+    // Optimistic UI update
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      fromUid: profile.uid,
+      toUid: selectedUser.uid,
+      message: messageContent,
+      createdAt: { toDate: () => new Date() },
+      read: false,
+      isOptimistic: true
+    };
+    
+    setChatMessages(prev => [...prev, optimisticMsg]);
+
+    // Background connection logic
+    const ensureConnection = async () => {
       const ugnayanId = profile.uid < selectedUser.uid ? `${profile.uid}-${selectedUser.uid}` : `${selectedUser.uid}-${profile.uid}`;
       try {
-        const { getDoc, doc, setDoc } = await import('firebase/firestore');
+        const { getDoc, doc, setDoc, addDoc, updateDoc, collection } = await import('firebase/firestore');
         const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
         const ugnayanSnap = await getDoc(ugnayanRef);
         
@@ -242,16 +274,11 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
             to_coord: { x: selectedUser.x, y: selectedUser.y, color: selectedUser.color }
           });
         }
-      } catch (err) {
-        handleFirestoreError(err, OperationType.CREATE, `ugnayan/${ugnayanId}`);
-      }
 
-      // Check if we should form a connection (legacy connections collection)
-      const hasReceived = chatMessages.some(m => m.fromUid === selectedUser.uid);
-      if (hasReceived) {
-        const connId = profile.uid < selectedUser.uid ? `${profile.uid}_${selectedUser.uid}` : `${selectedUser.uid}_${profile.uid}`;
-        try {
-          const { getDoc, doc, setDoc, addDoc, updateDoc } = await import('firebase/firestore');
+        // Legacy connections logic
+        const hasReceived = chatMessages.some(m => m.fromUid === selectedUser.uid);
+        if (hasReceived) {
+          const connId = profile.uid < selectedUser.uid ? `${profile.uid}_${selectedUser.uid}` : `${selectedUser.uid}_${profile.uid}`;
           const connRef = doc(db, 'connections', connId);
           const connSnap = await getDoc(connRef);
           if (!connSnap.exists()) {
@@ -261,26 +288,37 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
             });
           }
 
-          // Automatically form a constellation if neither is in one
           if (!profile.constellationId && !selectedUser.constellationId) {
             const constellationRef = await addDoc(collection(db, 'constellations'), {
               name: `${profile.nickname || profile.username} & ${selectedUser.nickname || selectedUser.username}'s Constellation`,
               memberIds: [profile.uid, selectedUser.uid],
               createdAt: serverTimestamp(),
             });
-            
-            // Update both users
             await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
             await updateDoc(doc(db, 'users', selectedUser.uid), { constellationId: constellationRef.id });
           }
-        } catch (err) {
-          handleFirestoreError(err, OperationType.CREATE, `connections/${connId}`);
         }
+      } catch (err) {
+        console.error("Background connection error:", err);
       }
-      
-      setNewMessage('');
+    };
+
+    // Trigger background connection without awaiting
+    ensureConnection();
+
+    setSending(true);
+    try {
+      await addDoc(collection(db, 'interactions'), {
+        fromUid: profile.uid,
+        toUid: selectedUser.uid,
+        message: messageContent,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'interactions');
+      // Remove optimistic message on error
+      setChatMessages(prev => prev.filter(m => m.id !== optimisticId));
     } finally {
       setSending(false);
     }
@@ -469,28 +507,40 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
                   </div>
-                ) : chatMessages.length === 0 ? (
-                  <div className="text-center py-12 opacity-20">
-                    <p className="text-[10px] uppercase tracking-[0.3em] font-bold">Begin your conversation</p>
-                  </div>
                 ) : (
-                  chatMessages.map((msg) => (
-                    <div 
-                      key={msg.id}
-                      className={`flex flex-col ${msg.fromUid === profile?.uid ? 'items-end' : 'items-start'}`}
-                    >
-                      <div className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
-                        msg.fromUid === profile?.uid 
-                          ? 'bg-purple-500/20 text-purple-100 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]' 
-                          : 'bg-white/5 text-white/90 border border-white/5'
-                      }`}>
-                        {msg.message}
+                  <>
+                    {isBonding && (
+                      <div className="flex justify-center mb-4">
+                        <div className="px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center gap-2">
+                          <div className="w-1 h-1 bg-purple-400 rounded-full animate-ping" />
+                          <span className="text-[9px] text-purple-300/80 uppercase tracking-widest font-bold">Nabubuo ang ugnayan...</span>
+                        </div>
                       </div>
-                      <span className="text-[8px] text-white/20 mt-1 px-2 font-bold uppercase">
-                        {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
-                      </span>
-                    </div>
-                  ))
+                    )}
+                    {chatMessages.length === 0 ? (
+                      <div className="text-center py-12 opacity-20">
+                        <p className="text-[10px] uppercase tracking-[0.3em] font-bold">Begin your conversation</p>
+                      </div>
+                    ) : (
+                      chatMessages.map((msg) => (
+                        <div 
+                          key={msg.id}
+                          className={`flex flex-col ${msg.fromUid === profile?.uid ? 'items-end' : 'items-start'} ${msg.isOptimistic ? 'opacity-70' : ''}`}
+                        >
+                          <div className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
+                            msg.fromUid === profile?.uid 
+                              ? 'bg-purple-500/20 text-purple-100 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]' 
+                              : 'bg-white/5 text-white/90 border border-white/5'
+                          }`}>
+                            {msg.message}
+                          </div>
+                          <span className="text-[8px] text-white/20 mt-1 px-2 font-bold uppercase">
+                            {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </>
                 )}
               </div>
 

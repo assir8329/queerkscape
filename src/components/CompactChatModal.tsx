@@ -19,10 +19,31 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isBonding, setIsBonding] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!profile || !user) return;
+
+    // Check if ugnayan exists to determine "bonding" state
+    const ugnayanId = profile.uid < user.uid ? `${profile.uid}-${user.uid}` : `${user.uid}-${profile.uid}`;
+    const { doc, getDoc, onSnapshot: onSnap } = require('firebase/firestore');
+    const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
+    
+    getDoc(ugnayanRef).then((snap: any) => {
+      if (!snap.exists()) {
+        setIsBonding(true);
+      } else {
+        setIsBonding(false);
+      }
+    }).catch(() => setIsBonding(false));
+
+    // Listen for ugnayan creation
+    const unsubscribeUgnayan = onSnap(ugnayanRef, (snap: any) => {
+      if (snap.exists()) {
+        setIsBonding(false);
+      }
+    });
 
     // Query for messages between these two users
     const q = query(
@@ -48,7 +69,10 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeUgnayan();
+    };
   }, [profile, user]);
 
   useEffect(() => {
@@ -62,17 +86,24 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
   const handleSend = async () => {
     if (!message.trim() || sending) return;
 
-    setSending(true);
-    try {
-      await addDoc(collection(db, 'interactions'), {
-        fromUid: profile.uid,
-        toUid: user.uid,
-        message: message.trim(),
-        createdAt: serverTimestamp(),
-        read: false,
-      });
+    const messageContent = message.trim();
+    setMessage('');
+    
+    // Optimistic UI update
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      fromUid: profile.uid,
+      toUid: user.uid,
+      message: messageContent,
+      createdAt: { toMillis: () => Date.now() },
+      isOptimistic: true
+    };
+    
+    setMessages(prev => [...prev, optimisticMsg]);
 
-      // Message-Triggered Ugnayan logic
+    // Background connection logic
+    const ensureConnection = async () => {
       const ugnayanId = profile.uid < user.uid ? `${profile.uid}-${user.uid}` : `${user.uid}-${profile.uid}`;
       try {
         const { getDoc, doc, setDoc } = await import('firebase/firestore');
@@ -88,12 +119,26 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
           });
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.CREATE, `ugnayan/${ugnayanId}`);
+        console.error("Background connection error:", err);
       }
+    };
 
-      setMessage('');
+    // Trigger background connection
+    ensureConnection();
+
+    setSending(true);
+    try {
+      await addDoc(collection(db, 'interactions'), {
+        fromUid: profile.uid,
+        toUid: user.uid,
+        message: messageContent,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'interactions');
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
     } finally {
       setSending(false);
     }
@@ -143,27 +188,39 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
                 <div className="flex items-center justify-center h-full py-4">
                   <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
                 </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-6 px-4">
-                  <p className="text-[10px] text-white/40 italic leading-relaxed">
-                    Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod.
-                  </p>
-                </div>
               ) : (
-                messages.map((msg) => (
-                  <div 
-                    key={msg.id}
-                    className={`flex flex-col ${msg.fromUid === profile.uid ? 'items-end' : 'items-start'}`}
-                  >
-                    <div className={`px-3 py-1.5 rounded-xl text-[11px] leading-relaxed max-w-[90%] ${
-                      msg.fromUid === profile.uid 
-                        ? 'bg-purple-500/20 text-purple-100 border border-purple-500/20' 
-                        : 'bg-white/5 text-white/90 border border-white/5'
-                    }`}>
-                      {msg.message}
+                <>
+                  {isBonding && (
+                    <div className="flex justify-center mb-2">
+                      <div className="px-2 py-0.5 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center gap-1.5">
+                        <div className="w-1 h-1 bg-purple-400 rounded-full animate-ping" />
+                        <span className="text-[8px] text-purple-300/80 uppercase tracking-widest font-bold">Nabubuo ang ugnayan...</span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )}
+                  {messages.length === 0 ? (
+                    <div className="text-center py-6 px-4">
+                      <p className="text-[10px] text-white/40 italic leading-relaxed">
+                        Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod.
+                      </p>
+                    </div>
+                  ) : (
+                    messages.map((msg) => (
+                      <div 
+                        key={msg.id}
+                        className={`flex flex-col ${msg.fromUid === profile.uid ? 'items-end' : 'items-start'} ${msg.isOptimistic ? 'opacity-70' : ''}`}
+                      >
+                        <div className={`px-3 py-1.5 rounded-xl text-[11px] leading-relaxed max-w-[90%] ${
+                          msg.fromUid === profile.uid 
+                            ? 'bg-purple-500/20 text-purple-100 border border-purple-500/20' 
+                            : 'bg-white/5 text-white/90 border border-white/5'
+                        }`}>
+                          {msg.message}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </>
               )}
             </div>
 
