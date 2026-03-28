@@ -302,7 +302,7 @@ service cloud.firestore {
              data.users.size() == 2 &&
              data.participants is list &&
              data.participants.size() == 2 &&
-             data.status == 'active' &&
+             data.status in ['new', 'active', 'seen'] &&
              data.from_coord is map &&
              data.to_coord is map &&
              data.lastActive is timestamp;

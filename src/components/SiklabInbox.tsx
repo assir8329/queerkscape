@@ -47,6 +47,9 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticReadUids, setOptimisticReadUids] = useState<Set<string>>(new Set());
+  const [unreadSignalsCount, setUnreadSignalsCount] = useState(0);
+  const [unreadUgnayanCount, setUnreadUgnayanCount] = useState(0);
+  const [isSignalsTabOptimisticallyRead, setIsSignalsTabOptimisticallyRead] = useState(false);
   
   // Chat states
   const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -83,7 +86,7 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
           id: doc.id,
           ...doc.data(),
         })) as Bond[];
-        
+
         const enrichedData = await Promise.all(data.map(async (bond) => {
           const otherUid = bond.users.find(uid => uid !== profile.uid);
           if (otherUid) {
@@ -111,6 +114,25 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     return () => unsubscribe();
   }, [profile, isOpen]);
 
+  // Fetch Ugnayan notifications
+  useEffect(() => {
+    if (!profile || !isOpen) return;
+
+    const q = query(
+      collection(db, 'ugnayan'),
+      where('participants', 'array-contains', profile.uid),
+      where('status', '==', 'new')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setUnreadUgnayanCount(snapshot.size);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'ugnayan');
+    });
+
+    return () => unsubscribe();
+  }, [profile, isOpen]);
+
   // Fetch Recent Interactions (Signals)
   useEffect(() => {
     if (!profile || !isOpen) return;
@@ -121,7 +143,8 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
         where('toUid', '==', profile.uid),
         where('fromUid', '==', profile.uid)
       ),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(200)
     );
 
     const unsubscribe = onSnapshot(
@@ -133,11 +156,11 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
         })) as Interaction[];
         
         // Group by conversation partner to show unique conversations
+        // Since the query is ordered by createdAt desc, the first one we see for each partner is the latest
         const conversations = new Map<string, Interaction>();
         data.forEach(interaction => {
           const otherUid = interaction.fromUid === profile.uid ? interaction.toUid : interaction.fromUid;
-          const existing = conversations.get(otherUid);
-          if (!existing || (interaction.createdAt?.toMillis?.() || 0) > (existing.createdAt?.toMillis?.() || 0)) {
+          if (!conversations.has(otherUid)) {
             conversations.set(otherUid, interaction);
           }
         });
@@ -159,7 +182,11 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
           return interaction;
         }));
         
-        enrichedData.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        enrichedData.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis?.() || (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+          const timeB = b.createdAt?.toMillis?.() || (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+          return timeB - timeA;
+        });
         setInteractions(enrichedData);
       },
       (error) => {
@@ -169,6 +196,27 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
 
     return () => unsubscribe();
   }, [profile, isOpen]);
+
+  // Derive Signals Tab notification state
+  useEffect(() => {
+    if (!profile) return;
+    
+    // Strict Tab Filter: Only count if I am the recipient and it's unread
+    const unreadMessages = interactions.filter(interaction => 
+      interaction.toUid === profile.uid && 
+      interaction.read === false &&
+      !optimisticReadUids.has((interaction as any).otherUid)
+    );
+    
+    setUnreadSignalsCount(isSignalsTabOptimisticallyRead ? 0 : unreadMessages.length);
+  }, [interactions, profile, optimisticReadUids, isSignalsTabOptimisticallyRead]);
+
+  // Reset optimistic tab state when modal closes or interactions change significantly
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSignalsTabOptimisticallyRead(false);
+    }
+  }, [isOpen]);
 
   // Fetch Chat Messages when a user is selected
   useEffect(() => {
@@ -280,7 +328,10 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
         if (!ugnayanSnap.exists()) {
           await setDoc(ugnayanRef, {
             users: [profile.uid, selectedUser.uid].sort(),
+            participants: [profile.uid, selectedUser.uid],
             createdAt: serverTimestamp(),
+            lastActive: serverTimestamp(),
+            status: 'new',
             from_coord: { x: profile.x, y: profile.y, color: profile.color },
             to_coord: { x: selectedUser.x, y: selectedUser.y, color: selectedUser.color }
           });
@@ -296,6 +347,8 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
             await setDoc(connRef, {
               users: [profile.uid, selectedUser.uid].sort(),
               createdAt: serverTimestamp(),
+              status: 'new',
+              newFor: [selectedUser.uid]
             });
           }
 
@@ -350,12 +403,28 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     });
     
     try {
+      // Mark connection as read if it was new
+      const connId = profile.uid < uid ? `${profile.uid}_${uid}` : `${uid}_${profile.uid}`;
+      const connRef = doc(db, 'connections', connId);
+      const connSnap = await getDoc(connRef);
+      if (connSnap.exists()) {
+        const connData = connSnap.data();
+        if (connData.status === 'new' && connData.newFor?.includes(profile.uid)) {
+          const updatedNewFor = connData.newFor.filter((id: string) => id !== profile.uid);
+          await updateDoc(connRef, { 
+            newFor: updatedNewFor,
+            status: updatedNewFor.length === 0 ? 'read' : 'new'
+          });
+        }
+      }
+
       // Mark all unread messages from this partner to me as read
       const unreadQuery = query(
         collection(db, 'interactions'),
         where('fromUid', '==', uid),
         where('toUid', '==', profile.uid),
-        where('read', '==', false)
+        where('read', '==', false),
+        limit(50)
       );
       
       let unreadSnap;
@@ -389,6 +458,66 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
       }
     } catch (e) {
       console.error('Unexpected error in handleUserSelect:', e);
+    }
+  };
+
+  const clearAllSignalsForTab = async () => {
+    if (!profile) return;
+    
+    // Optimistic UI: Hide the tab dot immediately
+    setIsSignalsTabOptimisticallyRead(true);
+    
+    try {
+      // Find all unread messages where I am the recipient
+      const unreadQuery = query(
+        collection(db, 'interactions'),
+        where('toUid', '==', profile.uid),
+        where('read', '==', false),
+        limit(50)
+      );
+      
+      const snap = await getDocs(unreadQuery);
+      if (!snap.empty) {
+        const batch = writeBatch(db);
+        snap.docs.forEach(d => {
+          batch.update(d.ref, { read: true });
+        });
+        await batch.commit();
+      }
+    } catch (err) {
+      console.error("Error in clearAllSignalsForTab:", err);
+    }
+  };
+
+  const handleTabChange = async (tab: 'ugnayan' | 'signals') => {
+    setActiveTab(tab);
+    
+    if (tab === 'signals') {
+      clearAllSignalsForTab();
+    }
+    
+    if (tab === 'ugnayan' && unreadUgnayanCount > 0) {
+      // Optimistic local update
+      setUnreadUgnayanCount(0);
+      
+      // Background Firestore update
+      try {
+        const q = query(
+          collection(db, 'ugnayan'),
+          where('participants', 'array-contains', profile?.uid),
+          where('status', '==', 'new')
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const batch = writeBatch(db);
+          snap.docs.forEach(d => {
+            batch.update(d.ref, { status: 'active' });
+          });
+          await batch.commit();
+        }
+      } catch (err) {
+        console.error("Error clearing ugnayan notifications:", err);
+      }
     }
   };
 
@@ -426,18 +555,40 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
               {/* Tabs */}
               <div className="flex border-b border-white/5">
                 <button 
-                  onClick={() => setActiveTab('ugnayan')}
-                  className={`flex-1 py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all ${activeTab === 'ugnayan' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/20 hover:text-white/40'}`}
+                  onClick={() => handleTabChange('ugnayan')}
+                  className={`flex-1 py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${activeTab === 'ugnayan' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/20 hover:text-white/40'}`}
                 >
                   <Users className={`w-3.5 h-3.5 ${activeTab === 'ugnayan' ? 'text-purple-400' : 'text-white/20'}`} />
                   Ugnayan
+                  {unreadUgnayanCount > 0 && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-2.5 right-4 min-w-[16px] h-4 bg-purple-600 rounded-full flex items-center justify-center px-1 shadow-[0_0_10px_rgba(147,51,234,0.5)]"
+                    >
+                      <span className="text-[8px] text-white font-black leading-none">
+                        {unreadUgnayanCount > 9 ? '9+' : unreadUgnayanCount}
+                      </span>
+                    </motion.div>
+                  )}
                 </button>
                 <button 
-                  onClick={() => setActiveTab('signals')}
-                  className={`flex-1 py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all ${activeTab === 'signals' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/20 hover:text-white/40'}`}
+                  onClick={() => handleTabChange('signals')}
+                  className={`flex-1 py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${activeTab === 'signals' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/20 hover:text-white/40'}`}
                 >
                   <MessageCircle className={`w-3.5 h-3.5 ${activeTab === 'signals' ? 'text-purple-400' : 'text-white/20'}`} />
                   Signals
+                  {unreadSignalsCount > 0 && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-2.5 right-4 min-w-[16px] h-4 bg-purple-600 rounded-full flex items-center justify-center px-1 shadow-[0_0_10px_rgba(147,51,234,0.5)]"
+                    >
+                      <span className="text-[8px] text-white font-black leading-none">
+                        {unreadSignalsCount > 9 ? '9+' : unreadSignalsCount}
+                      </span>
+                    </motion.div>
+                  )}
                 </button>
               </div>
 
@@ -457,27 +608,38 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                     </div>
                   ) : (
                     bonds.map((bond) => (
-                      <button
-                        key={bond.id}
-                        onClick={() => setSelectedUser(bond.otherUser!)}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-left"
-                      >
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
-                          style={{
-                            backgroundColor: `${getHexColor(bond.otherUser?.color || 'purple')}20`,
-                            border: `1px solid ${getHexColor(bond.otherUser?.color || 'purple')}`,
-                            color: getHexColor(bond.otherUser?.color || 'purple'),
-                            boxShadow: `0 0 10px ${getHexColor(bond.otherUser?.color || 'purple')}40`
-                          }}
+                        <button
+                          key={bond.id}
+                          onClick={() => handleUserSelect(bond.otherUser!.uid)}
+                          className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left relative ${
+                            bond.status === 'new' && bond.newFor?.includes(profile.uid)
+                              ? 'bg-purple-500/10 border-purple-500/20' 
+                              : 'bg-white/5 hover:bg-white/10 border-white/5'
+                          }`}
                         >
-                          {(bond.otherUser?.nickname || bond.otherUser?.username || '?').charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-bold text-white text-sm">{bond.otherUser?.nickname || bond.otherUser?.username}</div>
-                          <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{bond.otherUser?.vibe || 'Mysterious Star'}</div>
-                        </div>
-                      </button>
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+                            style={{
+                              backgroundColor: `${getHexColor(bond.otherUser?.color || 'purple')}20`,
+                              border: `1px solid ${getHexColor(bond.otherUser?.color || 'purple')}`,
+                              color: getHexColor(bond.otherUser?.color || 'purple'),
+                              boxShadow: `0 0 10px ${getHexColor(bond.otherUser?.color || 'purple')}40`
+                            }}
+                          >
+                            {(bond.otherUser?.nickname || bond.otherUser?.username || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-white text-sm">{bond.otherUser?.nickname || bond.otherUser?.username}</div>
+                            <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">{bond.otherUser?.vibe || 'Mysterious Star'}</div>
+                          </div>
+                          {bond.status === 'new' && bond.newFor?.includes(profile.uid) && (
+                            <motion.div 
+                              animate={{ scale: [1, 1.2, 1] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+                            />
+                          )}
+                        </button>
                     ))
                   )
                 ) : (
@@ -491,13 +653,16 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                   ) : (
                     interactions.map((interaction) => {
                       const otherUid = (interaction as any).otherUid;
-                      const isUnread = !interaction.read && interaction.toUid === profile.uid && !optimisticReadUids.has(otherUid);
+                      // Explicitly check for read === false and toUid === profile.uid
+                      const isUnread = interaction.read === false && 
+                                      interaction.toUid === profile.uid && 
+                                      !optimisticReadUids.has(otherUid);
                       
                       return (
                         <button
                           key={interaction.id}
                           onClick={() => handleUserSelect(otherUid)}
-                          className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${!isUnread ? 'bg-white/5 border-white/5 opacity-60' : 'bg-purple-500/10 border-purple-500/20'}`}
+                          className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${!isUnread ? 'bg-white/5 border-white/5 opacity-60' : 'bg-purple-500/10 border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.05)]'}`}
                         >
                           <div 
                             className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
