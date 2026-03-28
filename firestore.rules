@@ -321,8 +321,7 @@ service cloud.firestore {
     
     match /users/{userId} {
       allow read: if true;
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser();
-      allow update: if isAuthenticated() && isOwner(userId) && isValidUser() && areImmutableFieldsUnchanged(['uid', 'createdAt']);
+      allow write: if isAuthenticated() && isOwner(userId) && isValidUser();
       allow delete: if isOwner(userId) || isAdmin();
     }
 

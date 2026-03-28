@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { collection, query, where, onSnapshot, doc, getDoc, addDoc, serverTimestamp, orderBy, limit, updateDoc, or, and } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, addDoc, serverTimestamp, orderBy, limit, updateDoc, or, and, writeBatch, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -120,7 +120,8 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
       or(
         where('toUid', '==', profile.uid),
         where('fromUid', '==', profile.uid)
-      )
+      ),
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(
@@ -339,6 +340,8 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   };
 
   const handleUserSelect = async (uid: string) => {
+    if (!profile) return;
+
     // Optimistic UI: hide dot immediately
     setOptimisticReadUids(prev => {
       const next = new Set(prev);
@@ -347,12 +350,45 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     });
     
     try {
-      const userDoc = await getDoc(doc(db, 'users', uid));
-      if (userDoc.exists()) {
-        setSelectedUser(userDoc.data() as UserProfile);
+      // Mark all unread messages from this partner to me as read
+      const unreadQuery = query(
+        collection(db, 'interactions'),
+        where('fromUid', '==', uid),
+        where('toUid', '==', profile.uid),
+        where('read', '==', false)
+      );
+      
+      let unreadSnap;
+      try {
+        unreadSnap = await getDocs(unreadQuery);
+      } catch (e) {
+        handleFirestoreError(e, OperationType.LIST, 'interactions');
+        return;
+      }
+
+      if (!unreadSnap.empty) {
+        try {
+          const batch = writeBatch(db);
+          unreadSnap.docs.forEach(d => {
+            batch.update(d.ref, { read: true });
+          });
+          await batch.commit();
+        } catch (e) {
+          handleFirestoreError(e, OperationType.UPDATE, 'interactions (batch)');
+          return;
+        }
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+          setSelectedUser(userDoc.data() as UserProfile);
+        }
+      } catch (e) {
+        handleFirestoreError(e, OperationType.GET, `users/${uid}`);
       }
     } catch (e) {
-      handleFirestoreError(e, OperationType.GET, `users/${uid}`);
+      console.error('Unexpected error in handleUserSelect:', e);
     }
   };
 
@@ -486,7 +522,19 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                             </div>
                           </div>
                           {isUnread && (
-                            <div className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                            <motion.div 
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ 
+                                scale: [1, 1.2, 1],
+                                opacity: [1, 0.8, 1],
+                              }}
+                              transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                              className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_12px_rgba(168,85,247,0.8)]" 
+                            />
                           )}
                         </button>
                       );
