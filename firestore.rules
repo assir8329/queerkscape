@@ -92,6 +92,17 @@ service cloud.firestore {
     //   - vibe: string (optional, max 50 chars)
     //   - viewCount: number (optional)
     //
+    // Collection: ugnayan
+    // Document ID: {ugnayanId}
+    // Fields:
+    //   - users: list of 2 strings (required, sorted UIDs)
+    //   - participants: list of 2 strings (required)
+    //   - from_coord: map {x, y, color}
+    //   - to_coord: map {x, y, color}
+    //   - createdAt: timestamp
+    //   - lastActive: timestamp
+    //   - status: string
+    //
     // ===============================================================
     // Helper Functions
     // ===============================================================
@@ -102,8 +113,7 @@ service cloud.firestore {
     
     function isAdmin() {
       return isAuthenticated() &&
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "epstopikguideph@gmail.com" && request.auth.token.email_verified == true));
+        (request.auth.token.email == "epstopikguideph@gmail.com");
     }
     
     function isOwner(userId) {
@@ -285,6 +295,19 @@ service cloud.firestore {
              (!('viewCount' in data) || data.viewCount is number);
     }
 
+    function isValidUgnayan() {
+      let data = request.resource.data;
+      return hasRequiredFields(['users', 'participants', 'lastActive', 'status', 'from_coord', 'to_coord']) &&
+             data.users is list &&
+             data.users.size() == 2 &&
+             data.participants is list &&
+             data.participants.size() == 2 &&
+             data.status == 'active' &&
+             data.from_coord is map &&
+             data.to_coord is map &&
+             data.lastActive is timestamp;
+    }
+
     function isValidUserPrivate() {
       let data = request.resource.data;
       return hasRequiredFields(['email', 'createdAt']) &&
@@ -320,8 +343,15 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (request.auth.uid in resource.data.users) || isAdmin();
     }
 
+    match /ugnayan/{ugnayanId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidUgnayan();
+      allow update: if isAuthenticated() && (request.auth.uid in resource.data.participants) && isValidUgnayan();
+      allow delete: if isAdmin();
+    }
+
     match /interactions/{interactionId} {
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid || isAdmin());
       allow create: if isAuthenticated() && isValidInteraction();
       allow update: if isAuthenticated() && request.auth.uid == resource.data.toUid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid) || isAdmin();

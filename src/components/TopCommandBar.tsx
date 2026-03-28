@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Sparkles, X, Send, Command } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { UserProfile } from '../contexts/AuthContext';
+import { UserProfile, useAuth } from '../contexts/AuthContext';
 
 interface TopCommandBarProps {
   user: any;
@@ -22,6 +22,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
   onPromptSubmit,
   isVisible = true
 }) => {
+  const { guestName } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   const [promptResponse, setPromptResponse] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,7 +118,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
                     <Sparkles className="w-6 h-6 text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold">Join the Collective</h3>
+                    <h3 className="text-white font-bold">Welcome, {guestName || 'Lost Star'}</h3>
                     <p className="text-white/40 text-sm mt-1">Sign in to share your daily sambit and connect with others.</p>
                   </div>
                   <button 

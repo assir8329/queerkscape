@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Share2, Globe, User as UserIcon, Users, Bell, Settings as TakdaIcon, LogOut, MapPin, Menu, LogIn, ChevronLeft, ChevronRight, HelpCircle, Plus, MessageCircle, Star } from 'lucide-react';
-import { UserProfile } from '../contexts/AuthContext';
+import { UserProfile, useAuth } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppTab } from '../App';
@@ -46,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isVisible = true,
   hasNewSignals = false
 }) => {
+  const { guestName } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const hexColor = profile ? getHexColor(profile.color) : '#ffffff';
@@ -110,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </>
               ) : (
                 <div className="py-2">
-                  <h2 className="text-xs font-medium text-white/60 uppercase tracking-widest">Lost Star</h2>
+                  <h2 className="text-xs font-medium text-white/60 uppercase tracking-widest">{guestName || 'Lost Star'}</h2>
                 </div>
               )}
             </motion.div>

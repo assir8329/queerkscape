@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, limit, getDocs, getDoc, setDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { Star } from './Star';
+import { useDispersedStars } from '../lib/orbital-dispersion';
 import { ThoughtBubble } from './ThoughtBubble';
 import { UnsaidThought } from '../types';
 import { incrementViewCount } from './UnsaidThoughts';
@@ -39,6 +40,13 @@ const CACHE_KEY_USERS = 'hiraya_constellation_users';
 const CACHE_KEY_CONNECTIONS = 'hiraya_constellation_connections';
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
+interface Ugnayan {
+  id: string;
+  users: string[];
+  from_coord: { x: number; y: number; color: string };
+  to_coord: { x: number; y: number; color: string };
+}
+
 interface MapCanvasProps {
   onUserClick: (user: UserProfile) => void;
   filterTag: string;
@@ -53,6 +61,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const { user, profile, updateLastActive } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [ugnayan, setUgnayan] = useState<Ugnayan[]>([]);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
   const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -131,6 +140,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         localStorage.setItem(`${CACHE_KEY_CONNECTIONS}_time`, Date.now().toString());
       },
       (error) => handleFirestoreError(error, OperationType.GET, 'connections')
+    );
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, 'ugnayan'), limit(1000));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const ugnayanData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Ugnayan));
+        setUgnayan(ugnayanData);
+      },
+      (error) => handleFirestoreError(error, OperationType.GET, 'ugnayan')
     );
     return () => unsubscribe();
   }, []);
@@ -319,6 +341,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     });
   }, [users, profile, debouncedFilter, filterTag]);
 
+  const dispersedUsers = useDispersedStars(filteredUsers, scale);
+
   // Virtualization logic
   const visibleUsers = useMemo(() => {
     if (viewport.width === 0) return [];
@@ -328,10 +352,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     const minY = -position.y / scale - buffer;
     const maxY = (-position.y + viewport.height) / scale + buffer;
 
-    return filteredUsers.filter(u => 
+    return dispersedUsers.filter(u => 
       u.x >= minX && u.x <= maxX && u.y >= minY && u.y <= maxY
     );
-  }, [filteredUsers, position, scale, viewport]);
+  }, [dispersedUsers, position, scale, viewport]);
 
   const visibleThoughts = useMemo(() => {
     if (viewport.width === 0) return [];
@@ -357,42 +381,60 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
     ctx.clearRect(0, 0, 5000, 5000);
     
+    // Render Ugnayan lines
     const userMap = new Map<string, UserProfile>(users.map(u => [u.uid, u]));
     
-    connections.forEach(conn => {
+    ugnayan.forEach(conn => {
+      const isBuklodMode = mapMode === 'earth';
+      const isKindred = profile && (conn.users.includes(profile.uid)) && (conn.users.some(uid => kindredUids.includes(uid)));
+      
+      // In Buklod mode, only show kindred connections
+      if (isBuklodMode && !isKindred) return;
+
+      // Use current coordinates if available, otherwise fallback to stored ones
       const u1 = userMap.get(conn.users[0]);
       const u2 = userMap.get(conn.users[1]);
       
-      if (u1 && u2 && u1.x !== undefined && u1.y !== undefined && u2.x !== undefined && u2.y !== undefined) {
-        const isBuklod = profile && (conn.users.includes(profile.uid)) && (conn.users.some(uid => kindredUids.includes(uid)));
+      const x1 = u1?.x ?? conn.from_coord.x;
+      const y1 = u1?.y ?? conn.from_coord.y;
+      const x2 = u2?.x ?? conn.to_coord.x;
+      const y2 = u2?.y ?? conn.to_coord.y;
+      const c1 = u1?.color ?? conn.from_coord.color;
+      const c2 = u2?.color ?? conn.to_coord.color;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      
+      if (isBuklodMode && isKindred) {
+        // BUKLOD Styling: Thick, vibrant gradient line
+        const color1 = getHexColor(c1 || '#FFFFFF');
+        const color2 = getHexColor(c2 || '#FFFFFF');
+        const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+        gradient.addColorStop(0, color1);
+        gradient.addColorStop(1, color2);
         
-        ctx.beginPath();
-        ctx.moveTo(u1.x, u1.y);
-        ctx.lineTo(u2.x, u2.y);
-        
-        if (isBuklod) {
-          const color1 = getHexColor(u1.color || '#FFFFFF');
-          const color2 = getHexColor(u2.color || '#FFFFFF');
-          const gradient = ctx.createLinearGradient(u1.x, u1.y, u2.x, u2.y);
-          gradient.addColorStop(0, color1);
-          gradient.addColorStop(1, color2);
-          
-          ctx.strokeStyle = gradient;
-          ctx.lineWidth = 3;
-          ctx.globalAlpha = 0.8;
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = color1;
-        } else {
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-          ctx.lineWidth = 1;
-          ctx.globalAlpha = 0.15;
-          ctx.shadowBlur = 0;
-        }
-        
-        ctx.stroke();
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.9;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = color1;
+      } else {
+        // KALAWAKAN Styling: Faint, gray/white, low opacity
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.1;
+        ctx.shadowBlur = 0;
       }
+      
+      ctx.stroke();
+      // Reset shadow for next lines
+      ctx.shadowBlur = 0;
     });
-  }, [connections, users, profile, activeLayers, kindredUids]);
+
+    // Legacy connections (optional, keeping for compatibility if needed, but ugnayan is primary now)
+    // connections.forEach(conn => { ... })
+  }, [ugnayan, mapMode, profile, activeLayers, kindredUids]);
 
   useEffect(() => {
     if (!profile) return;
@@ -415,6 +457,63 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     if (!lastActive?.toMillis) return false;
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
     return lastActive.toMillis() > fiveMinutesAgo;
+  };
+
+  const activeUserCount = useMemo(() => {
+    return users.filter(u => isUserActive(u.lastActive)).length;
+  }, [users]);
+
+  const nebulaIntensity = useMemo(() => {
+    // Base intensity + boost from active users
+    return 0.3 + Math.min(activeUserCount * 0.05, 0.6);
+  }, [activeUserCount]);
+
+  const nebulaScale = useMemo(() => {
+    return 1 + Math.min(activeUserCount * 0.02, 0.4);
+  }, [activeUserCount]);
+
+  const runMigration = async () => {
+    console.log('Starting migration...');
+    try {
+      const interactionsSnap = await getDocs(collection(db, 'interactions'));
+      const interactionsData = interactionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const userMap = new Map<string, UserProfile>(users.map(u => [u.uid, u]));
+      let count = 0;
+      
+      for (const inter of interactionsData as any[]) {
+        const { fromUid, toUid, createdAt } = inter;
+        if (!fromUid || !toUid) continue;
+        
+        const uids = [fromUid, toUid].sort();
+        const ugnayanId = uids.join('-');
+        
+        const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
+        const ugnayanSnap = await getDoc(ugnayanRef);
+        
+        if (!ugnayanSnap.exists()) {
+          const u1 = userMap.get(fromUid);
+          const u2 = userMap.get(toUid);
+          
+          if (u1 && u2) {
+            await setDoc(ugnayanRef, {
+              users: uids,
+              participants: uids,
+              lastActive: createdAt || new Date(),
+              status: 'active',
+              from_coord: { x: u1.x, y: u1.y, color: u1.color || '#FFFFFF' },
+              to_coord: { x: u2.x, y: u2.y, color: u2.color || '#FFFFFF' },
+              createdAt: createdAt || new Date()
+            });
+            count++;
+          }
+        }
+      }
+      alert(`Migration complete! Created ${count} connections.`);
+    } catch (err) {
+      console.error('Migration failed:', err);
+      alert('Migration failed. Check console.');
+    }
   };
 
   return (
@@ -444,6 +543,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         <div className="absolute inset-0 opacity-10" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '50px 50px' }} />
              
+        {/* Puso ng Hiraya (Heart of Hiraya) - Central Nebula */}
+        {mapMode === 'constellation' && (
+          <div 
+            className="absolute pointer-events-none z-0"
+            style={{
+              left: 2500,
+              top: 2500,
+              width: 1500 * nebulaScale,
+              height: 1500 * nebulaScale,
+              transform: `translate(-50%, -50%) translate(${-position.x * 0.3 / scale}px, ${-position.y * 0.3 / scale}px)`,
+              background: 'radial-gradient(circle, rgba(75, 0, 130, 0.8) 0%, rgba(138, 43, 226, 0.4) 40%, rgba(147, 112, 219, 0.1) 70%, transparent 100%)',
+              filter: 'blur(60px)',
+              opacity: nebulaIntensity,
+              transition: isDragging ? 'none' : 'transform 0.1s ease-out, opacity 1s ease-in-out, width 1s ease-in-out, height 1s ease-in-out',
+            }}
+          >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-[10px] uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+              Puso ng Hiraya
+            </div>
+          </div>
+        )}
+
         <canvas 
           ref={canvasRef}
           width={5000}
@@ -452,6 +573,27 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         />
 
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
+          {/* Orbital Group Glows */}
+          {Array.from(new Set(visibleUsers.filter(u => (u as any).isDispersed).map(u => `${(u as any).originalX},${(u as any).originalY}`))).map(groupKey => {
+            const [gx, gy] = (groupKey as string).split(',').map(Number);
+            const groupMembers = visibleUsers.filter(u => (u as any).originalX === gx && (u as any).originalY === gy);
+            if (groupMembers.length < 2) return null;
+            
+            const N = groupMembers.length;
+            const radius = 40 + (N * 5) + 30; // Slightly larger than the orbit in world coordinates
+
+            return (
+              <circle
+                key={`group-glow-${groupKey}`}
+                cx={gx}
+                cy={gy}
+                r={radius}
+                fill="url(#orbitalGradient)"
+                className="opacity-20 transition-all duration-500"
+              />
+            );
+          })}
+
           {/* Constellation Glows */}
           {Array.from(new Set(visibleUsers.filter(u => u.constellationId).map(u => u.constellationId))).map(constellationId => {
             const members = visibleUsers.filter(u => u.constellationId === constellationId);
@@ -480,6 +622,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           })}
 
           <defs>
+            <radialGradient id="orbitalGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(168, 85, 247, 0.6)" />
+              <stop offset="100%" stopColor="rgba(168, 85, 247, 0)" />
+            </radialGradient>
             <radialGradient id="constellationGradient" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="rgba(168, 85, 247, 0.4)" />
               <stop offset="100%" stopColor="rgba(168, 85, 247, 0)" />
@@ -573,6 +719,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           </div>
         )}
       </AnimatePresence>
+
+      {/* Hidden Admin Migration Button */}
+      {localStorage.getItem('admin_mode') === 'true' && (
+        <button
+          onClick={runMigration}
+          className="absolute top-20 left-6 z-50 bg-red-500/20 hover:bg-red-500/40 text-red-500 text-[10px] px-2 py-1 rounded border border-red-500/50 transition-all uppercase tracking-widest font-bold"
+        >
+          Run Ugnayan Migration
+        </button>
+      )}
 
       {/* Mini-map */}
       <div className="absolute bottom-6 left-6 w-36 h-36 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden z-30 shadow-2xl hidden sm:block">

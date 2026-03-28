@@ -194,6 +194,25 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
         read: false,
       });
       
+      // Message-Triggered Ugnayan logic
+      const ugnayanId = profile.uid < user.uid ? `${profile.uid}-${user.uid}` : `${user.uid}-${profile.uid}`;
+      try {
+        const { getDoc, doc, setDoc } = await import('firebase/firestore');
+        const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
+        const ugnayanSnap = await getDoc(ugnayanRef);
+        
+        if (!ugnayanSnap.exists()) {
+          await setDoc(ugnayanRef, {
+            users: [profile.uid, user.uid].sort(),
+            createdAt: serverTimestamp(),
+            from_coord: { x: profile.x, y: profile.y, color: profile.color },
+            to_coord: { x: user.x, y: user.y, color: user.color }
+          });
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, `ugnayan/${ugnayanId}`);
+      }
+
       const hasReceived = messages.some(m => m.fromUid === user.uid);
       if (hasReceived) {
         const connId = profile.uid < user.uid ? `${profile.uid}_${user.uid}` : `${user.uid}_${profile.uid}`;

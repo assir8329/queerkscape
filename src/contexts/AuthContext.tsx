@@ -17,6 +17,7 @@ export type { UserProfile };
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
+  guestName: string;
   loading: boolean;
   signIn: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -29,10 +30,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const GUEST_NAMES = [
+  "The Wanderer",
+  "Lost Star",
+  "Ligaw na Liwanag",
+  "Banaag",
+  "Night Voyager",
+  "Tahimik na Siklab",
+  "Alipato"
+];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [guestName, setGuestName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize guest name
+    const storedGuestName = sessionStorage.getItem('hiraya_guest_name');
+    if (storedGuestName) {
+      setGuestName(storedGuestName);
+    } else {
+      const randomName = GUEST_NAMES[Math.floor(Math.random() * GUEST_NAMES.length)];
+      setGuestName(randomName);
+      sessionStorage.setItem('hiraya_guest_name', randomName);
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -223,6 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       user, 
       profile, 
+      guestName,
       loading, 
       signIn, 
       signInWithEmail, 

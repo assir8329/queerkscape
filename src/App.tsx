@@ -45,7 +45,7 @@ import { UnsaidThoughtsContent } from './components/UnsaidThoughtsContent';
 export type AppTab = 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit' | 'thoughts' | 'map';
 
 const MainApp: React.FC = () => {
-  const { user, profile, loading, signOut, updateProfile } = useAuth();
+  const { user, profile, guestName, loading, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -354,7 +354,30 @@ const MainApp: React.FC = () => {
                         boxShadow: isUiVisible ? `0 0 20px ${profile ? getHexColor(profile.color) : '#a855f7'}44` : 'none'
                       }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => profile && setSelectedUser(profile)}
+                      onClick={() => {
+                        if (profile) {
+                          setSelectedUser(profile);
+                        } else {
+                          // Create a mock profile for the guest
+                          const guestProfile: UserProfile = {
+                            uid: 'guest',
+                            username: guestName,
+                            nickname: guestName,
+                            color: 'purple',
+                            tags: [],
+                            signal: 'A wanderer in the digital cosmos.',
+                            x: 2500,
+                            y: 2500,
+                            createdAt: null as any,
+                            lastActive: null as any,
+                            blockedUsers: [],
+                            onboarded: true,
+                            favorites: [],
+                            lookingFor: [],
+                          };
+                          setSelectedUser(guestProfile);
+                        }
+                      }}
                       className="w-10 h-10 glass rounded-full flex items-center justify-center transition-all shadow-2xl border border-white/10 relative overflow-hidden"
                     >
                       <motion.div

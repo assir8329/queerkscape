@@ -227,7 +227,26 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
         read: false,
       });
       
-      // Check if we should form a connection
+      // Message-Triggered Ugnayan logic
+      const ugnayanId = profile.uid < selectedUser.uid ? `${profile.uid}-${selectedUser.uid}` : `${selectedUser.uid}-${profile.uid}`;
+      try {
+        const { getDoc, doc, setDoc } = await import('firebase/firestore');
+        const ugnayanRef = doc(db, 'ugnayan', ugnayanId);
+        const ugnayanSnap = await getDoc(ugnayanRef);
+        
+        if (!ugnayanSnap.exists()) {
+          await setDoc(ugnayanRef, {
+            users: [profile.uid, selectedUser.uid].sort(),
+            createdAt: serverTimestamp(),
+            from_coord: { x: profile.x, y: profile.y, color: profile.color },
+            to_coord: { x: selectedUser.x, y: selectedUser.y, color: selectedUser.color }
+          });
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, `ugnayan/${ugnayanId}`);
+      }
+
+      // Check if we should form a connection (legacy connections collection)
       const hasReceived = chatMessages.some(m => m.fromUid === selectedUser.uid);
       if (hasReceived) {
         const connId = profile.uid < selectedUser.uid ? `${profile.uid}_${selectedUser.uid}` : `${selectedUser.uid}_${profile.uid}`;

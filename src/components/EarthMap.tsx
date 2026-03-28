@@ -10,6 +10,7 @@ import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, incremen
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import L from 'leaflet';
+import { useDispersedStars } from '../lib/orbital-dispersion';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Target, MessageSquare, Sparkles, Eye, MapPin, Clock } from 'lucide-react';
 import { getHexColor } from '../lib/colors';
@@ -54,70 +55,6 @@ const getTargetLocation = (user?: UserProfile) => {
   }
 
   return { lat: 20, lng: 0, zoom: 2 };
-};
-
-// Custom icon for clusters
-const createCustomIcon = (color: string, count: number) => {
-  const hex = getHexColor(color);
-  const size = 16; // Small size for clusters too
-
-  const html = `
-    <div style="
-      width: ${size}px;
-      height: ${size}px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    ">
-      <div style="
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle, ${hex} 0%, ${hex}80 40%, transparent 80%);
-        border-radius: 50%;
-        box-shadow: 0 0 10px ${hex}, 0 0 20px ${hex}80;
-        animation-name: star-twinkle;
-        animation-duration: 2s;
-        animation-iteration-count: infinite;
-        animation-direction: alternate;
-        animation-timing-function: ease-in-out;
-        --star-color: ${hex};
-        --star-glow: ${hex}80;
-      "></div>
-      <div style="
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        background: #ffffff;
-        border-radius: 50%;
-        box-shadow: 0 0 8px #ffffff, 0 0 15px ${hex};
-      "></div>
-      ${count > 1 ? `
-        <div style="
-          position: absolute;
-          top: -10px;
-          right: -10px;
-          background: rgba(10, 10, 30, 0.8);
-          color: white;
-          font-size: 9px;
-          padding: 1px 4px;
-          border-radius: 6px;
-          border: 1px solid ${hex}40;
-          backdrop-filter: blur(2px);
-          font-weight: bold;
-          z-index: 10;
-        ">${count}</div>
-      ` : ''}
-    </div>
-  `;
-
-  return L.divIcon({
-    html,
-    className: 'custom-leaflet-icon',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
 };
 
 // Custom icon for individual stars
@@ -239,32 +176,6 @@ const createMemoryIcon = () => {
   });
 };
 
-// Deterministic pseudo-random number generator based on string
-const seededRandom = (seed: string) => {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
-  }
-  return () => {
-    h = Math.imul(h ^ (h >>> 16), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    return (h ^= h >>> 16) >>> 0;
-  };
-};
-
-const getJitteredPosition = (baseLat: number, baseLng: number, uid: string, zoom: number) => {
-  const rand = seededRandom(uid);
-  // Jitter should be proportional to zoom to maintain visual distance on screen
-  // At higher zoom, we want smaller coordinate offsets to keep stars close to their location
-  const spread = 0.04 / Math.pow(2, Math.max(0, zoom - 8));
-  const offsetLat = (rand() / 4294967296 - 0.5) * spread;
-  const offsetLng = (rand() / 4294967296 - 0.5) * spread;
-  return {
-    lat: baseLat + offsetLat,
-    lng: baseLng + offsetLng
-  };
-};
-
 interface ClusterData {
   lat: number;
   lng: number;
@@ -306,72 +217,54 @@ const MapContent: React.FC<{
     }
   });
 
-  // Group users by proximity based on zoom level
-  const clusters = useMemo(() => {
-    const result: ClusterData[] = [];
-    // Dynamic distance threshold based on zoom
-    // We want roughly 50 pixels of distance for clustering
-    // Formula: (pixels * 360) / (256 * 2^zoom)
-    const clusterDistance = 50 * 360 / (256 * Math.pow(2, zoom));
-
-    users.forEach(user => {
-      if (!user.location || user.hideLocation || isNaN(user.location.lat) || isNaN(user.location.lng)) return;
-      
-      const found = result.find(c => {
-        const dist = Math.sqrt(
-          Math.pow(c.lat - user.location!.lat, 2) + 
-          Math.pow(c.lng - user.location!.lng, 2)
-        );
-        return dist < clusterDistance;
-      });
-
-      if (found) {
-        found.users.push(user);
-      } else {
-        result.push({
-          lat: user.location.lat,
-          lng: user.location.lng,
-          users: [user],
-        });
-      }
-    });
-
-    return result;
-  }, [users, zoom]);
+  const dispersedUsers = useDispersedStars(users, zoom, true);
 
   return (
     <>
-      {showStars && clusters.map((cluster, i) => {
-        // If cluster has only one user, render as a star
-        if (cluster.users.length === 1) {
-          const user = cluster.users[0];
-          if (!user.location || isNaN(user.location.lat) || isNaN(user.location.lng)) return null;
-          
-          const pos = getJitteredPosition(user.location.lat, user.location.lng, user.uid, zoom);
-          
-          return (
-            <Marker 
-              key={`user-${user.uid}`}
-              position={[pos.lat, pos.lng]}
-              icon={createStarIcon(user.color)}
-              eventHandlers={{
-                click: () => onUserClick(user)
-              }}
-            />
-          );
-        }
-
-        // Render as a cluster
-        if (isNaN(cluster.lat) || isNaN(cluster.lng)) return null;
-        const color = cluster.users[0]?.color || 'purple';
+      {showStars && dispersedUsers.map((user, i) => {
+        if (!user.location || isNaN(user.location.lat) || isNaN(user.location.lng)) return null;
+        
         return (
           <Marker 
-            key={`cluster-${i}`} 
-            position={[cluster.lat, cluster.lng]}
-            icon={createCustomIcon(color, cluster.users.length)}
+            key={`user-${user.uid}`}
+            position={[user.location.lat, user.location.lng]}
+            icon={createStarIcon(user.color)}
             eventHandlers={{
-              click: () => onClusterClick(cluster)
+              click: () => onUserClick(user)
             }}
+          />
+        );
+      })}
+
+      {/* Orbital Group Glows for EarthMap */}
+      {showStars && Array.from(new Set(dispersedUsers.filter(u => (u as any).isDispersed).map(u => `${(u as any).originalLat},${(u as any).originalLng}`))).map(groupKey => {
+        const [glat, glng] = (groupKey as string).split(',').map(Number);
+        const groupMembers = dispersedUsers.filter(u => (u as any).originalLat === glat && (u as any).originalLng === glng);
+        if (groupMembers.length < 2) return null;
+        
+        const N = groupMembers.length;
+        // Radius in degrees for the glow
+        const radiusBase = 0.0005 * (18 / zoom);
+        const radius = radiusBase + (N * 0.0001) + 0.0002;
+
+        return (
+          <Marker
+            key={`group-glow-${groupKey}`}
+            position={[glat, glng]}
+            icon={L.divIcon({
+              html: `<div style="
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                filter: blur(10px);
+                pointer-events: none;
+              "></div>`,
+              className: 'group-glow-icon',
+              iconSize: [0, 0],
+            })}
+            zIndexOffset={-100}
           />
         );
       })}
@@ -379,12 +272,10 @@ const MapContent: React.FC<{
       {/* Always render thoughts on top */}
       {showThoughts && thoughts.map((thought) => {
         if (thought.lat == null || thought.lng == null || isNaN(thought.lat) || isNaN(thought.lng)) return null;
-        // Apply jitter offset to avoid overlapping markers
-        const pos = getJitteredPosition(thought.lat, thought.lng, thought.id, zoom);
         return (
           <Marker
             key={`thought-${thought.id}`}
-            position={[pos.lat, pos.lng]}
+            position={[thought.lat, thought.lng]}
             icon={createThoughtIcon()}
             zIndexOffset={1000}
             eventHandlers={{
