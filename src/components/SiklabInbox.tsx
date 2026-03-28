@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { collection, query, where, onSnapshot, doc, getDoc, addDoc, serverTimestamp, orderBy, limit, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, addDoc, serverTimestamp, orderBy, limit, updateDoc, or, and } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -46,6 +46,7 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   const [bonds, setBonds] = useState<Bond[]>([]);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [optimisticReadUids, setOptimisticReadUids] = useState<Set<string>>(new Set());
   
   // Chat states
   const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -116,7 +117,10 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
 
     const q = query(
       collection(db, 'interactions'),
-      where('toUid', '==', profile.uid)
+      or(
+        where('toUid', '==', profile.uid),
+        where('fromUid', '==', profile.uid)
+      )
     );
 
     const unsubscribe = onSnapshot(
@@ -127,26 +131,29 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
           ...doc.data(),
         })) as Interaction[];
         
-        // Group by sender to show unique conversations
-        const uniqueSenders = new Map<string, Interaction>();
+        // Group by conversation partner to show unique conversations
+        const conversations = new Map<string, Interaction>();
         data.forEach(interaction => {
-          const existing = uniqueSenders.get(interaction.fromUid);
+          const otherUid = interaction.fromUid === profile.uid ? interaction.toUid : interaction.fromUid;
+          const existing = conversations.get(otherUid);
           if (!existing || (interaction.createdAt?.toMillis?.() || 0) > (existing.createdAt?.toMillis?.() || 0)) {
-            uniqueSenders.set(interaction.fromUid, interaction);
+            conversations.set(otherUid, interaction);
           }
         });
 
-        const enrichedData = await Promise.all(Array.from(uniqueSenders.values()).map(async (interaction) => {
+        const enrichedData = await Promise.all(Array.from(conversations.entries()).map(async ([otherUid, interaction]) => {
           try {
-            const userDoc = await getDoc(doc(db, 'users', interaction.fromUid));
+            const userDoc = await getDoc(doc(db, 'users', otherUid));
             if (userDoc.exists()) {
               const userData = userDoc.data() as UserProfile;
               interaction.senderName = userData.nickname || userData.username;
               interaction.senderColor = userData.color;
               interaction.senderVibe = userData.vibe;
+              // Add otherUid to interaction for easier handling
+              (interaction as any).otherUid = otherUid;
             }
           } catch (e) {
-            handleFirestoreError(e, OperationType.GET, `users/${interaction.fromUid}`);
+            handleFirestoreError(e, OperationType.GET, `users/${otherUid}`);
           }
           return interaction;
         }));
@@ -192,7 +199,10 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
 
     const q = query(
       collection(db, 'interactions'),
-      where('fromUid', 'in', [profile.uid, selectedUser.uid]),
+      or(
+        and(where('fromUid', '==', profile.uid), where('toUid', '==', selectedUser.uid)),
+        and(where('fromUid', '==', selectedUser.uid), where('toUid', '==', profile.uid))
+      ),
       orderBy('createdAt', 'desc'),
       limit(50)
     );
@@ -329,6 +339,13 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   };
 
   const handleUserSelect = async (uid: string) => {
+    // Optimistic UI: hide dot immediately
+    setOptimisticReadUids(prev => {
+      const next = new Set(prev);
+      next.add(uid);
+      return next;
+    });
+    
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
@@ -436,37 +453,44 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                       </p>
                     </div>
                   ) : (
-                    interactions.map((interaction) => (
-                      <button
-                        key={interaction.id}
-                        onClick={() => handleUserSelect(interaction.fromUid)}
-                        className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${interaction.read ? 'bg-white/5 border-white/5 opacity-60' : 'bg-purple-500/10 border-purple-500/20'}`}
-                      >
-                        <div 
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
-                          style={{
-                            backgroundColor: `${getHexColor(interaction.senderColor || 'purple')}20`,
-                            border: `1px solid ${getHexColor(interaction.senderColor || 'purple')}`,
-                            color: getHexColor(interaction.senderColor || 'purple'),
-                            boxShadow: `0 0 10px ${getHexColor(interaction.senderColor || 'purple')}40`
-                          }}
+                    interactions.map((interaction) => {
+                      const otherUid = (interaction as any).otherUid;
+                      const isUnread = !interaction.read && interaction.toUid === profile.uid && !optimisticReadUids.has(otherUid);
+                      
+                      return (
+                        <button
+                          key={interaction.id}
+                          onClick={() => handleUserSelect(otherUid)}
+                          className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${!isUnread ? 'bg-white/5 border-white/5 opacity-60' : 'bg-purple-500/10 border-purple-500/20'}`}
                         >
-                          {(interaction.senderName || '?').charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="font-bold text-white text-sm">{interaction.senderName}</div>
-                            <div className="text-[8px] text-white/30 uppercase font-bold">
-                              {interaction.createdAt?.toDate ? interaction.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                          <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+                            style={{
+                              backgroundColor: `${getHexColor(interaction.senderColor || 'purple')}20`,
+                              border: `1px solid ${getHexColor(interaction.senderColor || 'purple')}`,
+                              color: getHexColor(interaction.senderColor || 'purple'),
+                              boxShadow: `0 0 10px ${getHexColor(interaction.senderColor || 'purple')}40`
+                            }}
+                          >
+                            {(interaction.senderName || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <div className="font-bold text-white text-sm">{interaction.senderName}</div>
+                              <div className="text-[8px] text-white/30 uppercase font-bold">
+                                {interaction.createdAt?.toDate ? interaction.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                              </div>
+                            </div>
+                            <div className="text-xs text-white/60 line-clamp-1 italic">
+                              {interaction.fromUid === profile.uid ? 'You: ' : ''}"{interaction.message}"
                             </div>
                           </div>
-                          <div className="text-xs text-white/60 line-clamp-1 italic">"{interaction.message}"</div>
-                        </div>
-                        {!interaction.read && (
-                          <div className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
-                        )}
-                      </button>
-                    ))
+                          {isUnread && (
+                            <div className="w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                          )}
+                        </button>
+                      );
+                    })
                   )
                 )}
               </div>

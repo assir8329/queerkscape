@@ -351,8 +351,11 @@ service cloud.firestore {
     }
 
     match /interactions/{interactionId} {
+      // Allows you to read the message if you are either the sender OR the receiver
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid || isAdmin());
+      
       allow create: if isAuthenticated() && isValidInteraction();
+      
       allow update: if isAuthenticated() && request.auth.uid == resource.data.toUid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow delete: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid) || isAdmin();
     }

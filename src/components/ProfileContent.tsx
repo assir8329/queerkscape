@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Clock, Star, MapPin, Users, Bell, Settings as TakdaIcon, LogOut } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, or, and } from 'firebase/firestore';
 import { db } from '../firebase';
 import { VIBES, getHexColor } from '../lib/colors';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -125,7 +125,10 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
 
     const q = query(
       collection(db, 'interactions'),
-      where('fromUid', 'in', [profile.uid, user.uid])
+      or(
+        and(where('fromUid', '==', profile.uid), where('toUid', '==', user.uid)),
+        and(where('fromUid', '==', user.uid), where('toUid', '==', profile.uid))
+      )
     );
 
     const unsubscribe = onSnapshot(

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, MessageCircle, Loader2 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, or, and } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getHexColor } from '../lib/colors';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
@@ -48,7 +48,10 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
     // Query for messages between these two users
     const q = query(
       collection(db, 'interactions'),
-      where('fromUid', 'in', [profile.uid, user.uid]),
+      or(
+        and(where('fromUid', '==', profile.uid), where('toUid', '==', user.uid)),
+        and(where('fromUid', '==', user.uid), where('toUid', '==', profile.uid))
+      ),
       orderBy('createdAt', 'desc'),
       limit(10)
     );
