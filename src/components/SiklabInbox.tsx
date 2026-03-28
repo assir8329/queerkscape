@@ -34,9 +34,7 @@ interface Bond {
 }
 
 const UGNAYAN_EMPTY_MESSAGES = [
-  "Ang langit ay tahimik pa... Wait for a soul to reach out.",
-  "Searching for frequencies. No signals have reached your star yet.",
-  "Your light is shining bright. Someone will notice soon."
+  "Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod."
 ];
 
 export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initialUser, onUserClick }) => {
@@ -228,6 +226,26 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
         createdAt: serverTimestamp(),
         read: false,
       });
+      
+      // Check if we should form a connection
+      const hasReceived = chatMessages.some(m => m.fromUid === selectedUser.uid);
+      if (hasReceived) {
+        const connId = profile.uid < selectedUser.uid ? `${profile.uid}_${selectedUser.uid}` : `${selectedUser.uid}_${profile.uid}`;
+        try {
+          const { getDoc, doc, setDoc } = await import('firebase/firestore');
+          const connRef = doc(db, 'connections', connId);
+          const connSnap = await getDoc(connRef);
+          if (!connSnap.exists()) {
+            await setDoc(connRef, {
+              users: [profile.uid, selectedUser.uid].sort(),
+              createdAt: serverTimestamp(),
+            });
+          }
+        } catch (err) {
+          handleFirestoreError(err, OperationType.CREATE, `connections/${connId}`);
+        }
+      }
+      
       setNewMessage('');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'interactions');
@@ -341,9 +359,11 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                   )
                 ) : (
                   interactions.length === 0 ? (
-                    <div className="text-center py-12 opacity-40">
-                      <MessageCircle className="w-10 h-10 mx-auto mb-3" />
-                      <p className="text-xs uppercase tracking-widest font-bold">No signals received yet</p>
+                    <div className="text-center py-12 px-6">
+                      <MessageCircle className="w-10 h-10 mx-auto mb-4 text-white/10" />
+                      <p className="text-xs text-white/40 leading-relaxed italic font-medium max-w-[200px] mx-auto">
+                        Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod.
+                      </p>
                     </div>
                   ) : (
                     interactions.map((interaction) => (
@@ -399,6 +419,39 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                   <div className="font-bold text-white text-sm">{selectedUser.nickname || selectedUser.username}</div>
                   <div className="text-[8px] text-white/40 uppercase tracking-[0.2em] font-bold">{selectedUser.vibe}</div>
                 </div>
+                
+                {/* Form Constellation Button */}
+                {bonds.some(b => b.users.includes(selectedUser.uid)) && !selectedUser.constellationId && (
+                  <button
+                    onClick={async () => {
+                      if (!profile || !selectedUser) return;
+                      const name = window.prompt("Pangalan ng inyong Constellation:", `${selectedUser.nickname || selectedUser.username}'s Constellation`);
+                      if (!name) return;
+                      
+                      try {
+                        const { addDoc, collection, serverTimestamp, doc, updateDoc } = await import('firebase/firestore');
+                        const constellationRef = await addDoc(collection(db, 'constellations'), {
+                          name,
+                          memberIds: [profile.uid, selectedUser.uid],
+                          createdAt: serverTimestamp(),
+                        });
+                        
+                        // Update both users
+                        await updateDoc(doc(db, 'users', profile.uid), { constellationId: constellationRef.id });
+                        await updateDoc(doc(db, 'users', selectedUser.uid), { constellationId: constellationRef.id });
+                        
+                        alert(`Nabuo na ang constellation: ${name}`);
+                      } catch (err) {
+                        handleFirestoreError(err, OperationType.CREATE, 'constellations');
+                      }
+                    }}
+                    className="ml-2 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 border border-purple-500/30"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Form Constellation
+                  </button>
+                )}
+
                 <button 
                   onClick={() => onUserClick(selectedUser)}
                   className="ml-auto p-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-xl transition-all"

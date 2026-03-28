@@ -315,7 +315,7 @@ service cloud.firestore {
     }
 
     match /connections/{connectionId} {
-      allow read: if isAuthenticated() && (request.auth.uid in resource.data.users);
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidConnection();
       allow delete: if isAuthenticated() && (request.auth.uid in resource.data.users) || isAdmin();
     }

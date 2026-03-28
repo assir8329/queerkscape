@@ -14,7 +14,30 @@ import { motion, AnimatePresence } from 'motion/react';
 interface Connection {
   id: string;
   users: string[];
+  type?: 'buklod' | 'public';
+  from_coord?: { x: number; y: number; color?: string };
+  to_coord?: { x: number; y: number; color?: string };
 }
+
+const getHexColor = (vibeColor: string) => {
+  const colors: Record<string, string> = {
+    '#FF6B6B': '#FF6B6B',
+    '#4ECDC4': '#4ECDC4',
+    '#45B7D1': '#45B7D1',
+    '#96CEB4': '#96CEB4',
+    '#FFEEAD': '#FFEEAD',
+    '#D4A5A5': '#D4A5A5',
+    '#9B59B6': '#9B59B6',
+    '#3498DB': '#3498DB',
+    '#E67E22': '#E67E22',
+    '#2ECC71': '#2ECC71',
+  };
+  return colors[vibeColor] || '#FFFFFF';
+};
+
+const CACHE_KEY_USERS = 'hiraya_constellation_users';
+const CACHE_KEY_CONNECTIONS = 'hiraya_constellation_connections';
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
 interface MapCanvasProps {
   onUserClick: (user: UserProfile) => void;
@@ -44,6 +67,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   // Layer toggles
   const [activeLayers, setActiveLayers] = useState<string[]>(['stars', 'thoughts', 'connections']);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const toggleLayer = (layer: string) => {
     setActiveLayers(prev => 
@@ -66,12 +90,22 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   }, []);
 
   useEffect(() => {
-    const q = query(collection(db, 'users'));
+    // Try to load from cache first
+    const cachedUsers = localStorage.getItem(CACHE_KEY_USERS);
+    const cachedTime = localStorage.getItem(`${CACHE_KEY_USERS}_time`);
+    
+    if (cachedUsers && cachedTime && Date.now() - parseInt(cachedTime) < CACHE_EXPIRY) {
+      setUsers(JSON.parse(cachedUsers));
+    }
+
+    const q = query(collection(db, 'users'), limit(1000));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const usersData = snapshot.docs.map((doc) => doc.data() as UserProfile);
         setUsers(usersData);
+        localStorage.setItem(CACHE_KEY_USERS, JSON.stringify(usersData));
+        localStorage.setItem(`${CACHE_KEY_USERS}_time`, Date.now().toString());
       },
       (error) => handleFirestoreError(error, OperationType.GET, 'users')
     );
@@ -79,18 +113,27 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   }, []);
 
   useEffect(() => {
-    if (!profile) return;
-    const q = query(collection(db, 'connections'));
+    // Try to load from cache first
+    const cachedConn = localStorage.getItem(CACHE_KEY_CONNECTIONS);
+    const cachedTime = localStorage.getItem(`${CACHE_KEY_CONNECTIONS}_time`);
+    
+    if (cachedConn && cachedTime && Date.now() - parseInt(cachedTime) < CACHE_EXPIRY) {
+      setConnections(JSON.parse(cachedConn));
+    }
+
+    const q = query(collection(db, 'connections'), limit(1000));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const connData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Connection));
         setConnections(connData);
+        localStorage.setItem(CACHE_KEY_CONNECTIONS, JSON.stringify(connData));
+        localStorage.setItem(`${CACHE_KEY_CONNECTIONS}_time`, Date.now().toString());
       },
       (error) => handleFirestoreError(error, OperationType.GET, 'connections')
     );
     return () => unsubscribe();
-  }, [profile]);
+  }, []);
 
   useEffect(() => {
     const q = query(
@@ -303,20 +346,70 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     );
   }, [thoughts, position, scale, viewport]);
 
-  // Render connections
-  const visibleConnections = useMemo(() => {
-    const userMap = new Map(filteredUsers.map(u => [u.uid, u]));
-    return connections.filter(c => userMap.has(c.users[0]) && userMap.has(c.users[1])).map(c => {
-      const u1 = userMap.get(c.users[0])!;
-      const u2 = userMap.get(c.users[1])!;
-      return { id: c.id, u1, u2 };
-    }).filter(c => {
-      // Only render connection if at least one user is visible
-      const u1Visible = visibleUsers.some(u => u.uid === c.u1.uid);
-      const u2Visible = visibleUsers.some(u => u.uid === c.u2.uid);
-      return u1Visible || u2Visible;
+  // Render connections on canvas for performance
+  const [kindredUids, setKindredUids] = useState<string[]>([]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !activeLayers.includes('connections')) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 5000, 5000);
+    
+    const userMap = new Map<string, UserProfile>(users.map(u => [u.uid, u]));
+    
+    connections.forEach(conn => {
+      const u1 = userMap.get(conn.users[0]);
+      const u2 = userMap.get(conn.users[1]);
+      
+      if (u1 && u2 && u1.x !== undefined && u1.y !== undefined && u2.x !== undefined && u2.y !== undefined) {
+        const isBuklod = profile && (conn.users.includes(profile.uid)) && (conn.users.some(uid => kindredUids.includes(uid)));
+        
+        ctx.beginPath();
+        ctx.moveTo(u1.x, u1.y);
+        ctx.lineTo(u2.x, u2.y);
+        
+        if (isBuklod) {
+          const color1 = getHexColor(u1.color || '#FFFFFF');
+          const color2 = getHexColor(u2.color || '#FFFFFF');
+          const gradient = ctx.createLinearGradient(u1.x, u1.y, u2.x, u2.y);
+          gradient.addColorStop(0, color1);
+          gradient.addColorStop(1, color2);
+          
+          ctx.strokeStyle = gradient;
+          ctx.lineWidth = 3;
+          ctx.globalAlpha = 0.8;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = color1;
+        } else {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.15;
+          ctx.shadowBlur = 0;
+        }
+        
+        ctx.stroke();
+      }
     });
-  }, [connections, filteredUsers, visibleUsers]);
+  }, [connections, users, profile, activeLayers, kindredUids]);
+
+  useEffect(() => {
+    if (!profile) return;
+    const q = query(
+      collection(db, 'connections'),
+      where('users', 'array-contains', profile.uid),
+      limit(5)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const uids = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return data.users.find((uid: string) => uid !== profile.uid);
+      }).filter(Boolean);
+      setKindredUids(uids);
+    });
+    return () => unsubscribe();
+  }, [profile]);
 
   const isUserActive = (lastActive: any) => {
     if (!lastActive?.toMillis) return false;
@@ -351,54 +444,38 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         <div className="absolute inset-0 opacity-10" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '50px 50px' }} />
              
+        <canvas 
+          ref={canvasRef}
+          width={5000}
+          height={5000}
+          className="absolute inset-0 pointer-events-none"
+        />
+
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {/* Constellation Glows and Lines */}
+          {/* Constellation Glows */}
           {Array.from(new Set(visibleUsers.filter(u => u.constellationId).map(u => u.constellationId))).map(constellationId => {
             const members = visibleUsers.filter(u => u.constellationId === constellationId);
-            if (members.length < 2) return null; // Need at least 2 to form a shape
+            if (members.length < 2) return null;
             
-            // Calculate bounding box center
             const minX = Math.min(...members.map(m => m.x));
             const maxX = Math.max(...members.map(m => m.x));
             const minY = Math.min(...members.map(m => m.y));
             const maxY = Math.max(...members.map(m => m.y));
             const cx = (minX + maxX) / 2;
             const cy = (minY + maxY) / 2;
-            const rx = (maxX - minX) / 2 + 150; // Add padding
+            const rx = (maxX - minX) / 2 + 150;
             const ry = (maxY - minY) / 2 + 150;
 
-            // Generate lines between all members
-            const lines = [];
-            for (let i = 0; i < members.length; i++) {
-              for (let j = i + 1; j < members.length; j++) {
-                lines.push(
-                  <line
-                    key={`const-line-${constellationId}-${i}-${j}`}
-                    x1={members[i].x}
-                    y1={members[i].y}
-                    x2={members[j].x}
-                    y2={members[j].y}
-                    stroke="rgba(168, 85, 247, 0.4)"
-                    strokeWidth="3"
-                    strokeDasharray="5,5"
-                    className="drop-shadow-[0_0_8px_rgba(168,85,247,0.8)] transition-all duration-1000"
-                  />
-                );
-              }
-            }
-
             return (
-              <g key={`constellation-group-${constellationId}`}>
-                <ellipse
-                  cx={cx}
-                  cy={cy}
-                  rx={rx}
-                  ry={ry}
-                  fill="url(#constellationGradient)"
-                  className="opacity-30 transition-all duration-1000"
-                />
-                {lines}
-              </g>
+              <ellipse
+                key={`constellation-glow-${constellationId}`}
+                cx={cx}
+                cy={cy}
+                rx={rx}
+                ry={ry}
+                fill="url(#constellationGradient)"
+                className="opacity-30 transition-all duration-1000"
+              />
             );
           })}
 
@@ -408,19 +485,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
               <stop offset="100%" stopColor="rgba(168, 85, 247, 0)" />
             </radialGradient>
           </defs>
-
-          {activeLayers.includes('connections') && visibleConnections.map(({ id, u1, u2 }) => (
-            <line
-              key={id}
-              x1={u1.x}
-              y1={u1.y}
-              x2={u2.x}
-              y2={u2.y}
-              stroke="rgba(255, 255, 255, 0.2)"
-              strokeWidth="2"
-              className="drop-shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-all duration-1000"
-            />
-          ))}
         </svg>
 
         {activeLayers.includes('stars') && visibleUsers.map((u) => (
@@ -431,6 +495,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
             isActive={isUserActive(u.lastActive)}
             scale={scale}
             isUser={u.uid === user?.uid}
+            isKindred={kindredUids.includes(u.uid)}
           />
         ))}
 

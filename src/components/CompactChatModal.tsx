@@ -124,8 +124,10 @@ export const CompactChatModal: React.FC<CompactChatModalProps> = ({ user, onClos
                   <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
                 </div>
               ) : messages.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">No signals yet</p>
+                <div className="text-center py-6 px-4">
+                  <p className="text-[10px] text-white/40 italic leading-relaxed">
+                    Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod.
+                  </p>
                 </div>
               ) : (
                 messages.map((msg) => (

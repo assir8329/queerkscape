@@ -9,17 +9,18 @@ interface StarProps {
   isActive: boolean;
   scale: number;
   isUser: boolean;
+  isKindred?: boolean;
 }
 
-export const Star: React.FC<StarProps> = ({ user, onClick, isActive, scale, isUser }) => {
+export const Star: React.FC<StarProps> = ({ user, onClick, isActive, scale, isUser, isKindred }) => {
   const hexColor = getHexColor(user.color);
-  const intensity = isActive ? '0.9' : '0.4';
-  const blur = isActive ? '20px' : '10px';
+  const intensity = (isActive || isUser || isKindred) ? '0.9' : '0.4';
+  const blur = (isActive || isUser || isKindred) ? '20px' : '10px';
   
   // Adjust size and glow based on scale to ensure visibility
-  const isZoomedOut = scale < 0.3;
-  const baseSize = isZoomedOut ? Math.max(16, 8 / scale) : 16;
-  const glowSize = isZoomedOut ? Math.max(20, 10 / scale) : 20;
+  const isZoomedOut = scale < 0.5;
+  const baseSize = isZoomedOut ? (isUser || isKindred ? 12 : 6) : 16;
+  const glowSize = isZoomedOut ? (isUser || isKindred ? 30 : 10) : 20;
   
   // Random floating animation values based on UID to keep it consistent
   const randomDelay = (user.uid.charCodeAt(0) % 10) * 0.5;
@@ -100,7 +101,7 @@ export const Star: React.FC<StarProps> = ({ user, onClick, isActive, scale, isUs
           className={`absolute inset-0 rounded-full transition-all duration-300 ${signaledToday && !isZoomedOut ? 'ring-2 ring-white/50 ring-offset-2 ring-offset-[#050510]' : ''}`}
           style={{
             background: `radial-gradient(circle, ${hexColor} 0%, ${hexColor}80 40%, transparent 80%)`,
-            boxShadow: `0 0 ${glowSize / 2}px ${hexColor}, 0 0 ${glowSize}px ${hexColor}80 ${isUser ? `, 0 0 ${glowSize * 2}px ${hexColor}40` : ''}`,
+            boxShadow: `0 0 ${glowSize / 2}px ${hexColor}, 0 0 ${glowSize}px ${hexColor}80 ${(isUser || isKindred) ? `, 0 0 ${glowSize * 2}px ${hexColor}40` : ''}`,
             animationName: isZoomedOut ? 'star-pulse' : 'star-twinkle',
             animationDuration: isZoomedOut ? animationValues.pulseDuration : animationValues.twinkleDuration,
             animationIterationCount: 'infinite',
@@ -109,17 +110,18 @@ export const Star: React.FC<StarProps> = ({ user, onClick, isActive, scale, isUs
             animationDelay: animationValues.delay,
             '--star-color': hexColor,
             '--star-glow': `${hexColor}80`,
-            filter: isZoomedOut ? 'blur(1px)' : 'none'
+            filter: isZoomedOut ? (isUser || isKindred ? 'blur(1px)' : 'blur(0.5px)') : 'none',
+            opacity: isZoomedOut && !(isUser || isKindred) ? 0.6 : 1
           } as React.CSSProperties}
         />
-        {isUser && isZoomedOut && (
+        {(isUser || isKindred) && isZoomedOut && (
           <div 
-            className="absolute inset-[-50%] rounded-full opacity-30"
+            className="absolute inset-[-100%] rounded-full opacity-40"
             style={{
               background: `radial-gradient(circle, ${hexColor} 0%, transparent 70%)`,
-              filter: 'blur(10px)',
+              filter: 'blur(15px)',
               animationName: 'pulse',
-              animationDuration: '2s',
+              animationDuration: '3s',
               animationIterationCount: 'infinite',
               animationTimingFunction: 'cubic-bezier(0.4, 0, 0.6, 1)'
             }}
@@ -140,7 +142,13 @@ export const Star: React.FC<StarProps> = ({ user, onClick, isActive, scale, isUs
       </div>
       
       {!isZoomedOut && (
-        <div className="mt-2 text-xs text-white/70 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black/50 px-2 py-1 rounded-md pointer-events-none backdrop-blur-sm border border-white/10 flex flex-col items-center gap-1">
+        <div className="mt-2 text-[10px] text-white/40 whitespace-nowrap pointer-events-none font-bold uppercase tracking-widest">
+          {user.nickname || user.username}
+        </div>
+      )}
+      
+      {!isZoomedOut && (
+        <div className="absolute top-full mt-4 text-xs text-white/70 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-black/50 px-2 py-1 rounded-md pointer-events-none backdrop-blur-sm border border-white/10 flex flex-col items-center gap-1 z-50">
           <span>{user.nickname || user.username}</span>
           {(user.zodiacSign || user.mbti) && (
             <div className="flex items-center gap-2 text-[10px] text-white/50">

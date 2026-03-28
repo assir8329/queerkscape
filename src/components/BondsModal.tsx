@@ -29,9 +29,7 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
   const [activeTab, setActiveTab] = useState<'bonds' | 'favorites'>('bonds');
 
   const emptyMessages = [
-    "Ang langit ay tahimik pa... Wait for a soul to reach out",
-    "Searching for frequencies. No signals have reached your star yet",
-    "Your light is shining bright. Someone will notice soon"
+    "Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod."
   ];
 
   const randomEmptyMessage = React.useMemo(() => {
@@ -157,7 +155,6 @@ export const BondsModal: React.FC<BondsModalProps> = ({ isOpen, onClose, onUserC
                     <p className="text-sm text-white/60 leading-relaxed italic max-w-[240px]">
                       {randomEmptyMessage}
                     </p>
-                    <p className="text-[10px] text-white/20 uppercase tracking-widest font-bold">No kindreds found yet</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">

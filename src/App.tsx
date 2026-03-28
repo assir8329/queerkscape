@@ -51,7 +51,7 @@ const MainApp: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [filterTag, setFilterTag] = useState('');
   const [mapMode, setMapModeState] = useState<'constellation' | 'earth'>(() => {
-    return (localStorage.getItem('mapMode') as 'constellation' | 'earth') || 'earth';
+    return (localStorage.getItem('mapMode') as 'constellation' | 'earth') || 'constellation';
   });
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [showSiklab, setShowSiklab] = useState(false);

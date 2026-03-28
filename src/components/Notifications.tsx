@@ -28,9 +28,7 @@ export const Notifications: React.FC<NotificationsProps> = ({ isOpen, onClose })
   const [interactions, setInteractions] = useState<Interaction[]>([]);
 
   const emptyMessages = [
-    "Ang langit ay tahimik pa... Wait for a soul to reach out",
-    "Searching for frequencies. No signals have reached your star yet",
-    "Your light is shining bright. Someone will notice soon"
+    "Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod."
   ];
 
   const randomEmptyMessage = React.useMemo(() => {
