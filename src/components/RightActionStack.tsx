@@ -74,13 +74,13 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
           {mapMode === 'constellation' ? (
             <ActionButton 
               icon={<Globe size={18} />} 
-              label="The World" 
+              label="Mundo" 
               onClick={() => setMapMode('earth')} 
             />
           ) : (
             <ActionButton 
               icon={<Star size={18} />} 
-              label="The Sky" 
+              label="Kalawakan" 
               onClick={() => setMapMode('constellation')} 
             />
           )}

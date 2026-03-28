@@ -1,76 +1,124 @@
 import React from 'react';
-import { Star, Globe, MessageCircle, Plus, Sparkles } from 'lucide-react';
+import { Star, Globe, MessageCircle, Plus, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAuth } from '../contexts/AuthContext';
+import { getHexColor } from '../lib/colors';
 
 interface BottomNavProps {
-  activeTab: 'profile' | 'map' | 'siklab' | 'thoughts';
-  setActiveTab: (tab: 'profile' | 'map' | 'siklab' | 'thoughts') => void;
+  activeTab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit';
+  setActiveTab: (tab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit') => void;
   hasNewSignals?: boolean;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, hasNewSignals = false }) => {
+  const { profile } = useAuth();
+  const userVibeColor = profile ? getHexColor(profile.color) : '#a855f7';
+
+  const handleMapToggle = () => {
+    if (activeTab === 'mundo') {
+      setActiveTab('kalawakan');
+    } else if (activeTab === 'kalawakan') {
+      setActiveTab('mundo');
+    } else {
+      // Default to mundo if coming from another tab
+      setActiveTab('mundo');
+    }
+  };
+
+  const isMapActive = activeTab === 'mundo' || activeTab === 'kalawakan';
+
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0B0B0C] border-t border-white/5 pb-safe h-16">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-lg border-t border-white/10 pb-safe h-16">
       <div className="flex items-center justify-around h-full px-2">
-        {/* Star Tab */}
+        {/* BUKLOD Tab */}
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => setActiveTab('buklod')}
           className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
         >
-          <div className={`relative p-1 transition-all ${activeTab === 'profile' ? 'text-purple-400' : 'text-white/30'}`}>
-            <Star className={`w-5 h-5 ${activeTab === 'profile' ? 'fill-purple-400/20' : ''}`} />
-            {activeTab === 'profile' && (
+          <div 
+            className={`relative p-1 transition-all ${activeTab === 'buklod' ? '' : 'text-white/30'}`}
+            style={{ color: activeTab === 'buklod' ? userVibeColor : undefined }}
+          >
+            <Star 
+              className="w-5 h-5" 
+              fill={activeTab === 'buklod' ? `${userVibeColor}33` : 'none'} 
+            />
+            {activeTab === 'buklod' && (
               <motion.div 
                 layoutId="activeTabGlow"
-                className="absolute inset-0 bg-purple-500/20 blur-lg rounded-full"
+                className="absolute inset-0 blur-lg rounded-full"
+                style={{ backgroundColor: `${userVibeColor}33` }}
               />
             )}
           </div>
-          <span className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'profile' ? 'text-purple-400' : 'text-white/20'}`}>
-            Star
+          <span 
+            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'buklod' ? '' : 'text-white/20'}`}
+            style={{ color: activeTab === 'buklod' ? userVibeColor : undefined }}
+          >
+            Buklod
           </span>
-          {activeTab === 'profile' && (
+          {activeTab === 'buklod' && (
             <motion.div 
               layoutId="activeTabUnderline"
-              className="absolute bottom-0 w-8 h-[2px] bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full"
+              className="absolute bottom-0 w-8 h-[2px] rounded-full"
+              style={{ backgroundColor: userVibeColor }}
             />
           )}
         </button>
 
-        {/* Map Tab */}
+        {/* MUNDO / KALAWAKAN Tab */}
         <button
-          onClick={() => setActiveTab('map')}
+          onClick={handleMapToggle}
           className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
         >
-          <div className={`relative p-1 transition-all ${activeTab === 'map' ? 'text-purple-400' : 'text-white/30'}`}>
-            <Globe className="w-5 h-5" />
-            {activeTab === 'map' && (
+          <div 
+            className={`relative p-1 transition-all ${isMapActive ? '' : 'text-white/30'}`}
+            style={{ color: isMapActive ? userVibeColor : undefined }}
+          >
+            <motion.div
+              animate={{ rotate: activeTab === 'kalawakan' ? 180 : 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              {activeTab === 'kalawakan' ? (
+                <Share2 className="w-5 h-5" />
+              ) : (
+                <Globe className="w-5 h-5" />
+              )}
+            </motion.div>
+            {isMapActive && (
               <motion.div 
                 layoutId="activeTabGlow"
-                className="absolute inset-0 bg-purple-500/20 blur-lg rounded-full"
+                className="absolute inset-0 blur-lg rounded-full"
+                style={{ backgroundColor: `${userVibeColor}33` }}
               />
             )}
           </div>
-          <span className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'map' ? 'text-purple-400' : 'text-white/20'}`}>
-            Map
+          <span 
+            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${isMapActive ? '' : 'text-white/20'}`}
+            style={{ color: isMapActive ? userVibeColor : undefined }}
+          >
+            {activeTab === 'kalawakan' ? 'Kalawakan' : 'Mundo'}
           </span>
-          {activeTab === 'map' && (
+          {isMapActive && (
             <motion.div 
               layoutId="activeTabUnderline"
-              className="absolute bottom-0 w-8 h-[2px] bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full"
+              className="absolute bottom-0 w-8 h-[2px] rounded-full"
+              style={{ backgroundColor: userVibeColor }}
             />
           )}
         </button>
 
-        {/* Siklab Tab */}
+        {/* SIKLAB Tab */}
         <button
           onClick={() => setActiveTab('siklab')}
           className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
         >
-          <div className={`relative p-1 transition-all ${activeTab === 'siklab' ? 'text-purple-400' : 'text-white/30'}`}>
+          <div 
+            className={`relative p-1 transition-all ${activeTab === 'siklab' ? '' : 'text-white/30'}`}
+            style={{ color: activeTab === 'siklab' ? userVibeColor : undefined }}
+          >
             <div className="relative">
               <MessageCircle className="w-5 h-5" />
-              <Sparkles className="absolute -top-1 -right-1 w-2 h-2 text-purple-300" />
               {hasNewSignals && (
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
               )}
@@ -78,42 +126,55 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, h
             {activeTab === 'siklab' && (
               <motion.div 
                 layoutId="activeTabGlow"
-                className="absolute inset-0 bg-purple-500/20 blur-lg rounded-full"
+                className="absolute inset-0 blur-lg rounded-full"
+                style={{ backgroundColor: `${userVibeColor}33` }}
               />
             )}
           </div>
-          <span className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'siklab' ? 'text-purple-400' : 'text-white/20'}`}>
+          <span 
+            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'siklab' ? '' : 'text-white/20'}`}
+            style={{ color: activeTab === 'siklab' ? userVibeColor : undefined }}
+          >
             Siklab
           </span>
           {activeTab === 'siklab' && (
             <motion.div 
               layoutId="activeTabUnderline"
-              className="absolute bottom-0 w-8 h-[2px] bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full"
+              className="absolute bottom-0 w-8 h-[2px] rounded-full"
+              style={{ backgroundColor: userVibeColor }}
             />
           )}
         </button>
 
-        {/* Sambit Tab */}
+        {/* SAMBIT Tab */}
         <button
-          onClick={() => setActiveTab('thoughts')}
+          onClick={() => setActiveTab('sambit')}
           className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
         >
-          <div className={`relative p-1 transition-all ${activeTab === 'thoughts' ? 'text-purple-400' : 'text-white/30'}`}>
+          <div 
+            className={`relative p-1 transition-all ${activeTab === 'sambit' ? '' : 'text-white/30'}`}
+            style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
+          >
             <Plus className="w-6 h-6" />
-            {activeTab === 'thoughts' && (
+            {activeTab === 'sambit' && (
               <motion.div 
                 layoutId="activeTabGlow"
-                className="absolute inset-0 bg-purple-500/20 blur-lg rounded-full"
+                className="absolute inset-0 blur-lg rounded-full"
+                style={{ backgroundColor: `${userVibeColor}33` }}
               />
             )}
           </div>
-          <span className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'thoughts' ? 'text-purple-400' : 'text-white/20'}`}>
+          <span 
+            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'sambit' ? '' : 'text-white/20'}`}
+            style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
+          >
             Sambit
           </span>
-          {activeTab === 'thoughts' && (
+          {activeTab === 'sambit' && (
             <motion.div 
               layoutId="activeTabUnderline"
-              className="absolute bottom-0 w-8 h-[2px] bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full"
+              className="absolute bottom-0 w-8 h-[2px] rounded-full"
+              style={{ backgroundColor: userVibeColor }}
             />
           )}
         </button>

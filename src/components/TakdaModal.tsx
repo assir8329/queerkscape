@@ -3,17 +3,17 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ShieldAlert, Trash2, Settings as SettingsIcon } from 'lucide-react';
+import { X, ShieldAlert, Trash2, Settings as TakdaIcon } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 
 import { ModalPortal } from './ModalPortal';
 
-interface SettingsModalProps {
+interface TakdaModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
   const { profile, updateProfile } = useAuth();
   const [blockedStars, setBlockedStars] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,8 +61,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             >
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <div className="flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-blue-400" />
-                <h3 className="text-white font-semibold">Cosmic Settings</h3>
+                <TakdaIcon className="w-5 h-5 text-blue-400" />
+                <h3 className="text-white font-semibold">Cosmic Takda</h3>
               </div>
               <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
                 <X className="w-5 h-5" />

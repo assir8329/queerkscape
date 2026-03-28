@@ -7,7 +7,7 @@ import { MapCanvas } from './components/MapCanvas';
 import { EarthMap } from './components/EarthMap';
 import { ProfileModal } from './components/ProfileModal';
 import { SiklabInbox } from './components/SiklabInbox';
-import { SettingsModal } from './components/SettingsModal';
+import { TakdaModal } from './components/TakdaModal';
 import { Onboarding } from './components/Onboarding';
 import { Sidebar } from './components/Sidebar';
 import { UnsaidThoughts } from './components/UnsaidThoughts';
@@ -36,7 +36,9 @@ const getDailyPrompt = () => {
   return DAILY_PROMPTS[dayOfYear % DAILY_PROMPTS.length];
 };
 
+import { Buklod } from './components/Buklod';
 import { RightPanel } from './components/RightPanel';
+import { getHexColor } from './lib/colors';
 import { CreateActionHubContent } from './components/CreateActionHubContent';
 import { UnsaidThoughtsContent } from './components/UnsaidThoughtsContent';
 
@@ -51,8 +53,8 @@ const MainApp: React.FC = () => {
   });
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [showSiklab, setShowSiklab] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'map' | 'siklab' | 'thoughts'>('map');
+  const [showTakda, setShowTakda] = useState(false);
+  const [activeTab, setActiveTab] = useState<'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit'>('mundo');
   const [hasNewSignals, setHasNewSignals] = useState(false);
   const [isCreateHubOpen, setIsCreateHubOpen] = useState(false);
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
@@ -134,8 +136,8 @@ const MainApp: React.FC = () => {
     return () => unsubscribe();
   }, [profile]);
 
-  const handleTabChange = (tab: 'profile' | 'map' | 'siklab' | 'thoughts') => {
-    if (tab === 'thoughts') {
+  const handleTabChange = (tab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit') => {
+    if (tab === 'sambit') {
       setIsCreateHubOpen(true);
       return;
     }
@@ -144,20 +146,20 @@ const MainApp: React.FC = () => {
       setActiveTab('siklab');
       return;
     }
+    
+    if (tab === 'mundo') {
+      setMapMode('earth');
+    } else if (tab === 'kalawakan') {
+      setMapMode('constellation');
+    }
+    
     setActiveTab(tab);
-    if (tab === 'profile') {
-      if (profile) {
-        setSelectedUser(profile);
-      } else {
+    
+    if (tab === 'buklod') {
+      if (!profile) {
         navigate('/login');
-        setActiveTab('map'); // Revert if not logged in
+        setActiveTab('mundo');
       }
-    } else if (tab === 'map') {
-      if (activeTab === 'profile' && selectedUser?.uid === profile?.uid) {
-        setSelectedUser(null);
-      }
-    } else if (tab === 'thoughts') {
-      setSelectedUser(null);
     }
   };
 
@@ -240,12 +242,20 @@ const MainApp: React.FC = () => {
                   navigate('/login');
                 }
               }}
+              onPrivateSkyClick={() => {
+                if (profile) {
+                  setActiveTab('profile');
+                  setMapMode('constellation');
+                } else {
+                  navigate('/login');
+                }
+              }}
               onBondsClick={() => {
                 setShowSiklab(true);
                 // We can potentially set a tab here if needed, but Siklab handles its own tabs
               }}
               onNotificationsClick={() => setShowSiklab(true)}
-              onSettingsClick={() => setShowSettings(true)}
+              onTakdaClick={() => setShowTakda(true)}
               onThoughtsClick={() => {
                 if (isMobile) {
                   setActiveTab('thoughts');
@@ -276,7 +286,9 @@ const MainApp: React.FC = () => {
             {/* Main Content */}
             <div className="flex-1 relative h-full flex min-w-0">
               <div className="flex-1 relative h-full">
-                {mapMode === 'constellation' ? (
+                {activeTab === 'buklod' ? (
+                  <Buklod />
+                ) : mapMode === 'constellation' ? (
                   <MapCanvas 
                     onUserClick={handleUserClick} 
                     filterTag={filterTag}
@@ -302,30 +314,58 @@ const MainApp: React.FC = () => {
                   />
                 )}
                 
-                <TopCommandBar 
-                  user={user}
-                  profile={profile}
-                  filterTag={filterTag}
-                  setFilterTag={setFilterTag}
-                  dailyPrompt={dailyPrompt}
-                  onPromptSubmit={handlePromptSubmit}
-                  isVisible={isUiVisible}
-                />
+                {!isMobile && (
+                  <TopCommandBar 
+                    user={user}
+                    profile={profile}
+                    filterTag={filterTag}
+                    setFilterTag={setFilterTag}
+                    dailyPrompt={dailyPrompt}
+                    onPromptSubmit={handlePromptSubmit}
+                    isVisible={isUiVisible}
+                  />
+                )}
 
-                {/* Mobile Guide Button */}
+                {/* Top Navigation (Identity & Meta) - Mobile Only */}
                 {isMobile && (
-                  <div className="fixed top-6 right-6 z-50 pointer-events-none">
+                  <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+                    {/* Gabay (?) */}
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ 
+                        opacity: isUiVisible ? 1 : 0.2,
+                        scale: isUiVisible ? 1 : 0.9
+                      }}
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-guide'))}
+                      className="w-10 h-10 glass rounded-full flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90 shadow-2xl border border-white/10"
+                    >
+                      <CircleHelp size={20} />
+                    </motion.button>
+
+                    {/* Profile Star */}
                     <motion.button
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ 
                         opacity: isUiVisible ? 1 : 0.2,
                         scale: isUiVisible ? 1 : 0.9,
-                        y: isUiVisible ? 0 : -5
+                        boxShadow: isUiVisible ? `0 0 20px ${profile ? getHexColor(profile.color) : '#a855f7'}44` : 'none'
                       }}
-                      onClick={() => window.dispatchEvent(new CustomEvent('open-guide'))}
-                      className="pointer-events-auto w-10 h-10 glass rounded-full flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90 shadow-2xl border border-white/10"
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => profile && setSelectedUser(profile)}
+                      className="w-10 h-10 glass rounded-full flex items-center justify-center transition-all shadow-2xl border border-white/10 relative overflow-hidden"
                     >
-                      <CircleHelp size={20} />
+                      <motion.div
+                        animate={{ 
+                          scale: [1, 1.1, 1],
+                          opacity: [0.5, 0.8, 0.5]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 blur-md"
+                        style={{ backgroundColor: profile ? getHexColor(profile.color) : '#a855f7' }}
+                      />
+                      <svg viewBox="0 0 24 24" className="w-6 h-6 relative z-10" fill={profile ? getHexColor(profile.color) : '#a855f7'}>
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
                     </motion.button>
                   </div>
                 )}
@@ -333,8 +373,8 @@ const MainApp: React.FC = () => {
                 {/* Unsaid Thoughts (Mobile only modal) */}
                 {isMobile && (
                   <UnsaidThoughts 
-                    isOpen={activeTab === 'thoughts' ? true : undefined} 
-                    onClose={activeTab === 'thoughts' ? () => setActiveTab('map') : undefined} 
+                    isOpen={activeTab === 'sambit' ? true : undefined} 
+                    onClose={activeTab === 'sambit' ? () => setActiveTab('mundo') : undefined} 
                   />
                 )}
 
@@ -352,9 +392,9 @@ const MainApp: React.FC = () => {
                   }}
                 />
 
-                <SettingsModal
-                  isOpen={showSettings}
-                  onClose={() => setShowSettings(false)}
+                <TakdaModal
+                  isOpen={showTakda}
+                  onClose={() => setShowTakda(false)}
                 />
 
                 <CreateActionHub 
@@ -376,11 +416,11 @@ const MainApp: React.FC = () => {
                     user={selectedUser}
                     onClose={() => {
                       setSelectedUser(null);
-                      if (activeTab === 'profile') {
-                        setActiveTab('map');
+                      if (activeTab === 'buklod' && !profile) {
+                        setActiveTab('mundo');
                       }
                     }}
-                    onSettingsClick={() => setShowSettings(true)}
+                    onTakdaClick={() => setShowTakda(true)}
                     onChatClick={(user) => {
                       setSiklabTargetUser(user);
                       setShowSiklab(true);

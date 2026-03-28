@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Clock, Star, MapPin, Users, Bell, Settings, LogOut } from 'lucide-react';
+import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Clock, Star, MapPin, Users, Bell, Settings as TakdaIcon, LogOut } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import { VIBES, getHexColor } from '../lib/colors';
@@ -26,7 +26,7 @@ interface ProfileContentProps {
   onClose: () => void;
   onBondsClick?: () => void;
   onNotificationsClick?: () => void;
-  onSettingsClick?: () => void;
+  onTakdaClick?: () => void;
   onSignOut?: () => void;
 }
 
@@ -35,7 +35,7 @@ export const ProfileContent: React.FC<ProfileContentProps> = ({
   onClose,
   onBondsClick,
   onNotificationsClick,
-  onSettingsClick,
+  onTakdaClick,
   onSignOut
 }) => {
   const { profile, updateProfile } = useAuth();

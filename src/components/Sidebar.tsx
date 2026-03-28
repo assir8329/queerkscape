@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Globe, User as UserIcon, Users, Bell, Settings, LogOut, MapPin, Menu, LogIn, ChevronLeft, ChevronRight, HelpCircle, Plus, MessageCircle } from 'lucide-react';
+import { Share2, Globe, User as UserIcon, Users, Bell, Settings as TakdaIcon, LogOut, MapPin, Menu, LogIn, ChevronLeft, ChevronRight, HelpCircle, Plus, MessageCircle, Star } from 'lucide-react';
 import { UserProfile } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
 import { motion, AnimatePresence } from 'motion/react';
@@ -9,9 +9,10 @@ interface SidebarProps {
   mapMode: 'constellation' | 'earth';
   setMapMode: (mode: 'constellation' | 'earth') => void;
   onMyProfileClick: () => void;
+  onPrivateSkyClick: () => void;
   onBondsClick: () => void;
   onNotificationsClick: () => void;
-  onSettingsClick: () => void;
+  onTakdaClick: () => void;
   onThoughtsClick: () => void;
   onPinMemoryClick: () => void;
   isAddingMemory?: boolean;
@@ -27,9 +28,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mapMode, 
   setMapMode, 
   onMyProfileClick, 
+  onPrivateSkyClick,
   onBondsClick,
   onNotificationsClick,
-  onSettingsClick,
+  onTakdaClick,
   onThoughtsClick,
   onPinMemoryClick,
   isAddingMemory,
@@ -115,20 +117,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 px-2 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
         <div className="mb-4">
           <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
-            {sidebarOpen ? 'Visions' : '•••'}
+            {sidebarOpen ? 'HIRAYA' : '•••'}
           </p>
           <SidebarItem 
             icon={<Share2 size={18} />} 
-            label="The Sky" 
+            label="Kalawakan" 
             active={mapMode === 'constellation'} 
             onClick={() => setMapMode('constellation')} 
             collapsed={!sidebarOpen}
           />
           <SidebarItem 
             icon={<Globe size={18} />} 
-            label="The World" 
+            label="Mundo" 
             active={mapMode === 'earth'} 
             onClick={() => setMapMode('earth')} 
+            collapsed={!sidebarOpen}
+          />
+          <SidebarItem 
+            icon={<Star size={18} />} 
+            label="Buklod" 
+            onClick={onPrivateSkyClick} 
             collapsed={!sidebarOpen}
           />
         </div>
@@ -136,11 +144,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {profile && (
           <div>
             <p className={`text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] px-4 mb-2 ${!sidebarOpen && 'text-center'}`}>
-              {sidebarOpen ? 'Inner Circle' : '•••'}
+              {sidebarOpen ? 'SANDIGAN' : '•••'}
             </p>
             <SidebarItem 
               icon={<UserIcon size={18} />} 
-              label="My Star" 
+              label="Aking Tala" 
               onClick={onMyProfileClick} 
               collapsed={!sidebarOpen}
             />
@@ -164,9 +172,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               collapsed={!sidebarOpen}
             />
             <SidebarItem 
-              icon={<Settings size={18} />} 
-              label="Settings" 
-              onClick={onSettingsClick} 
+              icon={<TakdaIcon size={18} />} 
+              label="TAKDA" 
+              onClick={onTakdaClick} 
               collapsed={!sidebarOpen}
             />
           </div>
@@ -215,7 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-2 border-t border-white/5 flex flex-col gap-1">
         <SidebarItem 
           icon={<HelpCircle size={18} />} 
-          label="How it Works" 
+          label="Gabay" 
           onClick={() => window.dispatchEvent(new CustomEvent('open-guide'))} 
           collapsed={!sidebarOpen}
         />

@@ -175,7 +175,7 @@ export const Onboarding: React.FC = () => {
         {step === 2 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <h3 className="text-white font-semibold mb-2 text-center">Where are you located? (Optional)</h3>
-            <p className="text-white/40 text-xs text-center mb-4">This helps you find Stars nearby in The World. Your exact location is never shared.</p>
+            <p className="text-white/40 text-xs text-center mb-4">This helps you find Stars nearby in Mundo. Your exact location is never shared.</p>
             
             <div className="space-y-3 mb-6">
               <button

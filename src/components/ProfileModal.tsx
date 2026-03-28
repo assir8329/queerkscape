@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Star, MapPin, Users, Bell, Settings, LogOut } from 'lucide-react';
+import { X, Send, Flag, ShieldAlert, Edit2, Check, MessageCircle, Star, MapPin, Users, Bell, Settings as TakdaIcon, LogOut } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { VIBES, getHexColor } from '../lib/colors';
@@ -26,7 +26,7 @@ const LOOKING_FOR_OPTIONS = [...STANDARD_OPTIONS, "custom"];
 interface ProfileModalProps {
   user: UserProfile | null;
   onClose: () => void;
-  onSettingsClick?: () => void;
+  onTakdaClick?: () => void;
   onChatClick?: (user: UserProfile) => void;
   onSignOut?: () => void;
 }
@@ -34,7 +34,7 @@ interface ProfileModalProps {
 export const ProfileModal: React.FC<ProfileModalProps> = ({ 
   user, 
   onClose,
-  onSettingsClick,
+  onTakdaClick,
   onChatClick,
   onSignOut
 }) => {
@@ -781,9 +781,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                       
                       {/* Mobile Actions Menu */}
                       <div className="md:hidden grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
-                        {onSettingsClick && (
-                          <button onClick={onSettingsClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                            <Settings className="w-4 h-4" /> Settings
+                        {onTakdaClick && (
+                          <button onClick={onTakdaClick} className="py-3 bg-white/5 hover:bg-white/10 text-white/80 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+                            <TakdaIcon className="w-4 h-4" /> Takda
                           </button>
                         )}
                         {onSignOut && (

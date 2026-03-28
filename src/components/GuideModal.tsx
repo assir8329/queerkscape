@@ -20,7 +20,7 @@ export const GuideModal: React.FC = () => {
   const steps = [
     {
       icon: <Star className="w-6 h-6 text-yellow-400" />,
-      title: "The Sky",
+      title: "Kalawakan",
       description: "Every user is a star. Your color and position reflect your 'vibe' and interests."
     },
     {
@@ -36,7 +36,7 @@ export const GuideModal: React.FC = () => {
     {
       icon: <MapPin className="w-6 h-6 text-red-400" />,
       title: "Bakás",
-      description: "Switch to The World to pin memories to real-world locations on the globe."
+      description: "Switch to Mundo to pin memories to real-world locations on the globe."
     },
     {
       icon: <Users className="w-6 h-6 text-green-400" />,
