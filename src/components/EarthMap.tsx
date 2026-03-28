@@ -77,7 +77,11 @@ const createCustomIcon = (color: string, count: number) => {
         background: radial-gradient(circle, ${hex} 0%, ${hex}80 40%, transparent 80%);
         border-radius: 50%;
         box-shadow: 0 0 10px ${hex}, 0 0 20px ${hex}80;
-        animation: star-twinkle 2s infinite alternate ease-in-out;
+        animation-name: star-twinkle;
+        animation-duration: 2s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+        animation-timing-function: ease-in-out;
         --star-color: ${hex};
         --star-glow: ${hex}80;
       "></div>
@@ -141,7 +145,11 @@ const createStarIcon = (color: string) => {
         background: radial-gradient(circle, ${hex} 0%, ${hex}80 40%, transparent 80%);
         border-radius: 50%;
         box-shadow: 0 0 10px ${hex}, 0 0 20px ${hex}80;
-        animation: star-twinkle ${duration}s infinite alternate ease-in-out;
+        animation-name: star-twinkle;
+        animation-duration: ${duration}s;
+        animation-iteration-count: infinite;
+        animation-direction: alternate;
+        animation-timing-function: ease-in-out;
         animation-delay: ${delay}s;
         --star-color: ${hex};
         --star-glow: ${hex}80;
@@ -154,7 +162,10 @@ const createStarIcon = (color: string) => {
         border-radius: 50%;
         box-shadow: 0 0 8px #ffffff, 0 0 15px ${hex};
         opacity: 0;
-        animation: star-burst ${burstDuration}s infinite ease-in-out;
+        animation-name: star-burst;
+        animation-duration: ${burstDuration}s;
+        animation-iteration-count: infinite;
+        animation-timing-function: ease-in-out;
         animation-delay: ${burstDelay}s;
       "></div>
     </div>
@@ -183,7 +194,9 @@ const createThoughtIcon = () => {
       justify-content: center;
       color: #a855f7;
       backdrop-filter: blur(2px);
-      animation: pulse-thought 3s infinite;
+      animation-name: pulse-thought;
+      animation-duration: 3s;
+      animation-iteration-count: infinite;
     ">
       <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
     </div>
@@ -552,7 +565,15 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       className={`absolute inset-0 z-0 bg-[#050510] overflow-hidden ${isAddingMemory ? 'cursor-crosshair' : ''}`}
     >
       {isAddingMemory && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] glass-dark text-yellow-400 px-6 py-3 rounded-full font-bold shadow-2xl animate-pulse border border-yellow-500/30">
+        <div 
+          className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] glass-dark text-yellow-400 px-6 py-3 rounded-full font-bold shadow-2xl border border-yellow-500/30"
+          style={{
+            animationName: 'pulse',
+            animationDuration: '2s',
+            animationIterationCount: 'infinite',
+            animationTimingFunction: 'cubic-bezier(0.4, 0, 0.6, 1)'
+          }}
+        >
           Tap anywhere on the map to leave a Bakás
         </div>
       )}

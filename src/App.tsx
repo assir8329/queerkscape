@@ -42,6 +42,8 @@ import { getHexColor } from './lib/colors';
 import { CreateActionHubContent } from './components/CreateActionHubContent';
 import { UnsaidThoughtsContent } from './components/UnsaidThoughtsContent';
 
+export type AppTab = 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit' | 'thoughts' | 'map';
+
 const MainApp: React.FC = () => {
   const { user, profile, loading, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ const MainApp: React.FC = () => {
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [showSiklab, setShowSiklab] = useState(false);
   const [showTakda, setShowTakda] = useState(false);
-  const [activeTab, setActiveTab] = useState<'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit'>('mundo');
+  const [activeTab, setActiveTab] = useState<AppTab>('mundo');
   const [hasNewSignals, setHasNewSignals] = useState(false);
   const [isCreateHubOpen, setIsCreateHubOpen] = useState(false);
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
@@ -136,7 +138,7 @@ const MainApp: React.FC = () => {
     return () => unsubscribe();
   }, [profile]);
 
-  const handleTabChange = (tab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit') => {
+  const handleTabChange = (tab: AppTab) => {
     if (tab === 'sambit') {
       setIsCreateHubOpen(true);
       return;
@@ -235,6 +237,8 @@ const MainApp: React.FC = () => {
               profile={profile} 
               mapMode={mapMode} 
               setMapMode={setMapMode} 
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
               onMyProfileClick={() => {
                 if (profile) {
                   setSelectedUser(profile);
@@ -244,8 +248,7 @@ const MainApp: React.FC = () => {
               }}
               onPrivateSkyClick={() => {
                 if (profile) {
-                  setActiveTab('profile');
-                  setMapMode('constellation');
+                  handleTabChange('buklod');
                 } else {
                   navigate('/login');
                 }

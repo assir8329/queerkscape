@@ -62,7 +62,7 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
             <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
               <div className="flex items-center gap-2">
                 <TakdaIcon className="w-5 h-5 text-blue-400" />
-                <h3 className="text-white font-semibold">Cosmic Takda</h3>
+                <h3 className="text-white font-semibold">TAKDA NG HIRAYA</h3>
               </div>
               <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
@@ -73,7 +73,7 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
               <section className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <ShieldAlert className="w-4 h-4 text-red-400" />
-                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider">Blocked Stars</h4>
+                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider">MGA TALANG BINUKOD</h4>
                 </div>
                 
                 {loading ? (
@@ -104,7 +104,7 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
               </section>
 
               <section className="mb-4">
-                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Privacy</h4>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Katiwasayan</h4>
                 <div className="bg-white/5 rounded-xl p-4 border border-white/5">
                   <div className="flex items-center justify-between">
                     <div>

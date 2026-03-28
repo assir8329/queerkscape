@@ -190,7 +190,7 @@ export const Buklod: React.FC = () => {
         {/* Kindred Stars */}
         {clampedSouls.map((soul) => (
           <div
-            key={soul.uid}
+            key={`kindred-star-${soul.uid}`}
             className="absolute pointer-events-auto cursor-pointer group"
             style={{ 
               left: `calc(50% + ${soul.relX}px)`, 

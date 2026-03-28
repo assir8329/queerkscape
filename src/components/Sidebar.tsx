@@ -3,6 +3,7 @@ import { Share2, Globe, User as UserIcon, Users, Bell, Settings as TakdaIcon, Lo
 import { UserProfile } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
 import { motion, AnimatePresence } from 'motion/react';
+import { AppTab } from '../App';
 
 interface SidebarProps {
   profile: UserProfile | null;
@@ -19,6 +20,8 @@ interface SidebarProps {
   onCreateClick: () => void;
   onSignOut: () => void;
   onSignInClick: () => void;
+  activeTab: AppTab;
+  onTabChange: (tab: AppTab) => void;
   isVisible?: boolean;
   hasNewSignals?: boolean;
 }
@@ -38,6 +41,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCreateClick,
   onSignOut,
   onSignInClick,
+  activeTab,
+  onTabChange,
   isVisible = true,
   hasNewSignals = false
 }) => {
@@ -122,20 +127,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <SidebarItem 
             icon={<Share2 size={18} />} 
             label="Kalawakan" 
-            active={mapMode === 'constellation'} 
-            onClick={() => setMapMode('constellation')} 
+            active={activeTab === 'kalawakan'} 
+            onClick={() => onTabChange('kalawakan')} 
             collapsed={!sidebarOpen}
           />
           <SidebarItem 
             icon={<Globe size={18} />} 
             label="Mundo" 
-            active={mapMode === 'earth'} 
-            onClick={() => setMapMode('earth')} 
+            active={activeTab === 'mundo'} 
+            onClick={() => onTabChange('mundo')} 
             collapsed={!sidebarOpen}
           />
           <SidebarItem 
             icon={<Star size={18} />} 
             label="Buklod" 
+            active={activeTab === 'buklod'}
             onClick={onPrivateSkyClick} 
             collapsed={!sidebarOpen}
           />

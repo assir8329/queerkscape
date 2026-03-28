@@ -38,7 +38,15 @@ export const ThoughtBubble: React.FC<ThoughtBubbleProps> = ({ thought, onExpand 
           }}
         >
           {/* Glowing Pulse */}
-          <div className="absolute -inset-2 bg-purple-500/20 rounded-full blur-lg animate-pulse group-hover:bg-purple-500/40 transition-all" />
+          <div 
+            className="absolute -inset-2 bg-purple-500/20 rounded-full blur-lg group-hover:bg-purple-500/40 transition-all" 
+            style={{
+              animationName: 'pulse',
+              animationDuration: '2s',
+              animationIterationCount: 'infinite',
+              animationTimingFunction: 'cubic-bezier(0.4, 0, 0.6, 1)'
+            }}
+          />
           
           {/* Icon/Bubble */}
           <div className="relative bg-purple-500/20 backdrop-blur-md border border-purple-500/60 p-1 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.6)] hover:scale-110 transition-transform">

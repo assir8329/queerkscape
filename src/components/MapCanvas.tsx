@@ -37,6 +37,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
+  const [lastTap, setLastTap] = useState(0);
   const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
   const [touchStartScale, setTouchStartScale] = useState(1);
   const hasCentered = useRef(false);
@@ -139,12 +140,33 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     }
   };
 
+  const resetToFullMap = () => {
+    if (viewport.width > 0) {
+      const scaleToFit = viewport.width / 5000;
+      setScale(scaleToFit);
+      setPosition({
+        x: viewport.width / 2 - 2500 * scaleToFit,
+        y: viewport.height / 2 - 2500 * scaleToFit,
+      });
+      onInteraction?.();
+    }
+  };
+
   useEffect(() => {
-    if (profile && viewport.width > 0 && !hasCentered.current) {
-      centerOnUser();
+    if (viewport.width > 0 && !hasCentered.current) {
+      if (mapMode === 'constellation') {
+        resetToFullMap();
+      } else if (profile) {
+        centerOnUser();
+      }
       hasCentered.current = true;
     }
-  }, [profile, scale, viewport]);
+  }, [profile, mapMode, viewport]);
+
+  useEffect(() => {
+    // Reset centering flag when switching modes to allow re-centering
+    hasCentered.current = false;
+  }, [mapMode]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -182,6 +204,15 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      // Double tap
+      resetToFullMap();
+      setLastTap(0);
+      return;
+    }
+    setLastTap(now);
+
     if (e.touches.length === 1) {
       setIsDragging(true);
       setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
@@ -392,12 +423,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           ))}
         </svg>
 
-        {activeLayers.includes('stars') && visibleUsers.map((user) => (
+        {activeLayers.includes('stars') && visibleUsers.map((u) => (
           <Star
-            key={user.uid}
-            user={user}
+            key={`user-star-${u.uid}`}
+            user={u}
             onClick={onUserClick}
-            isActive={isUserActive(user.lastActive)}
+            isActive={isUserActive(u.lastActive)}
+            scale={scale}
+            isUser={u.uid === user?.uid}
           />
         ))}
 
