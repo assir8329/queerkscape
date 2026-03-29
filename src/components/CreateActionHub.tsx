@@ -42,19 +42,19 @@ export const CreateActionHub: React.FC<CreateActionHubProps> = ({ isOpen, onClos
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Bottom Sheet (Floating Card above Nav) */}
+          {/* Bottom Sheet / Modal */}
           <motion.div
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-[80px] left-4 right-4 md:hidden bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            className="fixed bottom-16 left-4 right-4 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-[400px] bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
           >
-            {/* Handle */}
-            <div className="w-8 h-1 bg-white/10 rounded-full mx-auto mb-4" />
+            {/* Handle (Mobile only) */}
+            <div className="w-8 h-1 bg-white/10 rounded-full mx-auto mb-6 md:hidden" />
 
             <div className="flex justify-between items-center mb-3 px-1">
               <h2 className="text-sm font-bold text-white/40 uppercase tracking-widest">Sambit</h2>

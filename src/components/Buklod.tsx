@@ -109,7 +109,40 @@ export const Buklod: React.FC = () => {
     }
   }, [viewportSize]);
 
-  if (!profile || loading) {
+  if (!profile) {
+    return (
+      <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center z-50 px-6 text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8 max-w-sm"
+        >
+          <div className="relative inline-block">
+            <div className="absolute inset-0 blur-3xl bg-purple-500/20 rounded-full animate-pulse" />
+            <div className="relative w-16 h-16 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mx-auto">
+              <div className="w-2 h-2 bg-purple-400 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.8)]" />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-white font-black tracking-[0.4em] uppercase text-xs">Buklod Sanctuary</h2>
+            <p className="text-white/40 text-[11px] leading-relaxed tracking-widest uppercase font-medium">
+              This sacred space is reserved for those who have found their place in the constellation.
+            </p>
+          </div>
+
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/70 hover:text-white rounded-full text-[10px] font-bold uppercase tracking-[0.3em] transition-all active:scale-95"
+          >
+            Join the Constellation
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="fixed inset-0 bg-[#050505] flex items-center justify-center z-50">
         <motion.div 

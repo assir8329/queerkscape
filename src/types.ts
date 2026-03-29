@@ -33,6 +33,7 @@ export interface UserProfile {
   identity?: string;
   sexualRole?: string;
   usernameChanged?: boolean;
+  isGuest?: boolean;
 }
 
 export interface UnsaidThought {

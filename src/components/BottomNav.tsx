@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Globe, MessageSquare, Plus, Share2 } from 'lucide-react';
+import { Star, Globe, MessageSquare, Plus, Orbit } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
@@ -81,7 +81,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
             >
               {activeTab === 'kalawakan' ? (
-                <Share2 className="w-5 h-5" />
+                <Orbit className="w-5 h-5" />
               ) : (
                 <Globe className="w-5 h-5" />
               )}
@@ -149,38 +149,53 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
           )}
         </button>
 
-        {/* SAMBIT Tab */}
-        <button
-          onClick={() => setActiveTab('sambit')}
-          className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
-        >
-          <div 
-            className={`relative p-1 transition-all ${activeTab === 'sambit' ? '' : 'text-white/30'}`}
-            style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
+        {profile ? (
+          /* SAMBIT Tab */
+          <button
+            onClick={() => setActiveTab('sambit')}
+            className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
           >
-            <Plus className="w-6 h-6" />
+            <div 
+              className={`relative p-1 transition-all ${activeTab === 'sambit' ? '' : 'text-white/30'}`}
+              style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
+            >
+              <Plus className="w-6 h-6" />
+              {activeTab === 'sambit' && (
+                <motion.div 
+                  layoutId="activeTabGlow"
+                  className="absolute inset-0 blur-lg rounded-full"
+                  style={{ backgroundColor: `${userVibeColor}33` }}
+                />
+              )}
+            </div>
+            <span 
+              className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'sambit' ? '' : 'text-white/20'}`}
+              style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
+            >
+              Sambit
+            </span>
             {activeTab === 'sambit' && (
               <motion.div 
-                layoutId="activeTabGlow"
-                className="absolute inset-0 blur-lg rounded-full"
-                style={{ backgroundColor: `${userVibeColor}33` }}
+                layoutId="activeTabUnderline"
+                className="absolute bottom-0 w-8 h-[2px] rounded-full"
+                style={{ backgroundColor: userVibeColor }}
               />
             )}
-          </div>
-          <span 
-            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'sambit' ? '' : 'text-white/20'}`}
-            style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
+          </button>
+        ) : (
+          /* Sign In Tab for Guests */
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="relative flex flex-col items-center justify-center w-1/4 h-full transition-all"
           >
-            Sambit
-          </span>
-          {activeTab === 'sambit' && (
-            <motion.div 
-              layoutId="activeTabUnderline"
-              className="absolute bottom-0 w-8 h-[2px] rounded-full"
-              style={{ backgroundColor: userVibeColor }}
-            />
-          )}
-        </button>
+            <div className="relative p-1 text-purple-400">
+              <Plus className="w-6 h-6 rotate-45" />
+            </div>
+            <span className="text-[10px] uppercase tracking-[0.15em] mt-1 font-bold text-purple-400">
+              Sign In
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -129,7 +129,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
   if (!user) return null;
 
-  const isMe = profile ? user.uid === profile.uid : false;
+  const isMe = profile ? user.uid === profile.uid : (user.isGuest === true);
+  const isViewerGuest = !authUser;
+  const showJoinUI = isMe && isViewerGuest;
 
   const isUserActive = (lastActive: any) => {
     if (!lastActive?.toMillis) return false;
@@ -221,21 +223,21 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
-          className={isGuest 
-            ? "bg-[#0a0a14]/95 border border-white/10 rounded-3xl p-6 w-full max-w-[280px] shadow-2xl relative overflow-hidden flex flex-col items-center justify-center backdrop-blur-[12px]"
-            : "bg-[#1a1a2e] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh]"
+          className={showJoinUI 
+            ? "bg-black/95 border border-white/10 rounded-3xl p-6 w-full max-w-[280px] shadow-2xl relative overflow-hidden flex flex-col items-center justify-center backdrop-blur-[12px]"
+            : "bg-black border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh]"
           }
           onClick={(e) => e.stopPropagation()}
         >
           <button 
             onClick={onClose} 
-            className={`absolute top-3 right-3 flex items-center justify-center text-white/40 hover:text-white transition-all z-50 ${isGuest ? 'w-6 h-6' : 'w-8 h-8'}`}
+            className={`absolute top-3 right-3 flex items-center justify-center text-white/40 hover:text-white transition-all z-50 ${showJoinUI ? 'w-6 h-6' : 'w-8 h-8'}`}
             aria-label="Close"
           >
-            <X className={isGuest ? "w-3.5 h-3.5" : "w-5 h-5"} />
+            <X className={showJoinUI ? "w-3.5 h-3.5" : "w-5 h-5"} />
           </button>
 
-          {isGuest ? (
+          {showJoinUI ? (
             <div className="flex flex-col items-center justify-center space-y-4 py-2">
               <div className="relative">
                 <Star className="w-10 h-10 text-purple-400/80 fill-purple-400/20 animate-slow-pulse" />
@@ -270,13 +272,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 {/* Header Section */}
                 <div className="flex items-center gap-4 mb-4 shrink-0 relative">
               <div 
-                className={`relative w-14 h-14 rounded-full shrink-0 ${!active ? 'opacity-80' : ''} ${isGuest ? 'blur-md select-none' : ''}`}
+                className={`relative w-14 h-14 rounded-full shrink-0 ${!active ? 'opacity-80' : ''} ${user.isGuest ? 'blur-md select-none' : ''}`}
                 style={{ 
                   backgroundColor: hexColor,
-                  boxShadow: active && !isGuest ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
+                  boxShadow: active && !user.isGuest ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
                 }}
               >
-                {active && !isGuest && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a1a2e]" title="Active Star" />}
+                {active && !user.isGuest && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-black" title="Active Star" />}
               </div>
               
               <div className="flex-1 min-w-0">
@@ -287,7 +289,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         {user.nickname || user.username}
                       </h2>
                       <span className="text-sm shrink-0">✨</span>
-                      {!isEditing && !isGuest && (
+                      {!isEditing && !user.isGuest && (
                         <button 
                           onClick={profile ? toggleFavorite : undefined} 
                           className={`text-white/30 hover:text-yellow-400 transition-colors p-1.5 shrink-0 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
@@ -297,11 +299,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         </button>
                       )}
                     </div>
-                    <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{isGuest ? user.username[0] + '***' : user.username}</div>
+                    <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{user.isGuest ? user.username[0] + '***' : user.username}</div>
                   </div>
                 </div>
 
-                {!isGuest && (
+                {!user.isGuest && (
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] font-medium">
                     {user.location && !user.hideLocation && (
                       <div className="flex items-center gap-1 text-white/60">
@@ -434,13 +436,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           onChange={(e) => setEditData({ ...editData, identity: e.target.value })}
                           className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" className="bg-[#1a1a2e]">Select Identity</option>
-                          <option value="Cis-Woman" className="bg-[#1a1a2e]">Cis-Woman</option>
-                          <option value="Trans-Woman" className="bg-[#1a1a2e]">Trans-Woman</option>
-                          <option value="Non-Binary" className="bg-[#1a1a2e]">Non-Binary</option>
-                          <option value="Genderfluid" className="bg-[#1a1a2e]">Genderfluid</option>
-                          <option value="Genderqueer" className="bg-[#1a1a2e]">Genderqueer</option>
-                          <option value="Agender" className="bg-[#1a1a2e]">Agender</option>
+                          <option value="" className="bg-black">Select Identity</option>
+                          <option value="Cis-Woman" className="bg-black">Cis-Woman</option>
+                          <option value="Trans-Woman" className="bg-black">Trans-Woman</option>
+                          <option value="Non-Binary" className="bg-black">Non-Binary</option>
+                          <option value="Genderfluid" className="bg-black">Genderfluid</option>
+                          <option value="Genderqueer" className="bg-black">Genderqueer</option>
+                          <option value="Agender" className="bg-black">Agender</option>
                         </select>
                       </div>
 
@@ -451,12 +453,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           onChange={(e) => setEditData({ ...editData, sexualRole: e.target.value })}
                           className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" className="bg-[#1a1a2e]">Select Sexual Role</option>
-                          <option value="Stone Top" className="bg-[#1a1a2e]">Stone Top</option>
-                          <option value="Pillow Princess" className="bg-[#1a1a2e]">Pillow Princess</option>
-                          <option value="Switch/Versa" className="bg-[#1a1a2e]">Switch/Versa</option>
-                          <option value="Switch (top leaning)" className="bg-[#1a1a2e]">Switch (top leaning)</option>
-                          <option value="Switch (bottom leaning)" className="bg-[#1a1a2e]">Switch (bottom leaning)</option>
+                          <option value="" className="bg-black">Select Sexual Role</option>
+                          <option value="Stone Top" className="bg-black">Stone Top</option>
+                          <option value="Pillow Princess" className="bg-black">Pillow Princess</option>
+                          <option value="Switch/Versa" className="bg-black">Switch/Versa</option>
+                          <option value="Switch (top leaning)" className="bg-black">Switch (top leaning)</option>
+                          <option value="Switch (bottom leaning)" className="bg-black">Switch (bottom leaning)</option>
                         </select>
                       </div>
 
@@ -467,11 +469,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           onChange={(e) => setEditData({ ...editData, relationshipStatus: e.target.value })}
                           className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" className="bg-[#1a1a2e]">Select Relationship Status</option>
-                          <option value="single" className="bg-[#1a1a2e]">Single</option>
-                          <option value="taken" className="bg-[#1a1a2e]">Taken</option>
-                          <option value="in a situationship" className="bg-[#1a1a2e]">In a situationship</option>
-                          <option value="non-monogamous" className="bg-[#1a1a2e]">Non-monogamous</option>
+                          <option value="" className="bg-black">Select Relationship Status</option>
+                          <option value="single" className="bg-black">Single</option>
+                          <option value="taken" className="bg-black">Taken</option>
+                          <option value="in a situationship" className="bg-black">In a situationship</option>
+                          <option value="non-monogamous" className="bg-black">Non-monogamous</option>
                         </select>
                       </div>
                     </div>
@@ -488,19 +490,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           onChange={(e) => setEditData({ ...editData, zodiacSign: e.target.value })}
                           className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" className="bg-[#1a1a2e]">Zodiac</option>
-                          <option value="Aries" className="bg-[#1a1a2e]">Aries</option>
-                          <option value="Taurus" className="bg-[#1a1a2e]">Taurus</option>
-                          <option value="Gemini" className="bg-[#1a1a2e]">Gemini</option>
-                          <option value="Cancer" className="bg-[#1a1a2e]">Cancer</option>
-                          <option value="Leo" className="bg-[#1a1a2e]">Leo</option>
-                          <option value="Virgo" className="bg-[#1a1a2e]">Virgo</option>
-                          <option value="Libra" className="bg-[#1a1a2e]">Libra</option>
-                          <option value="Scorpio" className="bg-[#1a1a2e]">Scorpio</option>
-                          <option value="Sagittarius" className="bg-[#1a1a2e]">Sagittarius</option>
-                          <option value="Capricorn" className="bg-[#1a1a2e]">Capricorn</option>
-                          <option value="Aquarius" className="bg-[#1a1a2e]">Aquarius</option>
-                          <option value="Pisces" className="bg-[#1a1a2e]">Pisces</option>
+                          <option value="" className="bg-black">Zodiac</option>
+                          <option value="Aries" className="bg-black">Aries</option>
+                          <option value="Taurus" className="bg-black">Taurus</option>
+                          <option value="Gemini" className="bg-black">Gemini</option>
+                          <option value="Cancer" className="bg-black">Cancer</option>
+                          <option value="Leo" className="bg-black">Leo</option>
+                          <option value="Virgo" className="bg-black">Virgo</option>
+                          <option value="Libra" className="bg-black">Libra</option>
+                          <option value="Scorpio" className="bg-black">Scorpio</option>
+                          <option value="Sagittarius" className="bg-black">Sagittarius</option>
+                          <option value="Capricorn" className="bg-black">Capricorn</option>
+                          <option value="Aquarius" className="bg-black">Aquarius</option>
+                          <option value="Pisces" className="bg-black">Pisces</option>
                         </select>
                       </div>
 
@@ -511,23 +513,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           onChange={(e) => setEditData({ ...editData, mbti: e.target.value })}
                           className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
-                          <option value="" className="bg-[#1a1a2e]">MBTI</option>
-                          <option value="INTJ" className="bg-[#1a1a2e]">INTJ</option>
-                          <option value="INTP" className="bg-[#1a1a2e]">INTP</option>
-                          <option value="ENTJ" className="bg-[#1a1a2e]">ENTJ</option>
-                          <option value="ENTP" className="bg-[#1a1a2e]">ENTP</option>
-                          <option value="INFJ" className="bg-[#1a1a2e]">INFJ</option>
-                          <option value="INFP" className="bg-[#1a1a2e]">INFP</option>
-                          <option value="ENFJ" className="bg-[#1a1a2e]">ENFJ</option>
-                          <option value="ENFP" className="bg-[#1a1a2e]">ENFP</option>
-                          <option value="ISTJ" className="bg-[#1a1a2e]">ISTJ</option>
-                          <option value="ISFJ" className="bg-[#1a1a2e]">ISFJ</option>
-                          <option value="ESTJ" className="bg-[#1a1a2e]">ESTJ</option>
-                          <option value="ESFJ" className="bg-[#1a1a2e]">ESFJ</option>
-                          <option value="ISTP" className="bg-[#1a1a2e]">ISTP</option>
-                          <option value="ISFP" className="bg-[#1a1a2e]">ISFP</option>
-                          <option value="ESTP" className="bg-[#1a1a2e]">ESTP</option>
-                          <option value="ESFP" className="bg-[#1a1a2e]">ESFP</option>
+                          <option value="" className="bg-black">MBTI</option>
+                          <option value="INTJ" className="bg-black">INTJ</option>
+                          <option value="INTP" className="bg-black">INTP</option>
+                          <option value="ENTJ" className="bg-black">ENTJ</option>
+                          <option value="ENTP" className="bg-black">ENTP</option>
+                          <option value="INFJ" className="bg-black">INFJ</option>
+                          <option value="INFP" className="bg-black">INFP</option>
+                          <option value="ENFJ" className="bg-black">ENFJ</option>
+                          <option value="ENFP" className="bg-black">ENFP</option>
+                          <option value="ISTJ" className="bg-black">ISTJ</option>
+                          <option value="ISFJ" className="bg-black">ISFJ</option>
+                          <option value="ESTJ" className="bg-black">ESTJ</option>
+                          <option value="ESFJ" className="bg-black">ESFJ</option>
+                          <option value="ISTP" className="bg-black">ISTP</option>
+                          <option value="ISFP" className="bg-black">ISFP</option>
+                          <option value="ESTP" className="bg-black">ESTP</option>
+                          <option value="ESFP" className="bg-black">ESFP</option>
                         </select>
                       </div>
                     </div>
@@ -666,22 +668,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 /* VIEW MODE */
                 <div className="space-y-4">
                   {/* Signal Section */}
-                  {(user.signal || isGuest) && (
+                  {(user.signal || user.isGuest) && (
                     <section className="relative group">
                       <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
-                      <div className={`relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5 ${isGuest ? 'blur-md select-none' : ''}`}>
+                      <div className={`relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5 ${user.isGuest ? 'blur-md select-none' : ''}`}>
                         <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
                           <MessageCircle className="w-2.5 h-2.5" /> Sambit
                         </div>
                         <p className="text-sm text-white/90 font-medium leading-relaxed tracking-tight">
-                          "{isGuest ? "A thought waiting to be shared." : user.signal}"
+                          "{user.isGuest ? "A thought waiting to be shared." : user.signal}"
                         </p>
                       </div>
                     </section>
                   )}
 
                   {/* Vibe + Looking For */}
-                  {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && !isGuest && (
+                  {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && !user.isGuest && (
                     <section className="space-y-2">
                       <div className="flex flex-wrap gap-1.5">
                         {user.vibe && (
@@ -712,7 +714,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </section>
                   )}
 
-                  {!isGuest && (
+                  {!user.isGuest && (
                     <>
                       {/* Identity & Personality Grid */}
                       <div className="grid grid-cols-2 gap-4">

@@ -412,12 +412,11 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   const resetToHome = () => {
     if (map) {
       const PH_BOUNDS: L.LatLngBoundsExpression = [[4.5, 116.5], [21.0, 127.0]];
-      map.flyToBounds(PH_BOUNDS, { 
+      map.fitBounds(PH_BOUNDS, { 
         paddingTopLeft: [20, 120],
         paddingBottomRight: [20, 120], 
-        duration: 2,
-        easeLinearity: 0.1,
-        animate: true
+        animate: true,
+        duration: 1.5
       });
     }
   };
@@ -425,18 +424,14 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   useEffect(() => {
     if (map) {
       const PH_BOUNDS: L.LatLngBoundsExpression = [[4.5, 116.5], [21.0, 127.0]];
-      // Smooth cinematic entrance on load
-      // Use a small delay to ensure the map container is fully ready and dimensions are stable
-      const timer = setTimeout(() => {
-        map.flyToBounds(PH_BOUNDS, { 
-          paddingTopLeft: [20, 120],
-          paddingBottomRight: [20, 120],
-          duration: 3,
-          easeLinearity: 0.1,
-          animate: true
-        });
-      }, 100);
-      return () => clearTimeout(timer);
+      // Smooth entrance on load without the 3D "fly" effect
+      // Use animate: true for a smooth 2D transition instead of a jump
+      map.fitBounds(PH_BOUNDS, { 
+        paddingTopLeft: [20, 120],
+        paddingBottomRight: [20, 120],
+        animate: true,
+        duration: 1
+      });
     }
   }, [map]);
 
@@ -549,7 +544,6 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       <RightActionStack 
         isLoggedIn={!!currentUser}
         onCenterMe={handleCenterOnMe}
-        onHome={resetToHome}
         onPinMemory={() => setIsAddingMemory(!isAddingMemory)}
         isAddingMemory={isAddingMemory}
         onToggleLayer={toggleLayer}

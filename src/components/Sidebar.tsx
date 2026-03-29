@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, User as UserIcon, MessageSquare, Star, Users, Settings as TakdaIcon } from 'lucide-react';
+import { Globe, User as UserIcon, MessageSquare, Star, Users, Settings as TakdaIcon, Orbit, Plus } from 'lucide-react';
 import { UserProfile, useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppTab } from '../App';
@@ -44,8 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Kalawakan (Sky) Item */}
         <DockItem 
-          icon={<Star size={20} />} 
-          label="SKY" 
+          icon={<Orbit size={20} />} 
+          label="KALAWAKAN" 
           onClick={() => onTabChange('kalawakan')}
           active={activeTab === 'kalawakan'}
         />
@@ -66,26 +66,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
           active={activeTab === 'buklod'}
         />
 
-        {/* Ugnayan Item */}
+        {/* Sambit (Create) Item */}
         <DockItem 
           icon={
-            <div className="relative">
-              <Users size={20} />
-              {unreadUgnayanCount > 0 && (
-                <motion.span 
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-purple-600 rounded-full flex items-center justify-center text-[7px] text-white font-black shadow-[0_0_10px_rgba(168,85,247,0.8)] border border-white/20"
-                >
-                  {unreadUgnayanCount > 9 ? '9+' : unreadUgnayanCount}
-                </motion.span>
-              )}
+            <div className={`transition-all duration-300 ${profile ? 'bg-gradient-to-br from-purple-600 to-pink-600 p-1.5 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.5)] text-white' : 'text-purple-400'}`}>
+              <Plus size={20} className={profile ? '' : 'rotate-45'} />
             </div>
           } 
-          label="UGNAYAN" 
-          onClick={onBondsClick}
-          active={false}
+          label={profile ? "SAMBIT" : "SIGN IN"} 
+          onClick={() => onTabChange('sambit')}
+          active={activeTab === 'sambit'}
         />
+
+        {profile && (
+          <>
+            {/* Ugnayan Item */}
+            <DockItem 
+              icon={
+                <div className="relative">
+                  <Users size={20} />
+                  {unreadUgnayanCount > 0 && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-purple-600 rounded-full flex items-center justify-center text-[7px] text-white font-black shadow-[0_0_10px_rgba(168,85,247,0.8)] border border-white/20"
+                    >
+                      {unreadUgnayanCount > 9 ? '9+' : unreadUgnayanCount}
+                    </motion.span>
+                  )}
+                </div>
+              } 
+              label="UGNAYAN" 
+              onClick={onBondsClick}
+              active={false}
+            />
+          </>
+        )}
 
         {/* Siklab Item */}
         <DockItem 
@@ -108,26 +124,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
           active={false}
         />
 
-        {/* Takda Item */}
-        <DockItem 
-          icon={<TakdaIcon size={20} />} 
-          label="TAKDA" 
-          onClick={onTakdaClick}
-          active={false}
-        />
+        {profile && (
+          <>
+            {/* Takda Item */}
+            <DockItem 
+              icon={<TakdaIcon size={20} />} 
+              label="TAKDA" 
+              onClick={onTakdaClick}
+              active={false}
+            />
+          </>
+        )}
 
-        {/* Profile Item */}
+        {/* Profile / Sign In Item */}
         <DockItem 
           icon={
             <div className="relative">
-              {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover border border-white/20" referrerPolicy="no-referrer" />
+              {profile ? (
+                profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover border border-white/20" referrerPolicy="no-referrer" />
+                ) : (
+                  <UserIcon size={20} />
+                )
               ) : (
-                <UserIcon size={20} />
+                <div className="flex items-center gap-2">
+                  <UserIcon size={20} className="text-purple-400" />
+                </div>
               )}
             </div>
           } 
-          label="PROFILE" 
+          label={profile ? "PROFILE" : "SIGN IN"} 
           onClick={onMyProfileClick}
           active={false}
         />

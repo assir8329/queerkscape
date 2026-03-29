@@ -71,7 +71,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative"
+              className="bg-[#050510] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative"
             >
             <div className="flex items-center justify-between mb-5 py-1 border-b border-white/5">
               <div className="flex items-center gap-2 truncate">

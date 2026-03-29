@@ -20,7 +20,7 @@ import { WelcomePage } from './components/WelcomePage';
 import { Search, Sparkles, Star, LogIn, X, Loader2, Globe, Plus, CircleHelp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from './firebase';
-import { serverTimestamp, collection, onSnapshot, query, where } from 'firebase/firestore';
+import { serverTimestamp, collection, onSnapshot, query, where, getDocs, updateDoc, arrayRemove, doc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestore-errors';
 
 const DAILY_PROMPTS = [
@@ -164,9 +164,58 @@ const MainApp: React.FC = () => {
     return () => unsubscribe();
   }, [profile]);
 
+  const clearUgnayanNotifications = async () => {
+    if (!profile) return;
+    try {
+      const q = query(
+        collection(db, 'connections'),
+        where('users', 'array-contains', profile.uid),
+        where('newFor', 'array-contains', profile.uid)
+      );
+      const snapshot = await getDocs(q);
+      const updatePromises = snapshot.docs.map(docSnap => 
+        updateDoc(docSnap.ref, {
+          newFor: arrayRemove(profile.uid)
+        })
+      );
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error("Error clearing ugnayan notifications:", error);
+    }
+  };
+
+  const clearSignalNotifications = async () => {
+    if (!profile) return;
+    try {
+      const q = query(
+        collection(db, 'interactions'),
+        where('targetUserId', '==', profile.uid),
+        where('status', '==', 'new')
+      );
+      const snapshot = await getDocs(q);
+      const updatePromises = snapshot.docs.map(docSnap => 
+        updateDoc(docSnap.ref, {
+          status: 'read'
+        })
+      );
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error("Error clearing signal notifications:", error);
+    }
+  };
+
   const handleTabChange = (tab: AppTab) => {
     if (tab === activeTab && tab === 'mundo') {
       setResetMapTrigger(prev => prev + 1);
+    }
+
+    if ((tab === 'siklab' || tab === 'sambit' || tab === 'buklod' || tab === 'thoughts') && !profile) {
+      navigate('/login');
+      return;
+    }
+
+    if (tab === 'buklod') {
+      clearUgnayanNotifications();
     }
 
     if (tab === 'sambit') {
@@ -174,6 +223,8 @@ const MainApp: React.FC = () => {
       return;
     }
     if (tab === 'siklab') {
+      clearSignalNotifications();
+      clearUgnayanNotifications();
       setSiklabInitialTab('signals');
       setShowSiklab(true);
       return;
@@ -186,13 +237,6 @@ const MainApp: React.FC = () => {
     }
     
     setActiveTab(tab);
-    
-    if (tab === 'buklod') {
-      if (!profile) {
-        navigate('/login');
-        setActiveTab('mundo');
-      }
-    }
   };
 
   const handleUserClick = (userProfile: UserProfile) => {
@@ -276,21 +320,33 @@ const MainApp: React.FC = () => {
                 }
               }}
               onPrivateSkyClick={() => {
-                if (profile) {
-                  handleTabChange('buklod');
-                } else {
-                  navigate('/login');
-                }
+                handleTabChange('buklod');
               }}
               onBondsClick={() => {
+                if (!profile) {
+                  navigate('/login');
+                  return;
+                }
+                clearUgnayanNotifications();
                 setSiklabInitialTab('ugnayan');
                 setShowSiklab(true);
               }}
               onNotificationsClick={() => {
+                if (!profile) {
+                  navigate('/login');
+                  return;
+                }
+                clearSignalNotifications();
                 setSiklabInitialTab('signals');
                 setShowSiklab(true);
               }}
-              onTakdaClick={() => setShowTakda(true)}
+              onTakdaClick={() => {
+                if (!profile) {
+                  navigate('/login');
+                  return;
+                }
+                setShowTakda(true);
+              }}
               unreadSignalsCount={unreadSignalsCount}
               unreadUgnayanCount={unreadUgnayanCount}
             />
@@ -410,7 +466,7 @@ const MainApp: React.FC = () => {
                 {isMobile && (
                   <UnsaidThoughts 
                     isOpen={activeTab === 'sambit' ? true : undefined} 
-                    onClose={activeTab === 'sambit' ? () => setActiveTab('mundo') : undefined} 
+                    onClose={activeTab === 'sambit' ? () => setActiveTab(mapMode === 'constellation' ? 'kalawakan' : 'mundo') : undefined} 
                   />
                 )}
 
@@ -419,7 +475,7 @@ const MainApp: React.FC = () => {
                   onClose={() => {
                     setShowSiklab(false);
                     setSiklabTargetUser(null);
-                    if (activeTab === 'siklab') setActiveTab('mundo');
+                    if (activeTab === 'siklab') setActiveTab(mapMode === 'constellation' ? 'kalawakan' : 'mundo');
                   }} 
                   initialUser={siklabTargetUser}
                   onUserClick={(user) => {
@@ -454,7 +510,7 @@ const MainApp: React.FC = () => {
                     onClose={() => {
                       setSelectedUser(null);
                       if (activeTab === 'buklod' && !profile) {
-                        setActiveTab('mundo');
+                        setActiveTab(mapMode === 'constellation' ? 'kalawakan' : 'mundo');
                       }
                     }}
                     onTakdaClick={() => setShowTakda(true)}

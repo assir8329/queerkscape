@@ -57,12 +57,12 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0"
+              className="w-full max-w-md bg-[#050510] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0"
             >
-            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/2">
               <div className="flex items-center gap-2">
-                <TakdaIcon className="w-5 h-5 text-blue-400" />
-                <h3 className="text-white font-semibold">TAKDA NG HIRAYA</h3>
+                <TakdaIcon className="w-5 h-5 text-purple-400" />
+                <h3 className="text-white font-semibold tracking-wider">TAKDA NG HIRAYA</h3>
               </div>
               <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
@@ -73,7 +73,7 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
               <section className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <ShieldAlert className="w-4 h-4 text-red-400" />
-                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider">MGA TALANG BINUKOD</h4>
+                  <h4 className="text-xs font-semibold text-white/60 uppercase tracking-widest">MGA TALANG BINUKOD</h4>
                 </div>
                 
                 {loading ? (
@@ -81,14 +81,14 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
                     <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : blockedStars.length === 0 ? (
-                  <p className="text-xs text-white/40 font-medium">No stars are currently blocked.</p>
+                  <p className="text-xs text-white/30 font-medium italic">No stars are currently blocked.</p>
                 ) : (
                   <div className="space-y-2">
                     {blockedStars.map(star => (
-                      <div key={star.uid} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                      <div key={star.uid} className="flex items-center justify-between p-3 bg-white/[0.02] rounded-xl border border-white/5">
                         <div className="flex flex-col">
                           <span className="text-sm text-white font-medium">{star.nickname || star.username}</span>
-                          <span className="text-[10px] text-white/30">@{star.username}</span>
+                          <span className="text-[10px] text-white/30 font-mono">@{star.username}</span>
                         </div>
                         <button 
                           onClick={() => handleUnblock(star.uid)}
@@ -104,12 +104,12 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
               </section>
 
               <section className="mb-4">
-                <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Katiwasayan</h4>
-                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                <h4 className="text-xs font-semibold text-white/60 uppercase tracking-widest mb-4">Katiwasayan</h4>
+                <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-white font-medium">Location Privacy</p>
-                      <p className="text-xs text-white/40">You can toggle this in your profile editor.</p>
+                      <p className="text-[10px] text-white/30">You can toggle this in your profile editor.</p>
                     </div>
                     <div className={`w-10 h-5 rounded-full transition-colors ${profile?.hideLocation ? 'bg-purple-500' : 'bg-white/10'}`}>
                       <div className={`w-3 h-3 bg-white rounded-full mt-1 transition-transform ${profile?.hideLocation ? 'translate-x-6' : 'translate-x-1'}`} />

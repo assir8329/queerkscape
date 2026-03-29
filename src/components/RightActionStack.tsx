@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 interface RightActionStackProps {
   isLoggedIn: boolean;
   onCenterMe: () => void;
-  onHome: () => void;
   onPinMemory: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
@@ -22,7 +21,6 @@ interface RightActionStackProps {
 export const RightActionStack: React.FC<RightActionStackProps> = ({
   isLoggedIn,
   onCenterMe,
-  onHome,
   onPinMemory,
   onZoomIn,
   onZoomOut,
@@ -36,72 +34,49 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
   isVisible = true
 }) => {
   return (
-    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col gap-4 pointer-events-none">
-      <motion.div 
-        animate={{ 
-          opacity: isVisible ? 1 : 0.2,
-          x: isVisible ? 0 : 20,
-          scale: isVisible ? 1 : 0.95
-        }}
-        transition={{ type: "spring", stiffness: 200, damping: 25 }}
-        className="flex flex-col gap-4 pointer-events-auto"
-      >
-        {/* Primary Actions Group */}
-        <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
-          <ActionButton 
-            icon={<Maximize2 size={18} />} 
-            label="Home" 
-            onClick={onHome} 
-            variant="highlight"
-          />
-          <ActionButton 
-            icon={<Navigation2 size={18} />} 
-            label={isLoggedIn ? "Center Me" : "Sign in to center"} 
-            onClick={isLoggedIn ? onCenterMe : () => {}} 
-            variant="primary"
-            disabled={!isLoggedIn}
-          />
-          {mapMode === 'constellation' && (
-            <>
-              <ActionButton 
-                icon={<ZoomIn size={18} />} 
-                label="Zoom In" 
-                onClick={onZoomIn || (() => {})} 
-              />
-              <ActionButton 
-                icon={<ZoomOut size={18} />} 
-                label="Zoom Out" 
-                onClick={onZoomOut || (() => {})} 
-              />
-            </>
-          )}
-        </div>
-
-        {/* View Controls Group */}
-        <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
-          {mapMode === 'constellation' ? (
+    <>
+      {/* Bottom Right Actions (Navigation & Zoom) */}
+      <div className="fixed right-6 bottom-8 z-40 hidden md:flex flex-col gap-4 pointer-events-none">
+        <motion.div 
+          animate={{ 
+            opacity: isVisible ? 1 : 0.2,
+            x: isVisible ? 0 : 20,
+            scale: isVisible ? 1 : 0.95
+          }}
+          transition={{ type: "spring", stiffness: 200, damping: 25 }}
+          className="flex flex-col gap-4 pointer-events-auto"
+        >
+          <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
             <ActionButton 
-              icon={<Globe size={18} />} 
-              label="Mundo" 
-              onClick={() => setMapMode('earth')} 
+              icon={<Navigation2 size={18} />} 
+              label={isLoggedIn ? "Center Me" : "Sign in to center"} 
+              onClick={() => {
+                if (isLoggedIn) {
+                  onCenterMe();
+                } else {
+                  window.location.href = '/login';
+                }
+              }} 
+              variant="primary"
             />
-          ) : (
-            <ActionButton 
-              icon={<Star size={18} />} 
-              label="Kalawakan" 
-              onClick={() => setMapMode('constellation')} 
-            />
-          )}
-          <ActionButton 
-            icon={<Star size={18} fill={filterTag === 'favorites' ? "currentColor" : "none"} />} 
-            label="Favorites" 
-            active={filterTag === 'favorites'}
-            onClick={() => setFilterTag(filterTag === 'favorites' ? '' : 'favorites')} 
-            variant="yellow"
-          />
-        </div>
-      </motion.div>
-    </div>
+            {mapMode === 'constellation' && (
+              <>
+                <ActionButton 
+                  icon={<ZoomIn size={18} />} 
+                  label="Zoom In" 
+                  onClick={onZoomIn || (() => {})} 
+                />
+                <ActionButton 
+                  icon={<ZoomOut size={18} />} 
+                  label="Zoom Out" 
+                  onClick={onZoomOut || (() => {})} 
+                />
+              </>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </>
   );
 };
 
