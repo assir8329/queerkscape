@@ -38,7 +38,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onChatClick,
   onSignOut
 }) => {
-  const { profile, updateProfile } = useAuth();
+  const { user: authUser, profile, updateProfile } = useAuth();
+  const isGuest = !authUser;
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<UserProfile>>({});
   const [reportReason, setReportReason] = useState('');
@@ -220,37 +221,62 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
-          className="bg-[#1a1a2e] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh]"
+          className={isGuest 
+            ? "bg-[#0a0a14]/95 border border-white/10 rounded-3xl p-6 w-full max-w-[280px] shadow-2xl relative overflow-hidden flex flex-col items-center justify-center backdrop-blur-[12px]"
+            : "bg-[#1a1a2e] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh]"
+          }
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Top glow */}
-          <div 
-            className="absolute top-0 left-0 right-0 h-1" 
-            style={{ 
-              backgroundColor: hexColor,
-              boxShadow: `0 0 15px rgba(${rgbColor}, 0.8)`
-            }} 
-          />
-          
           <button 
             onClick={onClose} 
-            className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-white/40 hover:text-white transition-all z-50"
+            className={`absolute top-3 right-3 flex items-center justify-center text-white/40 hover:text-white transition-all z-50 ${isGuest ? 'w-6 h-6' : 'w-8 h-8'}`}
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className={isGuest ? "w-3.5 h-3.5" : "w-5 h-5"} />
           </button>
 
-          <div className="flex flex-col h-full overflow-hidden">
-            {/* Header Section */}
-            <div className="flex items-center gap-4 mb-4 shrink-0 relative">
+          {isGuest ? (
+            <div className="flex flex-col items-center justify-center space-y-4 py-2">
+              <div className="relative">
+                <Star className="w-10 h-10 text-purple-400/80 fill-purple-400/20 animate-slow-pulse" />
+                <div className="absolute inset-0 blur-xl bg-purple-500/20 rounded-full animate-slow-pulse" />
+              </div>
+              
+              <div className="text-center px-2">
+                <p className="text-[13px] font-light text-white/90 tracking-widest uppercase leading-snug">
+                  This star is waiting for a signal.
+                </p>
+              </div>
+
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="px-5 py-2 border border-white/10 hover:border-white/30 text-white/70 hover:text-white rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-white/5 active:scale-95"
+              >
+                Join the Constellation
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Top glow */}
               <div 
-                className={`relative w-14 h-14 rounded-full shrink-0 ${!active ? 'opacity-80' : ''}`}
+                className="absolute top-0 left-0 right-0 h-1" 
                 style={{ 
                   backgroundColor: hexColor,
-                  boxShadow: active ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
+                  boxShadow: `0 0 15px rgba(${rgbColor}, 0.8)`
+                }} 
+              />
+              
+              <div className="flex flex-col h-full overflow-hidden mt-4">
+                {/* Header Section */}
+                <div className="flex items-center gap-4 mb-4 shrink-0 relative">
+              <div 
+                className={`relative w-14 h-14 rounded-full shrink-0 ${!active ? 'opacity-80' : ''} ${isGuest ? 'blur-md select-none' : ''}`}
+                style={{ 
+                  backgroundColor: hexColor,
+                  boxShadow: active && !isGuest ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
                 }}
               >
-                {active && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a1a2e]" title="Active Star" />}
+                {active && !isGuest && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a1a2e]" title="Active Star" />}
               </div>
               
               <div className="flex-1 min-w-0">
@@ -261,7 +287,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         {user.nickname || user.username}
                       </h2>
                       <span className="text-sm shrink-0">✨</span>
-                      {!isEditing && (
+                      {!isEditing && !isGuest && (
                         <button 
                           onClick={profile ? toggleFavorite : undefined} 
                           className={`text-white/30 hover:text-yellow-400 transition-colors p-1.5 shrink-0 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
@@ -271,30 +297,32 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         </button>
                       )}
                     </div>
-                    <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{user.username}</div>
+                    <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{isGuest ? user.username[0] + '***' : user.username}</div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] font-medium">
-                  {user.location && !user.hideLocation && (
-                    <div className="flex items-center gap-1 text-white/60">
-                      <MapPin className="w-2.5 h-2.5 text-white/30" />
-                      <span>{user.location.city}</span>
-                    </div>
-                  )}
-                  {user.relationshipStatus && (
-                    <div className="flex items-center gap-1 text-white/60">
-                      <span className="text-white/30">💞</span>
-                      <span className="capitalize">{user.relationshipStatus}</span>
-                    </div>
-                  )}
-                  {user.pronouns && (
-                    <div className="flex items-center gap-1 text-white/60">
-                      <span className="text-white/30">👤</span>
-                      <span>{user.pronouns}</span>
-                    </div>
-                  )}
-                </div>
+                {!isGuest && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] font-medium">
+                    {user.location && !user.hideLocation && (
+                      <div className="flex items-center gap-1 text-white/60">
+                        <MapPin className="w-2.5 h-2.5 text-white/30" />
+                        <span>{user.location.city}</span>
+                      </div>
+                    )}
+                    {user.relationshipStatus && (
+                      <div className="flex items-center gap-1 text-white/60">
+                        <span className="text-white/30">💞</span>
+                        <span className="capitalize">{user.relationshipStatus}</span>
+                      </div>
+                    )}
+                    {user.pronouns && (
+                      <div className="flex items-center gap-1 text-white/60">
+                        <span className="text-white/30">👤</span>
+                        <span>{user.pronouns}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -638,22 +666,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 /* VIEW MODE */
                 <div className="space-y-4">
                   {/* Signal Section */}
-                  {user.signal && (
+                  {(user.signal || isGuest) && (
                     <section className="relative group">
                       <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5">
+                      <div className={`relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5 ${isGuest ? 'blur-md select-none' : ''}`}>
                         <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
                           <MessageCircle className="w-2.5 h-2.5" /> Sambit
                         </div>
                         <p className="text-sm text-white/90 font-medium leading-relaxed tracking-tight">
-                          "{user.signal}"
+                          "{isGuest ? "A thought waiting to be shared." : user.signal}"
                         </p>
                       </div>
                     </section>
                   )}
 
                   {/* Vibe + Looking For */}
-                  {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && (
+                  {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && !isGuest && (
                     <section className="space-y-2">
                       <div className="flex flex-wrap gap-1.5">
                         {user.vibe && (
@@ -684,60 +712,64 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     </section>
                   )}
 
-                  {/* Identity & Personality Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Identity Section */}
-                    {(user.relationshipStatus || user.identity || user.sexualRole) && (
-                      <section className="space-y-2">
-                        <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Identity</div>
-                        <div className="flex flex-col gap-1.5">
-                          {[
-                            user.relationshipStatus,
-                            user.identity,
-                            user.sexualRole
-                          ].filter(Boolean).map((item, i) => (
-                            <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
-                              <span className="capitalize">{item}</span>
+                  {!isGuest && (
+                    <>
+                      {/* Identity & Personality Grid */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Identity Section */}
+                        {(user.relationshipStatus || user.identity || user.sexualRole) && (
+                          <section className="space-y-2">
+                            <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Identity</div>
+                            <div className="flex flex-col gap-1.5">
+                              {[
+                                user.relationshipStatus,
+                                user.identity,
+                                user.sexualRole
+                              ].filter(Boolean).map((item, i) => (
+                                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
+                                  <span className="capitalize">{item}</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      </section>
-                    )}
+                          </section>
+                        )}
 
-                    {/* Personality Section */}
-                    {(user.zodiacSign || user.mbti) && (
-                      <section className="space-y-2">
-                        <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Personality</div>
-                        <div className="flex flex-col gap-1.5">
-                          {user.zodiacSign && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
-                              <span className="text-white/30">🌙</span>
-                              <span>{user.zodiacSign}</span>
+                        {/* Personality Section */}
+                        {(user.zodiacSign || user.mbti) && (
+                          <section className="space-y-2">
+                            <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Personality</div>
+                            <div className="flex flex-col gap-1.5">
+                              {user.zodiacSign && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
+                                  <span className="text-white/30">🌙</span>
+                                  <span>{user.zodiacSign}</span>
+                                </div>
+                              )}
+                              {user.mbti && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
+                                  <span className="text-white/30">🧠</span>
+                                  <span>{user.mbti}</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {user.mbti && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] border border-white/5 rounded-lg text-xs text-white/70 font-medium">
-                              <span className="text-white/30">🧠</span>
-                              <span>{user.mbti}</span>
-                            </div>
-                          )}
-                        </div>
-                      </section>
-                    )}
-                  </div>
-
-                  {/* Tags Section */}
-                  {user.tags && user.tags.length > 0 && (
-                    <section className="space-y-2">
-                      <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Interests</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {user.tags.map((tag, i) => (
-                          <span key={i} className="px-2.5 py-1 bg-purple-500/5 text-purple-300/80 text-[10px] font-bold rounded-md border border-purple-500/10">
-                            #{tag}
-                          </span>
-                        ))}
+                          </section>
+                        )}
                       </div>
-                    </section>
+
+                      {/* Tags Section */}
+                      {user.tags && user.tags.length > 0 && (
+                        <section className="space-y-2">
+                          <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold">Interests</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {user.tags.map((tag, i) => (
+                              <span key={i} className="px-2.5 py-1 bg-purple-500/5 text-purple-300/80 text-[10px] font-bold rounded-md border border-purple-500/10">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+                    </>
                   )}
 
                 </div>
@@ -746,17 +778,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
             {/* Actions Footer */}
             <div className="mt-6 pt-6 border-t border-white/10 shrink-0">
-              {!profile ? (
-                <div className="text-center py-4 px-6 bg-white/5 rounded-2xl border border-white/10">
-                  <p className="text-xs text-white/40 font-medium mb-3">Login to send signals and interact with this star</p>
-                  <button 
-                    onClick={() => window.location.href = '/login'}
-                    className="w-full py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-xl text-xs font-bold transition-all"
-                  >
-                    Go to Login
-                  </button>
-                </div>
-              ) : isMe ? (
+              {isMe ? (
                 <div className="flex gap-3">
                   {isEditing ? (
                     <>
@@ -804,22 +826,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               ) : (
                 <div className="space-y-4">
                   <button
-                    onClick={() => onChatClick && onChatClick(user)}
-                    className="w-full py-4 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
+                    onClick={() => !isGuest && onChatClick && onChatClick(user)}
+                    disabled={isGuest}
+                    className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${
+                      isGuest 
+                        ? 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5 shadow-none' 
+                        : 'bg-purple-500 hover:bg-purple-600 text-white shadow-purple-500/20'
+                    }`}
                   >
-                    <Send className="w-4 h-4" /> Send Signal
+                    {isGuest ? (
+                      <ShieldAlert className="w-4 h-4" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    {isGuest ? "Join Hiraya to Connect" : "Send Signal"}
                   </button>
                   
-                  <div className="flex justify-between items-center px-1">
-                    <button onClick={() => setIsReporting(!isReporting)} className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 flex items-center gap-1.5 transition-colors font-bold">
-                      <Flag className="w-3 h-3" /> Report
-                    </button>
-                    <button onClick={handleBlock} className="text-[10px] uppercase tracking-widest text-red-400/40 hover:text-red-400/60 flex items-center gap-1.5 transition-colors font-bold">
-                      <ShieldAlert className="w-3 h-3" /> Block
-                    </button>
-                  </div>
+                  {!isGuest && (
+                    <div className="flex justify-between items-center px-1">
+                      <button onClick={() => setIsReporting(!isReporting)} className="text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 flex items-center gap-1.5 transition-colors font-bold">
+                        <Flag className="w-3 h-3" /> Report
+                      </button>
+                      <button onClick={handleBlock} className="text-[10px] uppercase tracking-widest text-red-400/40 hover:text-red-400/60 flex items-center gap-1.5 transition-colors font-bold">
+                        <ShieldAlert className="w-3 h-3" /> Block
+                      </button>
+                    </div>
+                  )}
 
-                  {isReporting && (
+                  {isReporting && !isGuest && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-3 bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
                       <p className="text-[10px] text-red-200/50 uppercase tracking-wider font-bold">Report User</p>
                       <select 
@@ -854,9 +888,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               )}
             </div>
           </div>
-        </motion.div>
-      </motion.div>
-      </ModalPortal>
-    </AnimatePresence>
-  );
+        </>
+      )}
+    </motion.div>
+    </motion.div>
+    </ModalPortal>
+  </AnimatePresence>
+);
 };

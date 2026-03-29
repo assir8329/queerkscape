@@ -3,7 +3,7 @@ import { collection, query, where, onSnapshot, doc, getDoc, addDoc, serverTimest
 import { db } from '../firebase';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Users, MessageCircle, Send, Loader2, ChevronLeft, Sparkles } from 'lucide-react';
+import { X, Users, MessageCircle, MessageSquare, Send, Loader2, ChevronLeft, Sparkles } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { getHexColor } from '../lib/colors';
 import { ModalPortal } from './ModalPortal';
@@ -13,6 +13,7 @@ interface SiklabInboxProps {
   onClose: () => void;
   initialUser?: UserProfile | null;
   onUserClick: (user: UserProfile) => void;
+  initialTab?: 'ugnayan' | 'signals';
 }
 
 interface Interaction {
@@ -37,7 +38,7 @@ const UGNAYAN_EMPTY_MESSAGES = [
   "Tahimik ang iyong kalawakan. Maghintay ng siklab mula sa iyong mga buklod."
 ];
 
-export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initialUser, onUserClick }) => {
+export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initialUser, onUserClick, initialTab }) => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<'ugnayan' | 'signals'>('ugnayan');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -49,7 +50,6 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
   const [optimisticReadUids, setOptimisticReadUids] = useState<Set<string>>(new Set());
   const [unreadSignalsCount, setUnreadSignalsCount] = useState(0);
   const [unreadUgnayanCount, setUnreadUgnayanCount] = useState(0);
-  const [isSignalsTabOptimisticallyRead, setIsSignalsTabOptimisticallyRead] = useState(false);
   
   // Chat states
   const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -63,12 +63,20 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     return UGNAYAN_EMPTY_MESSAGES[Math.floor(Math.random() * UGNAYAN_EMPTY_MESSAGES.length)];
   }, [isOpen, activeTab === 'ugnayan']);
 
-  // Set initial user if provided
+  // Set initial user and tab if provided
   useEffect(() => {
-    if (initialUser) {
-      setSelectedUser(initialUser);
+    if (isOpen) {
+      if (initialUser) {
+        setSelectedUser(initialUser);
+        setActiveTab('signals');
+      } else if (initialTab) {
+        setActiveTab(initialTab);
+      }
+    } else {
+      // Reset state when closing
+      setSelectedUser(null);
     }
-  }, [initialUser]);
+  }, [isOpen, initialUser, initialTab]);
 
   // Fetch Connections (Ugnayan)
   useEffect(() => {
@@ -119,15 +127,20 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     if (!profile || !isOpen) return;
 
     const q = query(
-      collection(db, 'ugnayan'),
-      where('participants', 'array-contains', profile.uid),
+      collection(db, 'connections'),
+      where('users', 'array-contains', profile.uid),
       where('status', '==', 'new')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setUnreadUgnayanCount(snapshot.size);
+      // Only count if the user is in the newFor array
+      const count = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        return data.newFor?.includes(profile.uid);
+      }).length;
+      setUnreadUgnayanCount(count);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'ugnayan');
+      handleFirestoreError(error, OperationType.GET, 'connections');
     });
 
     return () => unsubscribe();
@@ -217,7 +230,7 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
         }
       });
       
-      const count = isSignalsTabOptimisticallyRead ? 0 : uniqueSenders.size;
+      const count = uniqueSenders.size;
       console.log("Unread signals count (unique senders):", count, "Total unread docs:", snapshot.docs.length);
       setUnreadSignalsCount(count);
     }, (error) => {
@@ -225,12 +238,12 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     });
 
     return () => unsubscribe();
-  }, [profile, isOpen, isSignalsTabOptimisticallyRead, optimisticReadUids]);
+  }, [profile, isOpen, optimisticReadUids]);
 
-  // Reset optimistic tab state when modal closes or interactions change significantly
+  // Reset optimistic state when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setIsSignalsTabOptimisticallyRead(false);
+      setOptimisticReadUids(new Set());
     }
   }, [isOpen]);
 
@@ -477,40 +490,8 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     }
   };
 
-  const clearAllSignalsForTab = async () => {
-    if (!profile) return;
-    
-    // Optimistic UI: Hide the tab dot immediately
-    setIsSignalsTabOptimisticallyRead(true);
-    
-    try {
-      // Find all unread messages where I am the recipient
-      const unreadQuery = query(
-        collection(db, 'interactions'),
-        where('toUid', '==', profile.uid),
-        where('read', '==', false),
-        limit(50)
-      );
-      
-      const snap = await getDocs(unreadQuery);
-      if (!snap.empty) {
-        const batch = writeBatch(db);
-        snap.docs.forEach(d => {
-          batch.update(d.ref, { read: true });
-        });
-        await batch.commit();
-      }
-    } catch (err) {
-      console.error("Error in clearAllSignalsForTab:", err);
-    }
-  };
-
   const handleTabChange = async (tab: 'ugnayan' | 'signals') => {
     setActiveTab(tab);
-    
-    if (tab === 'signals') {
-      clearAllSignalsForTab();
-    }
     
     if (tab === 'ugnayan' && unreadUgnayanCount > 0) {
       // Optimistic local update
@@ -519,15 +500,22 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
       // Background Firestore update
       try {
         const q = query(
-          collection(db, 'ugnayan'),
-          where('participants', 'array-contains', profile?.uid),
+          collection(db, 'connections'),
+          where('users', 'array-contains', profile?.uid),
           where('status', '==', 'new')
         );
         const snap = await getDocs(q);
         if (!snap.empty) {
           const batch = writeBatch(db);
           snap.docs.forEach(d => {
-            batch.update(d.ref, { status: 'active' });
+            const data = d.data();
+            if (data.newFor?.includes(profile?.uid)) {
+              const updatedNewFor = data.newFor.filter((id: string) => id !== profile?.uid);
+              batch.update(d.ref, { 
+                newFor: updatedNewFor,
+                status: updatedNewFor.length === 0 ? 'read' : 'new'
+              });
+            }
           });
           await batch.commit();
         }
@@ -592,7 +580,7 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                   onClick={() => handleTabChange('signals')}
                   className={`flex-1 py-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative ${activeTab === 'signals' ? 'text-purple-400 border-b-2 border-purple-400 bg-purple-400/5' : 'text-white/20 hover:text-white/40'}`}
                 >
-                  <MessageCircle className={`w-3.5 h-3.5 ${activeTab === 'signals' ? 'text-purple-400' : 'text-white/20'}`} />
+                  <MessageSquare className={`w-3.5 h-3.5 ${activeTab === 'signals' ? 'text-purple-400' : 'text-white/20'}`} />
                   Signals
                   {unreadSignalsCount > 0 && (
                     <motion.div 
@@ -623,16 +611,22 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                       </p>
                     </div>
                   ) : (
-                    bonds.map((bond) => (
-                        <button
-                          key={bond.id}
-                          onClick={() => handleUserSelect(bond.otherUser!.uid)}
-                          className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left relative ${
-                            bond.status === 'new' && bond.newFor?.includes(profile.uid)
-                              ? 'bg-purple-500/10 border-purple-500/20' 
-                              : 'bg-white/5 hover:bg-white/10 border-white/5'
-                          }`}
-                        >
+                    bonds.map((bond) => {
+                          const isNew = bond.status === 'new' && bond.newFor?.includes(profile.uid);
+                          const isSelected = selectedUser?.uid === bond.otherUser?.uid;
+                          
+                          return (
+                            <button
+                              key={bond.id}
+                              onClick={() => handleUserSelect(bond.otherUser!.uid)}
+                              className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left relative ${
+                                isSelected 
+                                  ? 'bg-purple-500/20 border-purple-500/40 shadow-[0_0_20px_rgba(168,85,247,0.1)]' 
+                                  : isNew
+                                    ? 'bg-purple-500/15 border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.1)]'
+                                    : 'bg-white/5 hover:bg-white/10 border-white/5'
+                              }`}
+                            >
                           <div 
                             className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
                             style={{
@@ -656,7 +650,8 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
                             />
                           )}
                         </button>
-                    ))
+                      );
+                    })
                   )
                 ) : (
                   interactions.length === 0 ? (

@@ -58,6 +58,8 @@ const MainApp: React.FC = () => {
   const [showTakda, setShowTakda] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>('mundo');
   const [unreadSignalsCount, setUnreadSignalsCount] = useState(0);
+  const [unreadUgnayanCount, setUnreadUgnayanCount] = useState(0);
+  const [siklabInitialTab, setSiklabInitialTab] = useState<'ugnayan' | 'signals'>('ugnayan');
   const [isCreateHubOpen, setIsCreateHubOpen] = useState(false);
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
   const [siklabTargetUser, setSiklabTargetUser] = useState<UserProfile | null>(null);
@@ -140,14 +142,35 @@ const MainApp: React.FC = () => {
     return () => unsubscribe();
   }, [profile]);
 
+  useEffect(() => {
+    if (!profile) return;
+    const q = query(
+      collection(db, 'connections'),
+      where('users', 'array-contains', profile.uid),
+      where('status', '==', 'new')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Only count if the user is in the newFor array
+      const count = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        return data.newFor?.includes(profile.uid);
+      }).length;
+      console.log("Global unread ugnayan count:", count);
+      setUnreadUgnayanCount(count);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'connections');
+    });
+    return () => unsubscribe();
+  }, [profile]);
+
   const handleTabChange = (tab: AppTab) => {
     if (tab === 'sambit') {
       setIsCreateHubOpen(true);
       return;
     }
     if (tab === 'siklab') {
+      setSiklabInitialTab('signals');
       setShowSiklab(true);
-      setActiveTab('siklab');
       return;
     }
     
@@ -234,11 +257,10 @@ const MainApp: React.FC = () => {
           <>
             {user && !profile?.onboarded && <Onboarding />}
             
-            {/* Sidebar (Desktop Only) */}
+            {/* Floating Bottom Dock (Desktop Only) */}
             <Sidebar 
               profile={profile} 
               mapMode={mapMode} 
-              setMapMode={setMapMode} 
               activeTab={activeTab}
               onTabChange={handleTabChange}
               onMyProfileClick={() => {
@@ -256,36 +278,16 @@ const MainApp: React.FC = () => {
                 }
               }}
               onBondsClick={() => {
+                setSiklabInitialTab('ugnayan');
                 setShowSiklab(true);
-                // We can potentially set a tab here if needed, but Siklab handles its own tabs
               }}
-              onNotificationsClick={() => setShowSiklab(true)}
+              onNotificationsClick={() => {
+                setSiklabInitialTab('signals');
+                setShowSiklab(true);
+              }}
               onTakdaClick={() => setShowTakda(true)}
-              onThoughtsClick={() => {
-                if (isMobile) {
-                  setActiveTab('thoughts');
-                } else {
-                  setRightPanelType('thoughts');
-                }
-              }}
-              onPinMemoryClick={() => {
-                if (!user) {
-                  navigate('/login');
-                  return;
-                }
-                setIsAddingMemory(!isAddingMemory);
-              }}
-              isAddingMemory={isAddingMemory}
-              onCreateClick={() => {
-                if (isMobile) {
-                  setIsCreateHubOpen(true);
-                } else {
-                  setRightPanelType('create');
-                }
-              }}
-              onSignOut={signOut}
-              onSignInClick={() => navigate('/login')}
               unreadSignalsCount={unreadSignalsCount}
+              unreadUgnayanCount={unreadUgnayanCount}
             />
 
             {/* Main Content */}
@@ -411,13 +413,14 @@ const MainApp: React.FC = () => {
                   onClose={() => {
                     setShowSiklab(false);
                     setSiklabTargetUser(null);
-                    if (activeTab === 'siklab') setActiveTab('map');
+                    if (activeTab === 'siklab') setActiveTab('mundo');
                   }} 
                   initialUser={siklabTargetUser}
                   onUserClick={(user) => {
                     setSelectedUser(user);
                     setShowSiklab(false);
                   }}
+                  initialTab={siklabInitialTab}
                 />
 
                 <TakdaModal
@@ -484,6 +487,7 @@ const MainApp: React.FC = () => {
               activeTab={activeTab} 
               setActiveTab={handleTabChange} 
               unreadSignalsCount={unreadSignalsCount}
+              unreadUgnayanCount={unreadUgnayanCount}
             />
           </>
         } />

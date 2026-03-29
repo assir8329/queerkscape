@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Globe, MessageCircle, Plus, Share2 } from 'lucide-react';
+import { Star, Globe, MessageSquare, Plus, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { getHexColor } from '../lib/colors';
@@ -8,9 +8,10 @@ interface BottomNavProps {
   activeTab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit';
   setActiveTab: (tab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit') => void;
   unreadSignalsCount?: number;
+  unreadUgnayanCount?: number;
 }
 
-export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, unreadSignalsCount = 0 }) => {
+export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, unreadSignalsCount = 0, unreadUgnayanCount = 0 }) => {
   const { profile } = useAuth();
   const userVibeColor = profile ? getHexColor(profile.color) : '#a855f7';
 
@@ -118,10 +119,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
             style={{ color: activeTab === 'siklab' ? userVibeColor : undefined }}
           >
             <div className="relative">
-              <MessageCircle className="w-5 h-5" />
-              {unreadSignalsCount > 0 && (
+              <MessageSquare className="w-5 h-5" />
+              {(unreadSignalsCount + unreadUgnayanCount) > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-purple-600 rounded-full flex items-center justify-center px-1 text-[7px] text-white font-black shadow-[0_0_8px_rgba(168,85,247,0.8)]">
-                  {unreadSignalsCount > 9 ? '9+' : unreadSignalsCount}
+                  {(unreadSignalsCount + unreadUgnayanCount) > 9 ? '9+' : (unreadSignalsCount + unreadUgnayanCount)}
                 </span>
               )}
             </div>
