@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import { motion, AnimatePresence } from 'motion/react';
@@ -43,36 +43,65 @@ export const KalawakanBackground: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [createShootingStar]);
 
-  const particlesOptions = {
+  const particlesOptions = useMemo(() => ({
+    fpsLimit: 30,
     particles: {
-      number: { value: 400, density: { enable: true, value_area: 800 } },
-      color: { value: ["#ffffff", "#ffe9c4", "#d4fbff"] },
-      shape: { type: "circle" },
-      opacity: {
-        value: 0.8,
-        random: true,
-        anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false }
+      number: { 
+        value: 250, 
+        density: { 
+          enable: true, 
+          area: 800 
+        } 
       },
-      size: { value: 1.2, random: true },
-      line_linked: { enable: false },
-      move: { enable: true, speed: 0.1, direction: "none", random: true, out_mode: "out" }
+      color: { 
+        value: ["#ffffff", "#ffe9c4", "#d4fbff"] 
+      },
+      shape: { 
+        type: "circle" 
+      },
+      opacity: {
+        value: { min: 0.1, max: 0.7 },
+        animation: {
+          enable: true,
+          speed: 0.4,
+          sync: false,
+          startValue: "random"
+        }
+      },
+      size: { 
+        value: { min: 0.5, max: 1.2 } 
+      },
+      move: {
+        enable: false,
+        speed: 0,
+        random: false,
+        straight: false,
+        outModes: {
+          default: "none"
+        }
+      }
     },
     interactivity: {
-      events: { onhover: { enable: true, mode: "bubble" } },
-      modes: { bubble: { distance: 100, size: 2, duration: 2, opacity: 1 } }
+      events: {
+        onHover: {
+          enable: false
+        },
+        onClick: {
+          enable: false
+        }
+      }
     },
     retina_detect: true,
     fullScreen: { enable: false }
-  };
+  }), []);
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-black">
       {/* Background Gradients */}
-      <div className="absolute inset-0 bg-black" />
       <div className="absolute inset-0" style={{
         backgroundImage: `
-          radial-gradient(circle at top right, rgba(121, 68, 154, 0.15), transparent),
-          radial-gradient(circle at 20% 80%, rgba(41, 196, 255, 0.15), transparent)
+          radial-gradient(circle at top right, rgba(121, 68, 154, 0.12), transparent),
+          radial-gradient(circle at 20% 80%, rgba(41, 196, 255, 0.12), transparent)
         `
       }} />
 
