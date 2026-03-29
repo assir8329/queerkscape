@@ -42,18 +42,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         animate={{ y: 0, opacity: 1 }}
         className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-8 py-3 flex items-center gap-6 shadow-2xl"
       >
-        {/* Sky/Map Item */}
+        {/* Kalawakan (Sky) Item */}
+        <DockItem 
+          icon={<Star size={20} />} 
+          label="SKY" 
+          onClick={() => onTabChange('kalawakan')}
+          active={activeTab === 'kalawakan'}
+        />
+
+        {/* Mundo (Earth) Item */}
         <DockItem 
           icon={<Globe size={20} />} 
-          label={mapMode === 'constellation' ? 'MUNDO' : 'SKY'} 
-          onClick={() => {
-            if (mapMode === 'constellation') {
-              onTabChange('mundo');
-            } else {
-              onTabChange('kalawakan');
-            }
-          }}
-          active={activeTab === 'mundo' || activeTab === 'kalawakan'}
+          label="MUNDO" 
+          onClick={() => onTabChange('mundo')}
+          active={activeTab === 'mundo'}
         />
 
         {/* Buklod Item */}

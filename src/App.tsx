@@ -57,6 +57,7 @@ const MainApp: React.FC = () => {
   const [showSiklab, setShowSiklab] = useState(false);
   const [showTakda, setShowTakda] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>('mundo');
+  const [resetMapTrigger, setResetMapTrigger] = useState(0);
   const [unreadSignalsCount, setUnreadSignalsCount] = useState(0);
   const [unreadUgnayanCount, setUnreadUgnayanCount] = useState(0);
   const [siklabInitialTab, setSiklabInitialTab] = useState<'ugnayan' | 'signals'>('ugnayan');
@@ -164,6 +165,10 @@ const MainApp: React.FC = () => {
   }, [profile]);
 
   const handleTabChange = (tab: AppTab) => {
+    if (tab === activeTab && tab === 'mundo') {
+      setResetMapTrigger(prev => prev + 1);
+    }
+
     if (tab === 'sambit') {
       setIsCreateHubOpen(true);
       return;
@@ -318,6 +323,7 @@ const MainApp: React.FC = () => {
                     onInteraction={handleMapInteraction}
                     isAddingMemory={isAddingMemory}
                     setIsAddingMemory={setIsAddingMemory}
+                    resetTrigger={resetMapTrigger}
                   />
                 )}
                 

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 interface RightActionStackProps {
   isLoggedIn: boolean;
   onCenterMe: () => void;
+  onHome: () => void;
   onPinMemory: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
@@ -21,6 +22,7 @@ interface RightActionStackProps {
 export const RightActionStack: React.FC<RightActionStackProps> = ({
   isLoggedIn,
   onCenterMe,
+  onHome,
   onPinMemory,
   onZoomIn,
   onZoomOut,
@@ -46,6 +48,12 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
       >
         {/* Primary Actions Group */}
         <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
+          <ActionButton 
+            icon={<Maximize2 size={18} />} 
+            label="Home" 
+            onClick={onHome} 
+            variant="highlight"
+          />
           <ActionButton 
             icon={<Navigation2 size={18} />} 
             label={isLoggedIn ? "Center Me" : "Sign in to center"} 

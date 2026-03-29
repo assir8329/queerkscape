@@ -27,6 +27,7 @@ interface EarthMapProps {
   onInteraction?: () => void;
   isAddingMemory?: boolean;
   setIsAddingMemory?: (adding: boolean) => void;
+  resetTrigger?: number;
 }
 // ... (rest of the helper functions remain the same)
 
@@ -315,7 +316,7 @@ const MapContent: React.FC<{
   );
 };
 
-export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction, isAddingMemory: externalIsAddingMemory, setIsAddingMemory: externalSetIsAddingMemory }) => {
+export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserClick, filterTag, setFilterTag, mapMode, setMapMode, isUiVisible = true, onInteraction, isAddingMemory: externalIsAddingMemory, setIsAddingMemory: externalSetIsAddingMemory, resetTrigger = 0 }) => {
   const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -396,14 +397,8 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
     });
   }, [users, currentUser, debouncedFilter, filterTag]);
 
-  useEffect(() => {
-    if (map && currentUser) {
-      const target = getTargetLocation(currentUser);
-      if (!isNaN(target.lat) && !isNaN(target.lng)) {
-        map.flyTo([target.lat, target.lng], target.zoom, { duration: 1.5 });
-      }
-    }
-  }, [map, currentUser]);
+  // Remove automatic fly-to-user on load to ensure Philippines is the default view
+  // Users can still use "Center Me" button
 
   const handleCenterOnMe = () => {
     if (map && currentUser) {
@@ -413,6 +408,37 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       }
     }
   };
+
+  const resetToHome = () => {
+    if (map) {
+      const PH_BOUNDS: L.LatLngBoundsExpression = [[4.5, 116.5], [21.0, 127.0]];
+      map.flyToBounds(PH_BOUNDS, { 
+        paddingTopLeft: [20, 150],
+        paddingBottomRight: [20, 150], 
+        duration: 2,
+        easeLinearity: 0.25
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (map) {
+      const PH_BOUNDS: L.LatLngBoundsExpression = [[4.5, 116.5], [21.0, 127.0]];
+      // Smooth cinematic entrance on load
+      map.flyToBounds(PH_BOUNDS, { 
+        paddingTopLeft: [20, 150],
+        paddingBottomRight: [20, 150],
+        duration: 2.5,
+        easeLinearity: 0.25
+      });
+    }
+  }, [map]);
+
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      resetToHome();
+    }
+  }, [resetTrigger]);
 
   const handleMapClick = async (lat: number, lng: number) => {
     if (!isAddingMemory) return;
@@ -470,13 +496,13 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       )}
 
       <MapContainer 
-        center={[20, 0]} 
-        zoom={2} 
+        center={[12.8797, 121.7740]} 
+        zoom={6} 
         ref={setMap}
         style={{ height: '100%', width: '100%', background: '#050510' }}
         zoomControl={false}
         attributionControl={false}
-        minZoom={2}
+        minZoom={5.8}
         maxZoom={18}
       >
         <TileLayer
@@ -516,6 +542,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
       <RightActionStack 
         isLoggedIn={!!currentUser}
         onCenterMe={handleCenterOnMe}
+        onHome={resetToHome}
         onPinMemory={() => setIsAddingMemory(!isAddingMemory)}
         isAddingMemory={isAddingMemory}
         onToggleLayer={toggleLayer}
