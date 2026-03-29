@@ -14,6 +14,8 @@
   "dependencies": {
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@tsparticles/react": "^3.0.0",
+    "@tsparticles/slim": "^3.9.1",
     "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
@@ -29,6 +31,7 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.13.2",
     "tailwind-merge": "^3.5.0",
+    "tsparticles": "^3.9.1",
     "vite": "^6.2.0"
   },
   "devDependencies": {

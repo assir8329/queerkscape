@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { Star } from './Star';
+import { KalawakanBackground } from './KalawakanBackground';
 import { useDispersedStars } from '../lib/orbital-dispersion';
 import { ThoughtBubble } from './ThoughtBubble';
 import { UnsaidThought } from '../types';
@@ -519,7 +520,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-[#050510] cursor-grab active:cursor-grabbing touch-none"
+      className="relative w-full h-full overflow-hidden bg-black cursor-grab active:cursor-grabbing touch-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -531,6 +532,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         handleZoom(e.deltaY > 0 ? -0.1 : 0.1, e.clientX, e.clientY);
       }}
     >
+      {/* Kalawakan Background (Fixed) */}
+      <KalawakanBackground />
+
       <div
         className="absolute origin-top-left"
         style={{
@@ -540,9 +544,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           transition: isDragging ? 'none' : 'transform 0.1s ease-out',
         }}
       >
-        <div className="absolute inset-0 opacity-10" 
-             style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '50px 50px' }} />
-             
         {/* Puso ng Hiraya (Heart of Hiraya) - Central Nebula */}
         {mapMode === 'constellation' && (
           <div 
