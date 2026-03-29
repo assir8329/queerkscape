@@ -413,10 +413,11 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
     if (map) {
       const PH_BOUNDS: L.LatLngBoundsExpression = [[4.5, 116.5], [21.0, 127.0]];
       map.flyToBounds(PH_BOUNDS, { 
-        paddingTopLeft: [20, 150],
-        paddingBottomRight: [20, 150], 
+        paddingTopLeft: [20, 120],
+        paddingBottomRight: [20, 120], 
         duration: 2,
-        easeLinearity: 0.25
+        easeLinearity: 0.1,
+        animate: true
       });
     }
   };
@@ -425,12 +426,17 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
     if (map) {
       const PH_BOUNDS: L.LatLngBoundsExpression = [[4.5, 116.5], [21.0, 127.0]];
       // Smooth cinematic entrance on load
-      map.flyToBounds(PH_BOUNDS, { 
-        paddingTopLeft: [20, 150],
-        paddingBottomRight: [20, 150],
-        duration: 2.5,
-        easeLinearity: 0.25
-      });
+      // Use a small delay to ensure the map container is fully ready and dimensions are stable
+      const timer = setTimeout(() => {
+        map.flyToBounds(PH_BOUNDS, { 
+          paddingTopLeft: [20, 120],
+          paddingBottomRight: [20, 120],
+          duration: 3,
+          easeLinearity: 0.1,
+          animate: true
+        });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [map]);
 
@@ -497,13 +503,14 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
 
       <MapContainer 
         center={[12.8797, 121.7740]} 
-        zoom={6} 
+        zoom={5.5} 
         ref={setMap}
         style={{ height: '100%', width: '100%', background: '#050510' }}
         zoomControl={false}
         attributionControl={false}
-        minZoom={5.8}
+        minZoom={5.4}
         maxZoom={18}
+        zoomSnap={0}
       >
         <TileLayer
           url={isAddingMemory 

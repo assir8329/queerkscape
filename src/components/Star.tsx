@@ -80,17 +80,14 @@ export const Star: React.FC<StarProps> = ({ user, onClick, isActive, scale, isUs
       initial={{ scale: 0, opacity: 0 }}
       animate={{ 
         scale: 1, 
-        opacity: 1,
-        y: isZoomedOut ? 0 : [0, -10, 0],
-        x: isZoomedOut ? 0 : [0, 5, 0]
+        opacity: 1
       }}
       transition={{
         scale: { duration: 0.5 },
-        opacity: { duration: 0.5 },
-        y: { duration: randomDuration, repeat: Infinity, ease: "easeInOut", delay: randomDelay },
-        x: { duration: randomDuration * 1.2, repeat: Infinity, ease: "easeInOut", delay: randomDelay }
+        opacity: { duration: 0.5 }
       }}
-      whileHover={{ scale: 1.3, zIndex: 40 }}
+      whileHover={{ scale: 1.1, zIndex: 40 }}
+      whileTap={{ scale: 0.95 }}
       onClick={(e) => {
         e.stopPropagation();
         onClick(user);

@@ -44,13 +44,14 @@ export const KalawakanBackground: React.FC = () => {
   }, [createShootingStar]);
 
   const particlesOptions = useMemo(() => ({
-    fpsLimit: 30,
+    fpsLimit: 15,
+    detectRetina: false,
     particles: {
       number: { 
-        value: 250, 
+        value: 200, 
         density: { 
           enable: true, 
-          area: 800 
+          area: 1000 
         } 
       },
       color: { 
@@ -60,38 +61,24 @@ export const KalawakanBackground: React.FC = () => {
         type: "circle" 
       },
       opacity: {
-        value: { min: 0.1, max: 0.7 },
+        value: { min: 0.1, max: 0.5 },
         animation: {
           enable: true,
-          speed: 0.4,
+          speed: 0.1,
           sync: false,
           startValue: "random"
         }
       },
       size: { 
-        value: { min: 0.5, max: 1.2 } 
+        value: { min: 0.5, max: 0.8 } 
       },
       move: {
-        enable: false,
-        speed: 0,
-        random: false,
-        straight: false,
-        outModes: {
-          default: "none"
-        }
+        enable: false
       }
     },
     interactivity: {
-      events: {
-        onHover: {
-          enable: false
-        },
-        onClick: {
-          enable: false
-        }
-      }
+      events: {}
     },
-    retina_detect: true,
     fullScreen: { enable: false }
   }), []);
 

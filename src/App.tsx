@@ -56,7 +56,10 @@ const MainApp: React.FC = () => {
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [showSiklab, setShowSiklab] = useState(false);
   const [showTakda, setShowTakda] = useState(false);
-  const [activeTab, setActiveTab] = useState<AppTab>('mundo');
+  const [activeTab, setActiveTab] = useState<AppTab>(() => {
+    const savedMode = localStorage.getItem('mapMode');
+    return savedMode === 'constellation' ? 'kalawakan' : 'mundo';
+  });
   const [resetMapTrigger, setResetMapTrigger] = useState(0);
   const [unreadSignalsCount, setUnreadSignalsCount] = useState(0);
   const [unreadUgnayanCount, setUnreadUgnayanCount] = useState(0);
@@ -94,16 +97,13 @@ const MainApp: React.FC = () => {
   }, [user, loading, location.pathname, navigate]);
 
   const handleMapInteraction = () => {
-    setIsUiVisible(false);
-    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
-    fadeTimeoutRef.current = setTimeout(() => {
-      setIsUiVisible(true);
-    }, 2000);
+    // Effect removed as per user request to reduce perceived lag and interaction overhead
   };
 
   const setMapMode = (mode: 'constellation' | 'earth') => {
     setMapModeState(mode);
     localStorage.setItem('mapMode', mode);
+    setActiveTab(mode === 'constellation' ? 'kalawakan' : 'mundo');
   };
 
   React.useEffect(() => {

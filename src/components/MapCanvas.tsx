@@ -551,16 +551,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
             style={{
               left: 2500,
               top: 2500,
-              width: 1500 * nebulaScale,
-              height: 1500 * nebulaScale,
-              transform: `translate(-50%, -50%) translate(${-position.x * 0.3 / scale}px, ${-position.y * 0.3 / scale}px)`,
-              background: 'radial-gradient(circle, rgba(75, 0, 130, 0.8) 0%, rgba(138, 43, 226, 0.4) 40%, rgba(147, 112, 219, 0.1) 70%, transparent 100%)',
-              filter: 'blur(60px)',
+              width: 1200,
+              height: 1200,
+              transform: 'translate(-50%, -50%)',
+              background: 'radial-gradient(circle, rgba(75, 0, 130, 0.3) 0%, rgba(138, 43, 226, 0.15) 50%, transparent 80%)',
+              filter: 'blur(40px)',
               opacity: nebulaIntensity,
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out, opacity 1s ease-in-out, width 1s ease-in-out, height 1s ease-in-out',
+              transition: 'opacity 1s ease-in-out',
             }}
           >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-[10px] uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 text-[10px] uppercase tracking-[0.5em] font-bold whitespace-nowrap">
               Puso ng Hiraya
             </div>
           </div>
