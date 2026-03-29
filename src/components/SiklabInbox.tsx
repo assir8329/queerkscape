@@ -197,19 +197,35 @@ export const SiklabInbox: React.FC<SiklabInboxProps> = ({ isOpen, onClose, initi
     return () => unsubscribe();
   }, [profile, isOpen]);
 
-  // Derive Signals Tab notification state
+  // Dedicated listener for unread signals count
   useEffect(() => {
-    if (!profile) return;
-    
-    // Strict Tab Filter: Only count if I am the recipient and it's unread
-    const unreadMessages = interactions.filter(interaction => 
-      interaction.toUid === profile.uid && 
-      interaction.read === false &&
-      !optimisticReadUids.has((interaction as any).otherUid)
+    if (!profile || !isOpen) return;
+
+    const q = query(
+      collection(db, 'interactions'),
+      where('toUid', '==', profile.uid),
+      where('read', '==', false)
     );
-    
-    setUnreadSignalsCount(isSignalsTabOptimisticallyRead ? 0 : unreadMessages.length);
-  }, [interactions, profile, optimisticReadUids, isSignalsTabOptimisticallyRead]);
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Deduplicate by fromUid to count unique people who messaged
+      const uniqueSenders = new Set();
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (!optimisticReadUids.has(data.fromUid)) {
+          uniqueSenders.add(data.fromUid);
+        }
+      });
+      
+      const count = isSignalsTabOptimisticallyRead ? 0 : uniqueSenders.size;
+      console.log("Unread signals count (unique senders):", count, "Total unread docs:", snapshot.docs.length);
+      setUnreadSignalsCount(count);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'interactions_count');
+    });
+
+    return () => unsubscribe();
+  }, [profile, isOpen, isSignalsTabOptimisticallyRead, optimisticReadUids]);
 
   // Reset optimistic tab state when modal closes or interactions change significantly
   useEffect(() => {

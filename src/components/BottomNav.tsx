@@ -7,10 +7,10 @@ import { getHexColor } from '../lib/colors';
 interface BottomNavProps {
   activeTab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit';
   setActiveTab: (tab: 'buklod' | 'mundo' | 'kalawakan' | 'siklab' | 'sambit') => void;
-  hasNewSignals?: boolean;
+  unreadSignalsCount?: number;
 }
 
-export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, hasNewSignals = false }) => {
+export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, unreadSignalsCount = 0 }) => {
   const { profile } = useAuth();
   const userVibeColor = profile ? getHexColor(profile.color) : '#a855f7';
 
@@ -119,8 +119,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, h
           >
             <div className="relative">
               <MessageCircle className="w-5 h-5" />
-              {hasNewSignals && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+              {unreadSignalsCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-3.5 bg-purple-600 rounded-full flex items-center justify-center px-1 text-[7px] text-white font-black shadow-[0_0_8px_rgba(168,85,247,0.8)]">
+                  {unreadSignalsCount > 9 ? '9+' : unreadSignalsCount}
+                </span>
               )}
             </div>
             {activeTab === 'siklab' && (

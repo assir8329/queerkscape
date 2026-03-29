@@ -23,7 +23,7 @@ interface SidebarProps {
   activeTab: AppTab;
   onTabChange: (tab: AppTab) => void;
   isVisible?: boolean;
-  hasNewSignals?: boolean;
+  unreadSignalsCount?: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
   isVisible = true,
-  hasNewSignals = false
+  unreadSignalsCount = 0
 }) => {
   const { guestName } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -169,8 +169,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               icon={
                 <div className="relative">
                   <Bell size={18} />
-                  {hasNewSignals && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                  {unreadSignalsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-[16px] h-4 bg-purple-600 rounded-full flex items-center justify-center px-1 text-[8px] text-white font-black shadow-[0_0_8px_rgba(168,85,247,0.8)]">
+                      {unreadSignalsCount > 9 ? '9+' : unreadSignalsCount}
+                    </span>
                   )}
                 </div>
               } 

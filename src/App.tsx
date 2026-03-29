@@ -57,7 +57,7 @@ const MainApp: React.FC = () => {
   const [showSiklab, setShowSiklab] = useState(false);
   const [showTakda, setShowTakda] = useState(false);
   const [activeTab, setActiveTab] = useState<AppTab>('mundo');
-  const [hasNewSignals, setHasNewSignals] = useState(false);
+  const [unreadSignalsCount, setUnreadSignalsCount] = useState(0);
   const [isCreateHubOpen, setIsCreateHubOpen] = useState(false);
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
   const [siklabTargetUser, setSiklabTargetUser] = useState<UserProfile | null>(null);
@@ -131,7 +131,9 @@ const MainApp: React.FC = () => {
       where('read', '==', false)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setHasNewSignals(!snapshot.empty);
+      const uniqueSenders = new Set(snapshot.docs.map(doc => doc.data().fromUid));
+      console.log("Global unread signals count (unique senders):", uniqueSenders.size);
+      setUnreadSignalsCount(uniqueSenders.size);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'interactions');
     });
@@ -283,7 +285,7 @@ const MainApp: React.FC = () => {
               }}
               onSignOut={signOut}
               onSignInClick={() => navigate('/login')}
-              hasNewSignals={hasNewSignals}
+              unreadSignalsCount={unreadSignalsCount}
             />
 
             {/* Main Content */}
@@ -481,7 +483,7 @@ const MainApp: React.FC = () => {
             <BottomNav 
               activeTab={activeTab} 
               setActiveTab={handleTabChange} 
-              hasNewSignals={hasNewSignals}
+              unreadSignalsCount={unreadSignalsCount}
             />
           </>
         } />
