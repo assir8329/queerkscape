@@ -1,12 +1,13 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Cormorant+Garamond:ital,wght@1,300&family=Geologica:wght@100..900&display=swap');
 
-html, body {
+html, body, #root {
   touch-action: none;
   overscroll-behavior: none;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
+  overflow: hidden !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  position: fixed;
 }
 
 @theme {
@@ -137,5 +138,16 @@ html, body {
   50% {
     transform: scale(1.1);
     opacity: 1;
+  }
+}
+
+@keyframes nebula-breathing {
+  0%, 100% {
+    transform: scale(1);
+    filter: blur(40px) brightness(1);
+  }
+  50% {
+    transform: scale(1.03);
+    filter: blur(45px) brightness(1.1);
   }
 }

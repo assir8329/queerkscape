@@ -5,22 +5,30 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export const KalawakanBackground: React.FC = () => {
   const [init, setInit] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1920, height: typeof window !== 'undefined' ? window.innerHeight : 1080 });
   const [shootingStars, setShootingStars] = useState<{ id: number; x: number; y: number; length: number; color: string; duration: number }[]>([]);
 
   useEffect(() => {
+    const handleResize = () => {
+      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    
     initParticlesEngine(async (engine) => {
       await loadSlim(engine);
     }).then(() => {
       setInit(true);
     });
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const createShootingStar = useCallback(() => {
     const id = Date.now() + Math.random();
     const colors = ['#ff3f81', '#29c4ff', '#ffffff', '#79449a', '#fdfc47'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    const startX = Math.random() * window.innerWidth;
-    const startY = Math.random() * (window.innerHeight / 2);
+    const startX = Math.random() * dimensions.width;
+    const startY = Math.random() * (dimensions.height / 2);
     const length = Math.random() * 80 + 50;
     const duration = Math.random() * 1000 + 800;
 
@@ -44,14 +52,14 @@ export const KalawakanBackground: React.FC = () => {
   }, [createShootingStar]);
 
   const particlesOptions = useMemo(() => ({
-    fpsLimit: 15,
+    fpsLimit: 30,
     detectRetina: false,
     particles: {
       number: { 
         value: 200, 
         density: { 
           enable: true, 
-          area: 1000 
+          area: 1200 
         } 
       },
       color: { 
@@ -83,15 +91,7 @@ export const KalawakanBackground: React.FC = () => {
   }), []);
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-black">
-      {/* Background Gradients */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: `
-          radial-gradient(circle at top right, rgba(121, 68, 154, 0.12), transparent),
-          radial-gradient(circle at 20% 80%, rgba(41, 196, 255, 0.12), transparent)
-        `
-      }} />
-
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none z-0 bg-black">
       {/* Particles (Stars) */}
       {init && (
         <Particles
@@ -113,8 +113,8 @@ export const KalawakanBackground: React.FC = () => {
               rotate: -35 
             }}
             animate={{ 
-              x: -window.innerWidth * 0.5, 
-              y: window.innerWidth * 0.5, 
+              x: -800, 
+              y: 800, 
               opacity: 0,
               rotate: -35 
             }}

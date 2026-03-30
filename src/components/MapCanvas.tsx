@@ -40,8 +40,6 @@ const getHexColor = (vibeColor: string) => {
 const CACHE_KEY_USERS = 'hiraya_constellation_users';
 const CACHE_KEY_CONNECTIONS = 'hiraya_constellation_connections';
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
-const UNIVERSE_SIZE = 5000;
-const wrap = (v: number, m: number) => ((v % m) + m) % m;
 
 interface Ugnayan {
   id: string;
@@ -68,13 +66,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   const [thoughts, setThoughts] = useState<UnsaidThought[]>([]);
   const [activeThought, setActiveThought] = useState<UnsaidThought | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [scale, setScale] = useState(1);
-  const [lastTap, setLastTap] = useState(0);
-  const [touchStartDistance, setTouchStartDistance] = useState<number | null>(null);
-  const [touchStartScale, setTouchStartScale] = useState(1);
   const hasCentered = useRef(false);
 
   // Layer toggles
@@ -177,6 +168,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     return () => unsubscribe();
   }, []);
 
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -200,23 +193,22 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const centerOnUser = () => {
     if (profile && viewport.width > 0) {
-      const targetX = wrap(profile.x, UNIVERSE_SIZE);
-      const targetY = wrap(profile.y, UNIVERSE_SIZE);
       setPosition({
-        x: viewport.width / 2 - targetX * scale,
-        y: viewport.height / 2 - targetY * scale,
+        x: viewport.width / 2 - profile.x * scale,
+        y: viewport.height / 2 - profile.y * scale,
       });
       onInteraction?.();
     }
   };
 
   const resetToFullMap = () => {
-    if (viewport.width > 0) {
-      const scaleToFit = viewport.width / UNIVERSE_SIZE;
+    if (viewport.width > 0 && viewport.height > 0) {
+      // Scale to fit the smaller dimension to ensure entire map is visible
+      const scaleToFit = Math.min(viewport.width / 5000, viewport.height / 5000);
       setScale(scaleToFit);
       setPosition({
-        x: viewport.width / 2 - (UNIVERSE_SIZE / 2) * scaleToFit,
-        y: viewport.height / 2 - (UNIVERSE_SIZE / 2) * scaleToFit,
+        x: viewport.width / 2 - 2500 * scaleToFit,
+        y: viewport.height / 2 - 2500 * scaleToFit,
       });
       onInteraction?.();
     }
@@ -238,129 +230,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     hasCentered.current = false;
   }, [mapMode]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-    onInteraction?.();
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-    
-    // Wrap world coordinates to ensure seamless panning
-    const worldX = wrap(-newX / scale, UNIVERSE_SIZE);
-    const worldY = wrap(-newY / scale, UNIVERSE_SIZE);
-    
-    setPosition({
-      x: -worldX * scale,
-      y: -worldY * scale,
-    });
-    
-    // Update dragStart to prevent jumping after wrap
-    setDragStart({
-      x: e.clientX + worldX * scale,
-      y: e.clientY + worldY * scale,
-    });
-    
-    onInteraction?.();
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-
-  const handleZoom = (delta: number, centerX?: number, centerY?: number) => {
-    setScale((prev) => {
-      const newScale = Math.min(Math.max(0.2, prev + delta), 3);
-      
-      if (centerX !== undefined && centerY !== undefined) {
-        // Zoom towards the cursor/pinch center
-        const zoomFactor = newScale / prev;
-        setPosition(pos => {
-          const newX = centerX - (centerX - pos.x) * zoomFactor;
-          const newY = centerY - (centerY - pos.y) * zoomFactor;
-          const worldX = wrap(-newX / newScale, UNIVERSE_SIZE);
-          const worldY = wrap(-newY / newScale, UNIVERSE_SIZE);
-          return {
-            x: -worldX * newScale,
-            y: -worldY * newScale
-          };
-        });
-      }
-      
-      return newScale;
-    });
-    onInteraction?.();
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const now = Date.now();
-    if (now - lastTap < 300) {
-      // Double tap
-      resetToFullMap();
-      setLastTap(0);
-      return;
-    }
-    setLastTap(now);
-
-    if (e.touches.length === 1) {
-      setIsDragging(true);
-      setDragStart({ x: e.touches[0].clientX - position.x, y: e.touches[0].clientY - position.y });
-    } else if (e.touches.length === 2) {
-      const distance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      setTouchStartDistance(distance);
-      setTouchStartScale(scale);
-    }
-    onInteraction?.();
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (e.touches.length === 1 && isDragging) {
-      const newX = e.touches[0].clientX - dragStart.x;
-      const newY = e.touches[0].clientY - dragStart.y;
-      
-      const worldX = wrap(-newX / scale, UNIVERSE_SIZE);
-      const worldY = wrap(-newY / scale, UNIVERSE_SIZE);
-      
-      setPosition({
-        x: -worldX * scale,
-        y: -worldY * scale,
-      });
-      
-      setDragStart({
-        x: e.touches[0].clientX + worldX * scale,
-        y: e.touches[0].clientY + worldY * scale,
-      });
-    } else if (e.touches.length === 2 && touchStartDistance !== null) {
-      const distance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      const delta = distance / touchStartDistance;
-      const newScale = Math.min(Math.max(0.2, touchStartScale * delta), 3);
-      
-      // Calculate pinch center
-      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      
-      const zoomFactor = newScale / scale;
-      setPosition(pos => ({
-        x: centerX - (centerX - pos.x) * zoomFactor,
-        y: centerY - (centerY - pos.y) * zoomFactor,
-      }));
-      setScale(newScale);
-    }
-    onInteraction?.();
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    setTouchStartDistance(null);
-  };
-
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     return users.filter((u) => {
@@ -379,65 +248,32 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const dispersedUsers = useDispersedStars(filteredUsers, scale);
 
-  // Virtualization logic with wrap-around support
+  // Virtualization logic
   const visibleUsers = useMemo(() => {
     if (viewport.width === 0) return [];
-    const buffer = 200 / scale;
-    const cameraX = wrap(-position.x / scale, UNIVERSE_SIZE);
-    const cameraY = wrap(-position.y / scale, UNIVERSE_SIZE);
-    
-    const minX = cameraX - buffer;
-    const maxX = cameraX + viewport.width / scale + buffer;
-    const minY = cameraY - buffer;
-    const maxY = cameraY + viewport.height / scale + buffer;
-
-    const inRange = (val: number, min: number, max: number) => {
-      if (min < 0) return val >= min + UNIVERSE_SIZE || val <= max;
-      if (max > UNIVERSE_SIZE) return val >= min || val <= max - UNIVERSE_SIZE;
-      return val >= min && val <= max;
-    };
+    const buffer = 200 / scale; // 200px buffer
+    const minX = -position.x / scale - buffer;
+    const maxX = (-position.x + viewport.width) / scale + buffer;
+    const minY = -position.y / scale - buffer;
+    const maxY = (-position.y + viewport.height) / scale + buffer;
 
     return dispersedUsers.filter(u => 
-      inRange(u.x, minX, maxX) && inRange(u.y, minY, maxY)
+      u.x >= minX && u.x <= maxX && u.y >= minY && u.y <= maxY
     );
   }, [dispersedUsers, position, scale, viewport]);
 
   const visibleThoughts = useMemo(() => {
     if (viewport.width === 0) return [];
     const buffer = 100 / scale;
-    const cameraX = wrap(-position.x / scale, UNIVERSE_SIZE);
-    const cameraY = wrap(-position.y / scale, UNIVERSE_SIZE);
-    
-    const minX = cameraX - buffer;
-    const maxX = cameraX + viewport.width / scale + buffer;
-    const minY = cameraY - buffer;
-    const maxY = cameraY + viewport.height / scale + buffer;
-
-    const inRange = (val: number, min: number, max: number) => {
-      if (min < 0) return val >= min + UNIVERSE_SIZE || val <= max;
-      if (max > UNIVERSE_SIZE) return val >= min || val <= max - UNIVERSE_SIZE;
-      return val >= min && val <= max;
-    };
+    const minX = -position.x / scale - buffer;
+    const maxX = (-position.x + viewport.width) / scale + buffer;
+    const minY = -position.y / scale - buffer;
+    const maxY = (-position.y + viewport.height) / scale + buffer;
 
     return thoughts.filter(t => 
-      t.x != null && t.y != null && inRange(t.x, minX, maxX) && inRange(t.y, minY, maxY)
+      t.x != null && t.y != null && t.x >= minX && t.x <= maxX && t.y >= minY && t.y <= maxY
     );
   }, [thoughts, position, scale, viewport]);
-
-  const getWrappedElementPos = (elementX: number, elementY: number) => {
-    const cameraX = wrap(-position.x / scale, UNIVERSE_SIZE);
-    const cameraY = wrap(-position.y / scale, UNIVERSE_SIZE);
-    
-    let dx = elementX - cameraX;
-    if (dx > UNIVERSE_SIZE / 2) dx -= UNIVERSE_SIZE;
-    if (dx < -UNIVERSE_SIZE / 2) dx += UNIVERSE_SIZE;
-    
-    let dy = elementY - cameraY;
-    if (dy > UNIVERSE_SIZE / 2) dy -= UNIVERSE_SIZE;
-    if (dy < -UNIVERSE_SIZE / 2) dy += UNIVERSE_SIZE;
-    
-    return { x: cameraX + dx, y: cameraY + dy };
-  };
 
   // Render connections on canvas for performance
   const [kindredUids, setKindredUids] = useState<string[]>([]);
@@ -466,28 +302,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
       
       const x1 = u1?.x ?? conn.from_coord.x;
       const y1 = u1?.y ?? conn.from_coord.y;
-      let x2 = u2?.x ?? conn.to_coord.x;
-      let y2 = u2?.y ?? conn.to_coord.y;
+      const x2 = u2?.x ?? conn.to_coord.x;
+      const y2 = u2?.y ?? conn.to_coord.y;
       const c1 = u1?.color ?? conn.from_coord.color;
       const c2 = u2?.color ?? conn.to_coord.color;
 
-      // Wrap-around line logic: find the shortest path across the universe
-      if (Math.abs(x2 - x1) > UNIVERSE_SIZE / 2) {
-        if (x2 > x1) x2 -= UNIVERSE_SIZE;
-        else x2 += UNIVERSE_SIZE;
-      }
-      if (Math.abs(y2 - y1) > UNIVERSE_SIZE / 2) {
-        if (y2 > y1) y2 -= UNIVERSE_SIZE;
-        else y2 += UNIVERSE_SIZE;
-      }
-
-      // Adjust endpoints relative to the camera to ensure they are drawn in the correct "wrap"
-      const p1 = getWrappedElementPos(x1, y1);
-      const p2 = getWrappedElementPos(x2, y2);
-
       ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       
       if (isBuklodMode && isKindred) {
         // BUKLOD Styling: Thick, vibrant gradient line
@@ -546,15 +368,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
     return users.filter(u => isUserActive(u.lastActive)).length;
   }, [users]);
 
-  const nebulaIntensity = useMemo(() => {
-    // Base intensity + boost from active users
-    return 0.3 + Math.min(activeUserCount * 0.05, 0.6);
-  }, [activeUserCount]);
-
-  const nebulaScale = useMemo(() => {
-    return 1 + Math.min(activeUserCount * 0.02, 0.4);
-  }, [activeUserCount]);
-
   const runMigration = async () => {
     console.log('Starting migration...');
     try {
@@ -602,17 +415,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-black cursor-grab active:cursor-grabbing touch-none"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onWheel={(e) => {
-        handleZoom(e.deltaY > 0 ? -0.1 : 0.1, e.clientX, e.clientY);
-      }}
+      className="fixed inset-0 h-[100dvh] w-screen !overflow-hidden bg-black touch-none"
     >
       {/* Kalawakan Background (Fixed) */}
       <KalawakanBackground />
@@ -623,34 +426,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           width: 5000,
           height: 5000,
           transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-          transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+          transition: 'transform 0.1s ease-out',
         }}
       >
-        {/* Puso ng Hiraya (Heart of Hiraya) - Central Nebula */}
-        {mapMode === 'constellation' && (() => {
-          const wrapped = getWrappedElementPos(UNIVERSE_SIZE / 2, UNIVERSE_SIZE / 2);
-          return (
-            <div 
-              className="absolute pointer-events-none z-0"
-              style={{
-                left: wrapped.x,
-                top: wrapped.y,
-                width: 1200,
-                height: 1200,
-                transform: 'translate(-50%, -50%)',
-                background: 'radial-gradient(circle, rgba(75, 0, 130, 0.3) 0%, rgba(138, 43, 226, 0.15) 50%, transparent 80%)',
-                filter: 'blur(40px)',
-                opacity: nebulaIntensity,
-                transition: 'opacity 1s ease-in-out',
-              }}
-            >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 text-[10px] uppercase tracking-[0.5em] font-bold whitespace-nowrap">
-                Puso ng Hiraya
-              </div>
-            </div>
-          );
-        })()}
-
         <canvas 
           ref={canvasRef}
           width={5000}
@@ -659,94 +437,30 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         />
 
         <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {/* Orbital Group Glows */}
-          {Array.from(new Set(visibleUsers.filter(u => (u as any).isDispersed).map(u => `${(u as any).originalX},${(u as any).originalY}`))).map(groupKey => {
-            const [gx, gy] = (groupKey as string).split(',').map(Number);
-            const groupMembers = visibleUsers.filter(u => (u as any).originalX === gx && (u as any).originalY === gy);
-            if (groupMembers.length < 2) return null;
-            
-            const N = groupMembers.length;
-            const radius = 40 + (N * 5) + 30; // Slightly larger than the orbit in world coordinates
-
-            return (
-              <circle
-                key={`group-glow-${groupKey}`}
-                cx={gx}
-                cy={gy}
-                r={radius}
-                fill="url(#orbitalGradient)"
-                className="opacity-20 transition-all duration-500"
-              />
-            );
-          })}
-
-          {/* Constellation Glows */}
-          {Array.from(new Set(visibleUsers.filter(u => u.constellationId).map(u => u.constellationId))).map(constellationId => {
-            const members = visibleUsers.filter(u => u.constellationId === constellationId);
-            if (members.length < 2) return null;
-            
-            const minX = Math.min(...members.map(m => m.x));
-            const maxX = Math.max(...members.map(m => m.x));
-            const minY = Math.min(...members.map(m => m.y));
-            const maxY = Math.max(...members.map(m => m.y));
-            const cx = (minX + maxX) / 2;
-            const cy = (minY + maxY) / 2;
-            const rx = (maxX - minX) / 2 + 150;
-            const ry = (maxY - minY) / 2 + 150;
-
-            return (
-              <ellipse
-                key={`constellation-glow-${constellationId}`}
-                cx={cx}
-                cy={cy}
-                rx={rx}
-                ry={ry}
-                fill="url(#constellationGradient)"
-                className="opacity-30 transition-all duration-1000"
-              />
-            );
-          })}
-
-          <defs>
-            <radialGradient id="orbitalGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgba(168, 85, 247, 0.6)" />
-              <stop offset="100%" stopColor="rgba(168, 85, 247, 0)" />
-            </radialGradient>
-            <radialGradient id="constellationGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="rgba(168, 85, 247, 0.4)" />
-              <stop offset="100%" stopColor="rgba(168, 85, 247, 0)" />
-            </radialGradient>
-          </defs>
         </svg>
 
-        {activeLayers.includes('stars') && visibleUsers.map((u) => {
-          const wrapped = getWrappedElementPos(u.x, u.y);
-          return (
-            <Star
-              key={`user-star-${u.uid}`}
-              user={{ ...u, x: wrapped.x, y: wrapped.y }}
-              onClick={onUserClick}
-              isActive={isUserActive(u.lastActive)}
-              scale={scale}
-              isUser={u.uid === user?.uid}
-              isKindred={kindredUids.includes(u.uid)}
-            />
-          );
-        })}
+        {activeLayers.includes('stars') && visibleUsers.map((u) => (
+          <Star
+            key={`user-star-${u.uid}`}
+            user={u}
+            onClick={onUserClick}
+            isActive={isUserActive(u.lastActive)}
+            scale={scale}
+            isUser={u.uid === user?.uid}
+            isKindred={kindredUids.includes(u.uid)}
+          />
+        ))}
 
-        {activeLayers.includes('thoughts') && visibleThoughts.map((thought) => {
-          const wrapped = getWrappedElementPos(thought.x!, thought.y!);
-          return (
-            <ThoughtBubble
-              key={thought.id}
-              thought={{ ...thought, x: wrapped.x, y: wrapped.y }}
-              onExpand={(t) => {
-                setActiveThought(t);
-                incrementViewCount(t.id);
-              }}
-            />
-          );
-        })}
+        {activeLayers.includes('thoughts') && visibleThoughts.map((thought) => (
+          <ThoughtBubble
+            key={thought.id}
+            thought={thought}
+            onExpand={(t) => {
+              setActiveThought(t);
+              incrementViewCount(t.id);
+            }}
+          />
+        ))}
       </div>
 
       {/* Expanded Thought Modal */}
@@ -822,40 +536,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         </button>
       )}
 
-      {/* Mini-map */}
-      <div className="absolute bottom-6 left-6 w-36 h-36 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden z-30 shadow-2xl hidden sm:block">
-        <div className="relative w-full h-full">
-          {/* Mini-map stars */}
-          {filteredUsers.map(u => (
-            <div
-              key={u.uid}
-              className="absolute w-1 h-1 bg-white/50 rounded-full"
-              style={{
-                left: `${(u.x / 5000) * 100}%`,
-                top: `${(u.y / 5000) * 100}%`,
-              }}
-            />
-          ))}
-          {/* Viewport indicator */}
-          <div
-            className="absolute border border-purple-500/50 bg-purple-500/10 pointer-events-none"
-            style={{
-              left: `${(wrap(-position.x / scale, UNIVERSE_SIZE) / UNIVERSE_SIZE) * 100}%`,
-              top: `${(wrap(-position.y / scale, UNIVERSE_SIZE) / UNIVERSE_SIZE) * 100}%`,
-              width: `${Math.min(100, (viewport.width / scale / UNIVERSE_SIZE) * 100)}%`,
-              height: `${Math.min(100, (viewport.height / scale / UNIVERSE_SIZE) * 100)}%`,
-            }}
-          />
-        </div>
-      </div>
-
       {/* Right Action Stack */}
       <RightActionStack 
         isLoggedIn={!!user}
         onCenterMe={centerOnUser}
         onPinMemory={() => {}} // Not available in Kalawakan
-        onZoomIn={() => handleZoom(0.2, viewport.width / 2, viewport.height / 2)}
-        onZoomOut={() => handleZoom(-0.2, viewport.width / 2, viewport.height / 2)}
+        onZoomIn={() => {}}
+        onZoomOut={() => {}}
         onToggleLayer={toggleLayer}
         activeLayers={activeLayers}
         mapMode={mapMode}

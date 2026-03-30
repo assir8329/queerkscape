@@ -483,7 +483,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
 
   return (
     <div 
-      className={`absolute inset-0 z-0 bg-[#050510] overflow-hidden ${isAddingMemory ? 'cursor-crosshair' : ''}`}
+      className={`fixed inset-0 h-screen w-screen z-0 bg-[#050510] overflow-hidden ${isAddingMemory ? 'cursor-crosshair' : ''}`}
     >
       {isAddingMemory && (
         <div 

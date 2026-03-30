@@ -41,10 +41,8 @@ export const getDispersedUsers = (
       const gridLng = Math.round(user.location.lng / proximityThreshold) * proximityThreshold;
       key = `${gridLat},${gridLng}`;
     } else {
-      // Wrap-around grid grouping
-      const UNIVERSE_SIZE = 5000;
-      const gridX = ((Math.round(user.x / proximityThreshold) * proximityThreshold) % UNIVERSE_SIZE + UNIVERSE_SIZE) % UNIVERSE_SIZE;
-      const gridY = ((Math.round(user.y / proximityThreshold) * proximityThreshold) % UNIVERSE_SIZE + UNIVERSE_SIZE) % UNIVERSE_SIZE;
+      const gridX = Math.round(user.x / proximityThreshold) * proximityThreshold;
+      const gridY = Math.round(user.y / proximityThreshold) * proximityThreshold;
       key = `${gridX},${gridY}`;
     }
     
@@ -95,9 +93,8 @@ export const getDispersedUsers = (
             groupSize: N
           });
         } else {
-          const UNIVERSE_SIZE = 5000;
-          const newX = ((centerA + radius * Math.cos(angle)) % UNIVERSE_SIZE + UNIVERSE_SIZE) % UNIVERSE_SIZE;
-          const newY = ((centerB + radius * Math.sin(angle)) % UNIVERSE_SIZE + UNIVERSE_SIZE) % UNIVERSE_SIZE;
+          const newX = centerA + radius * Math.cos(angle);
+          const newY = centerB + radius * Math.sin(angle);
           dispersedUsers.push({
             ...u,
             x: newX,

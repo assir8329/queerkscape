@@ -79,8 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             // Ensure map coordinates exist for legacy users
             if (data.x === undefined || data.y === undefined) {
-              updates.x = Math.floor(Math.random() * 4000) + 500;
-              updates.y = Math.floor(Math.random() * 4000) + 500;
+              updates.x = Math.floor(Math.random() * 2000) + 1500; // 1500 to 3500
+              updates.y = Math.floor(Math.random() * 2000) + 1500;
               needsUpdate = true;
             }
 
@@ -111,8 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               color: randomColor,
               tags: [],
               signal: 'Just joined the constellation.',
-              x: Math.floor(Math.random() * 4000) + 500, // 500 to 4500
-              y: Math.floor(Math.random() * 4000) + 500,
+              x: Math.floor(Math.random() * 2000) + 1500, // 1500 to 3500
+              y: Math.floor(Math.random() * 2000) + 1500,
               createdAt: serverTimestamp(),
               lastActive: serverTimestamp(),
               blockedUsers: [],
@@ -191,8 +191,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         color: randomColor,
         tags: [],
         signal: 'Just joined the constellation.',
-        x: Math.floor(Math.random() * 4000) + 500,
-        y: Math.floor(Math.random() * 4000) + 500,
+        x: Math.floor(Math.random() * 2000) + 1500, // 1500 to 3500
+        y: Math.floor(Math.random() * 2000) + 1500,
         createdAt: serverTimestamp(),
         lastActive: serverTimestamp(),
         blockedUsers: [],

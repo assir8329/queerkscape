@@ -37,7 +37,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
   };
 
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-6 pointer-events-none hidden md:block">
+    <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-6 pointer-events-none hidden md:block">
       <motion.div 
         animate={{ 
           opacity: isVisible ? 1 : 0.2,

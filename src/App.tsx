@@ -288,7 +288,7 @@ const MainApp: React.FC = () => {
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-[#050510] relative font-sans flex">
+    <div className="fixed inset-0 h-[100vh] w-[100vw] overflow-hidden bg-[#050510] font-sans flex">
       <GuideModal />
       
       <Routes>
@@ -352,8 +352,8 @@ const MainApp: React.FC = () => {
             />
 
             {/* Main Content */}
-            <div className="flex-1 relative h-full flex min-w-0">
-              <div className="flex-1 relative h-full">
+            <div className="flex-1 relative h-full flex min-w-0 overflow-hidden">
+              <div className="flex-1 relative h-full overflow-hidden">
                 {activeTab === 'buklod' ? (
                   <Buklod />
                 ) : mapMode === 'constellation' ? (
