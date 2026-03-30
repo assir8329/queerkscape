@@ -40,6 +40,8 @@ const getHexColor = (vibeColor: string) => {
 const CACHE_KEY_USERS = 'hiraya_constellation_users';
 const CACHE_KEY_CONNECTIONS = 'hiraya_constellation_connections';
 const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+const UNIVERSE_SIZE = 5000;
+const wrap = (v: number, m: number) => ((v % m) + m) % m;
 
 interface Ugnayan {
   id: string;
@@ -198,9 +200,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const centerOnUser = () => {
     if (profile && viewport.width > 0) {
+      const targetX = wrap(profile.x, UNIVERSE_SIZE);
+      const targetY = wrap(profile.y, UNIVERSE_SIZE);
       setPosition({
-        x: viewport.width / 2 - profile.x * scale,
-        y: viewport.height / 2 - profile.y * scale,
+        x: viewport.width / 2 - targetX * scale,
+        y: viewport.height / 2 - targetY * scale,
       });
       onInteraction?.();
     }
@@ -208,11 +212,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const resetToFullMap = () => {
     if (viewport.width > 0) {
-      const scaleToFit = viewport.width / 5000;
+      const scaleToFit = viewport.width / UNIVERSE_SIZE;
       setScale(scaleToFit);
       setPosition({
-        x: viewport.width / 2 - 2500 * scaleToFit,
-        y: viewport.height / 2 - 2500 * scaleToFit,
+        x: viewport.width / 2 - (UNIVERSE_SIZE / 2) * scaleToFit,
+        y: viewport.height / 2 - (UNIVERSE_SIZE / 2) * scaleToFit,
       });
       onInteraction?.();
     }
@@ -242,10 +246,24 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    
+    // Wrap world coordinates to ensure seamless panning
+    const worldX = wrap(-newX / scale, UNIVERSE_SIZE);
+    const worldY = wrap(-newY / scale, UNIVERSE_SIZE);
+    
     setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
+      x: -worldX * scale,
+      y: -worldY * scale,
     });
+    
+    // Update dragStart to prevent jumping after wrap
+    setDragStart({
+      x: e.clientX + worldX * scale,
+      y: e.clientY + worldY * scale,
+    });
+    
     onInteraction?.();
   };
 
@@ -258,10 +276,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
       if (centerX !== undefined && centerY !== undefined) {
         // Zoom towards the cursor/pinch center
         const zoomFactor = newScale / prev;
-        setPosition(pos => ({
-          x: centerX - (centerX - pos.x) * zoomFactor,
-          y: centerY - (centerY - pos.y) * zoomFactor,
-        }));
+        setPosition(pos => {
+          const newX = centerX - (centerX - pos.x) * zoomFactor;
+          const newY = centerY - (centerY - pos.y) * zoomFactor;
+          const worldX = wrap(-newX / newScale, UNIVERSE_SIZE);
+          const worldY = wrap(-newY / newScale, UNIVERSE_SIZE);
+          return {
+            x: -worldX * newScale,
+            y: -worldY * newScale
+          };
+        });
       }
       
       return newScale;
@@ -295,9 +319,20 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (e.touches.length === 1 && isDragging) {
+      const newX = e.touches[0].clientX - dragStart.x;
+      const newY = e.touches[0].clientY - dragStart.y;
+      
+      const worldX = wrap(-newX / scale, UNIVERSE_SIZE);
+      const worldY = wrap(-newY / scale, UNIVERSE_SIZE);
+      
       setPosition({
-        x: e.touches[0].clientX - dragStart.x,
-        y: e.touches[0].clientY - dragStart.y,
+        x: -worldX * scale,
+        y: -worldY * scale,
+      });
+      
+      setDragStart({
+        x: e.touches[0].clientX + worldX * scale,
+        y: e.touches[0].clientY + worldY * scale,
       });
     } else if (e.touches.length === 2 && touchStartDistance !== null) {
       const distance = Math.hypot(
@@ -344,32 +379,65 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
 
   const dispersedUsers = useDispersedStars(filteredUsers, scale);
 
-  // Virtualization logic
+  // Virtualization logic with wrap-around support
   const visibleUsers = useMemo(() => {
     if (viewport.width === 0) return [];
-    const buffer = 200 / scale; // 200px buffer
-    const minX = -position.x / scale - buffer;
-    const maxX = (-position.x + viewport.width) / scale + buffer;
-    const minY = -position.y / scale - buffer;
-    const maxY = (-position.y + viewport.height) / scale + buffer;
+    const buffer = 200 / scale;
+    const cameraX = wrap(-position.x / scale, UNIVERSE_SIZE);
+    const cameraY = wrap(-position.y / scale, UNIVERSE_SIZE);
+    
+    const minX = cameraX - buffer;
+    const maxX = cameraX + viewport.width / scale + buffer;
+    const minY = cameraY - buffer;
+    const maxY = cameraY + viewport.height / scale + buffer;
+
+    const inRange = (val: number, min: number, max: number) => {
+      if (min < 0) return val >= min + UNIVERSE_SIZE || val <= max;
+      if (max > UNIVERSE_SIZE) return val >= min || val <= max - UNIVERSE_SIZE;
+      return val >= min && val <= max;
+    };
 
     return dispersedUsers.filter(u => 
-      u.x >= minX && u.x <= maxX && u.y >= minY && u.y <= maxY
+      inRange(u.x, minX, maxX) && inRange(u.y, minY, maxY)
     );
   }, [dispersedUsers, position, scale, viewport]);
 
   const visibleThoughts = useMemo(() => {
     if (viewport.width === 0) return [];
     const buffer = 100 / scale;
-    const minX = -position.x / scale - buffer;
-    const maxX = (-position.x + viewport.width) / scale + buffer;
-    const minY = -position.y / scale - buffer;
-    const maxY = (-position.y + viewport.height) / scale + buffer;
+    const cameraX = wrap(-position.x / scale, UNIVERSE_SIZE);
+    const cameraY = wrap(-position.y / scale, UNIVERSE_SIZE);
+    
+    const minX = cameraX - buffer;
+    const maxX = cameraX + viewport.width / scale + buffer;
+    const minY = cameraY - buffer;
+    const maxY = cameraY + viewport.height / scale + buffer;
+
+    const inRange = (val: number, min: number, max: number) => {
+      if (min < 0) return val >= min + UNIVERSE_SIZE || val <= max;
+      if (max > UNIVERSE_SIZE) return val >= min || val <= max - UNIVERSE_SIZE;
+      return val >= min && val <= max;
+    };
 
     return thoughts.filter(t => 
-      t.x != null && t.y != null && t.x >= minX && t.x <= maxX && t.y >= minY && t.y <= maxY
+      t.x != null && t.y != null && inRange(t.x, minX, maxX) && inRange(t.y, minY, maxY)
     );
   }, [thoughts, position, scale, viewport]);
+
+  const getWrappedElementPos = (elementX: number, elementY: number) => {
+    const cameraX = wrap(-position.x / scale, UNIVERSE_SIZE);
+    const cameraY = wrap(-position.y / scale, UNIVERSE_SIZE);
+    
+    let dx = elementX - cameraX;
+    if (dx > UNIVERSE_SIZE / 2) dx -= UNIVERSE_SIZE;
+    if (dx < -UNIVERSE_SIZE / 2) dx += UNIVERSE_SIZE;
+    
+    let dy = elementY - cameraY;
+    if (dy > UNIVERSE_SIZE / 2) dy -= UNIVERSE_SIZE;
+    if (dy < -UNIVERSE_SIZE / 2) dy += UNIVERSE_SIZE;
+    
+    return { x: cameraX + dx, y: cameraY + dy };
+  };
 
   // Render connections on canvas for performance
   const [kindredUids, setKindredUids] = useState<string[]>([]);
@@ -398,14 +466,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
       
       const x1 = u1?.x ?? conn.from_coord.x;
       const y1 = u1?.y ?? conn.from_coord.y;
-      const x2 = u2?.x ?? conn.to_coord.x;
-      const y2 = u2?.y ?? conn.to_coord.y;
+      let x2 = u2?.x ?? conn.to_coord.x;
+      let y2 = u2?.y ?? conn.to_coord.y;
       const c1 = u1?.color ?? conn.from_coord.color;
       const c2 = u2?.color ?? conn.to_coord.color;
 
+      // Wrap-around line logic: find the shortest path across the universe
+      if (Math.abs(x2 - x1) > UNIVERSE_SIZE / 2) {
+        if (x2 > x1) x2 -= UNIVERSE_SIZE;
+        else x2 += UNIVERSE_SIZE;
+      }
+      if (Math.abs(y2 - y1) > UNIVERSE_SIZE / 2) {
+        if (y2 > y1) y2 -= UNIVERSE_SIZE;
+        else y2 += UNIVERSE_SIZE;
+      }
+
+      // Adjust endpoints relative to the camera to ensure they are drawn in the correct "wrap"
+      const p1 = getWrappedElementPos(x1, y1);
+      const p2 = getWrappedElementPos(x2, y2);
+
       ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
       
       if (isBuklodMode && isKindred) {
         // BUKLOD Styling: Thick, vibrant gradient line
@@ -545,26 +627,29 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
         }}
       >
         {/* Puso ng Hiraya (Heart of Hiraya) - Central Nebula */}
-        {mapMode === 'constellation' && (
-          <div 
-            className="absolute pointer-events-none z-0"
-            style={{
-              left: 2500,
-              top: 2500,
-              width: 1200,
-              height: 1200,
-              transform: 'translate(-50%, -50%)',
-              background: 'radial-gradient(circle, rgba(75, 0, 130, 0.3) 0%, rgba(138, 43, 226, 0.15) 50%, transparent 80%)',
-              filter: 'blur(40px)',
-              opacity: nebulaIntensity,
-              transition: 'opacity 1s ease-in-out',
-            }}
-          >
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 text-[10px] uppercase tracking-[0.5em] font-bold whitespace-nowrap">
-              Puso ng Hiraya
+        {mapMode === 'constellation' && (() => {
+          const wrapped = getWrappedElementPos(UNIVERSE_SIZE / 2, UNIVERSE_SIZE / 2);
+          return (
+            <div 
+              className="absolute pointer-events-none z-0"
+              style={{
+                left: wrapped.x,
+                top: wrapped.y,
+                width: 1200,
+                height: 1200,
+                transform: 'translate(-50%, -50%)',
+                background: 'radial-gradient(circle, rgba(75, 0, 130, 0.3) 0%, rgba(138, 43, 226, 0.15) 50%, transparent 80%)',
+                filter: 'blur(40px)',
+                opacity: nebulaIntensity,
+                transition: 'opacity 1s ease-in-out',
+              }}
+            >
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 text-[10px] uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+                Puso ng Hiraya
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <canvas 
           ref={canvasRef}
@@ -634,28 +719,34 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           </defs>
         </svg>
 
-        {activeLayers.includes('stars') && visibleUsers.map((u) => (
-          <Star
-            key={`user-star-${u.uid}`}
-            user={u}
-            onClick={onUserClick}
-            isActive={isUserActive(u.lastActive)}
-            scale={scale}
-            isUser={u.uid === user?.uid}
-            isKindred={kindredUids.includes(u.uid)}
-          />
-        ))}
+        {activeLayers.includes('stars') && visibleUsers.map((u) => {
+          const wrapped = getWrappedElementPos(u.x, u.y);
+          return (
+            <Star
+              key={`user-star-${u.uid}`}
+              user={{ ...u, x: wrapped.x, y: wrapped.y }}
+              onClick={onUserClick}
+              isActive={isUserActive(u.lastActive)}
+              scale={scale}
+              isUser={u.uid === user?.uid}
+              isKindred={kindredUids.includes(u.uid)}
+            />
+          );
+        })}
 
-        {activeLayers.includes('thoughts') && visibleThoughts.map((thought) => (
-          <ThoughtBubble
-            key={thought.id}
-            thought={thought}
-            onExpand={(t) => {
-              setActiveThought(t);
-              incrementViewCount(t.id);
-            }}
-          />
-        ))}
+        {activeLayers.includes('thoughts') && visibleThoughts.map((thought) => {
+          const wrapped = getWrappedElementPos(thought.x!, thought.y!);
+          return (
+            <ThoughtBubble
+              key={thought.id}
+              thought={{ ...thought, x: wrapped.x, y: wrapped.y }}
+              onExpand={(t) => {
+                setActiveThought(t);
+                incrementViewCount(t.id);
+              }}
+            />
+          );
+        })}
       </div>
 
       {/* Expanded Thought Modal */}
@@ -749,10 +840,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onUserClick, filterTag, se
           <div
             className="absolute border border-purple-500/50 bg-purple-500/10 pointer-events-none"
             style={{
-              left: `${Math.max(0, (-position.x / scale / 5000) * 100)}%`,
-              top: `${Math.max(0, (-position.y / scale / 5000) * 100)}%`,
-              width: `${Math.min(100, (viewport.width / scale / 5000) * 100)}%`,
-              height: `${Math.min(100, (viewport.height / scale / 5000) * 100)}%`,
+              left: `${(wrap(-position.x / scale, UNIVERSE_SIZE) / UNIVERSE_SIZE) * 100}%`,
+              top: `${(wrap(-position.y / scale, UNIVERSE_SIZE) / UNIVERSE_SIZE) * 100}%`,
+              width: `${Math.min(100, (viewport.width / scale / UNIVERSE_SIZE) * 100)}%`,
+              height: `${Math.min(100, (viewport.height / scale / UNIVERSE_SIZE) * 100)}%`,
             }}
           />
         </div>

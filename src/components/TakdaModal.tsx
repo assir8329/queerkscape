@@ -57,23 +57,23 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-[#050510] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0"
+              className="w-full max-w-[400px] bg-[#050510]/95 border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] mb-24 md:mb-0 backdrop-blur-2xl"
             >
-            <div className="p-4 border-b border-white/10 flex justify-between items-center bg-white/2">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <TakdaIcon className="w-5 h-5 text-purple-400" />
-                <h3 className="text-white font-semibold tracking-wider">TAKDA NG HIRAYA</h3>
+                <TakdaIcon className="w-4 h-4 text-purple-400" />
+                <h3 className="text-white font-bold uppercase tracking-[0.2em] text-xs">TAKDA NG HIRAYA</h3>
               </div>
-              <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
+              <button onClick={onClose} className="text-white/40 hover:text-white transition-colors p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto custom-scrollbar">
-              <section className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <ShieldAlert className="w-4 h-4 text-red-400" />
-                  <h4 className="text-xs font-semibold text-white/60 uppercase tracking-widest">MGA TALANG BINUKOD</h4>
+            <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
+              <section>
+                <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-1">
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                  <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">MGA TALANG BINUKOD</h4>
                 </div>
                 
                 {loading ? (
@@ -103,16 +103,21 @@ export const TakdaModal: React.FC<TakdaModalProps> = ({ isOpen, onClose }) => {
                 )}
               </section>
 
-              <section className="mb-4">
-                <h4 className="text-xs font-semibold text-white/60 uppercase tracking-widest mb-4">Katiwasayan</h4>
-                <div className="bg-white/[0.02] rounded-xl p-4 border border-white/5">
+              <section>
+                <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 border-b border-white/5 pb-1">Katiwasayan</div>
+                <div className="bg-white/[0.02] rounded-2xl p-4 border border-white/5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-white font-medium">Location Privacy</p>
+                      <p className="text-xs text-white font-bold uppercase tracking-wider">Location Privacy</p>
                       <p className="text-[10px] text-white/30">You can toggle this in your profile editor.</p>
                     </div>
-                    <div className={`w-10 h-5 rounded-full transition-colors ${profile?.hideLocation ? 'bg-purple-500' : 'bg-white/10'}`}>
-                      <div className={`w-3 h-3 bg-white rounded-full mt-1 transition-transform ${profile?.hideLocation ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <div className="relative inline-flex h-6 w-11 items-center rounded-full transition-all focus:outline-none group opacity-80">
+                      <div className={`absolute inset-0 rounded-full transition-all duration-300 ${profile?.hideLocation ? 'bg-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-white/5'}`} />
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-300 shadow-lg relative z-10 ${
+                          profile?.hideLocation ? 'translate-x-6 bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.8)]' : 'translate-x-1 bg-white/40'
+                        }`}
+                      />
                     </div>
                   </div>
                 </div>

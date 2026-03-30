@@ -53,7 +53,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
             )}
           </div>
           <span 
-            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'buklod' ? '' : 'text-white/20'}`}
+            className={`text-[10px] uppercase tracking-[0.3em] mt-1 font-brand font-normal ${activeTab === 'buklod' ? '' : 'text-white/20'}`}
             style={{ color: activeTab === 'buklod' ? userVibeColor : undefined }}
           >
             Buklod
@@ -95,7 +95,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
             )}
           </div>
           <span 
-            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${isMapActive ? '' : 'text-white/20'}`}
+            className={`text-[10px] uppercase tracking-[0.3em] mt-1 font-brand font-normal ${isMapActive ? '' : 'text-white/20'}`}
             style={{ color: isMapActive ? userVibeColor : undefined }}
           >
             {activeTab === 'kalawakan' ? 'Kalawakan' : 'Mundo'}
@@ -135,7 +135,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
             )}
           </div>
           <span 
-            className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'siklab' ? '' : 'text-white/20'}`}
+            className={`text-[10px] uppercase tracking-[0.3em] mt-1 font-brand font-normal ${activeTab === 'siklab' ? '' : 'text-white/20'}`}
             style={{ color: activeTab === 'siklab' ? userVibeColor : undefined }}
           >
             Siklab
@@ -169,7 +169,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, u
               )}
             </div>
             <span 
-              className={`text-[10px] uppercase tracking-[0.15em] mt-1 font-bold ${activeTab === 'sambit' ? '' : 'text-white/20'}`}
+              className={`text-[10px] uppercase tracking-[0.3em] mt-1 font-brand font-normal ${activeTab === 'sambit' ? '' : 'text-white/20'}`}
               style={{ color: activeTab === 'sambit' ? userVibeColor : undefined }}
             >
               Sambit

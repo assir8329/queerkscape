@@ -180,7 +180,7 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, onClick, active }) => 
             initial={{ opacity: 0, y: 0 }}
             animate={{ opacity: 1, y: -10 }}
             exit={{ opacity: 0, y: 0 }}
-            className="absolute bottom-full mb-2 text-[9px] font-bold text-white/60 tracking-[0.2em] uppercase whitespace-nowrap"
+            className="absolute bottom-full mb-2 text-[9px] font-brand font-normal text-white/60 tracking-[0.3em] uppercase whitespace-nowrap"
           >
             {label}
           </motion.span>

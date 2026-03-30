@@ -22,6 +22,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
   const [text, setText] = useState('');
   const [date, setDate] = useState('');
   const [vibe, setVibe] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,6 +40,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
         region,
         createdAt: serverTimestamp(),
         viewCount: 0,
+        isAnonymous,
       };
 
       if (date) {
@@ -71,15 +73,15 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#050510] border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative"
+              className="bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-xl p-4 w-full max-w-[400px] shadow-2xl relative"
             >
             <div className="flex items-center justify-between mb-5 py-1 border-b border-white/5">
               <div className="flex items-center gap-2 truncate">
                 <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                 <div className="flex items-center gap-1.5 truncate">
-                  <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold whitespace-nowrap">Bakás</span>
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-brand font-normal whitespace-nowrap">Bakás</span>
                   <span className="text-white/20">·</span>
-                  <span className="text-xs text-white/60 truncate font-medium">{region}</span>
+                  <span className="text-xs text-white/60 truncate font-ui-tech font-medium">{region}</span>
                 </div>
               </div>
               <button
@@ -92,7 +94,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-white/60 mb-1 uppercase tracking-wider">
+                <label className="block text-xs font-ui-tech font-medium text-white/60 mb-1 uppercase tracking-wider">
                   Anong nangyari rito?
                 </label>
                 <textarea
@@ -100,7 +102,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
                   onChange={(e) => setText(e.target.value)}
                   maxLength={500}
                   placeholder="Mag-iwan ng bakás ng iyong kasaysayan..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 resize-none h-28 leading-relaxed"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-2 py-0 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 resize-none h-28 leading-[1.5] font-soul font-light text-[0.95rem]"
                   required
                 />
                 <div className="text-right text-[10px] text-white/40 mt-1">
@@ -110,7 +112,7 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-white/60 mb-1 uppercase tracking-wider">
+                  <label className="block text-xs font-ui-tech font-medium text-white/60 mb-1 uppercase tracking-wider">
                     Date (Optional)
                   </label>
                   <div className="relative">
@@ -120,12 +122,12 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       max={new Date().toISOString().split('T')[0]}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 text-sm"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-9 pr-3 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500/50 text-sm font-ui-tech"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-white/60 mb-1 uppercase tracking-wider">
+                  <label className="block text-xs font-ui-tech font-medium text-white/60 mb-1 uppercase tracking-wider">
                     Vibe (Optional)
                   </label>
                   <input
@@ -134,15 +136,29 @@ export const MemoryModal: React.FC<MemoryModalProps> = ({ isOpen, onClose, curre
                     onChange={(e) => setVibe(e.target.value)}
                     placeholder="e.g., Nostalgic"
                     maxLength={50}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 text-sm"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-2 py-0 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 text-sm font-ui-tech"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                <div className="flex flex-col">
+                  <span className="text-xs font-ui-tech font-bold text-white/80 uppercase tracking-wider">Anonymous</span>
+                  <span className="text-[10px] text-white/40">Hide your identity in this memory</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAnonymous(!isAnonymous)}
+                  className={`w-10 h-5 rounded-full transition-all relative ${isAnonymous ? 'bg-yellow-500' : 'bg-white/10'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${isAnonymous ? 'left-6' : 'left-1'}`} />
+                </button>
               </div>
 
               <button
                 type="submit"
                 disabled={!text.trim() || isSubmitting}
-                className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-ui font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
               >
                 {isSubmitting ? 'Nagbabakás...' : 'Mag-iwan ng Bakás'}
               </button>

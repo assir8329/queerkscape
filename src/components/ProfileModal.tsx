@@ -223,38 +223,37 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
-          className={showJoinUI 
-            ? "bg-black/95 border border-white/10 rounded-3xl p-6 w-full max-w-[280px] shadow-2xl relative overflow-hidden flex flex-col items-center justify-center backdrop-blur-[12px]"
-            : "bg-black border border-white/10 rounded-2xl p-4 w-full max-w-md shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[90vh]"
-          }
+          className="bg-[#050510]/95 border border-white/10 rounded-xl p-4 w-full max-w-[400px] shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh] md:max-h-[80vh] backdrop-blur-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           <button 
             onClick={onClose} 
-            className={`absolute top-3 right-3 flex items-center justify-center text-white/40 hover:text-white transition-all z-50 ${showJoinUI ? 'w-6 h-6' : 'w-8 h-8'}`}
+            className="absolute top-4 right-4 flex items-center justify-center text-white/40 hover:text-white transition-all z-50 w-8 h-8"
             aria-label="Close"
           >
-            <X className={showJoinUI ? "w-3.5 h-3.5" : "w-5 h-5"} />
+            <X className="w-5 h-5" />
           </button>
 
           {showJoinUI ? (
-            <div className="flex flex-col items-center justify-center space-y-4 py-2">
+            <div className="flex flex-col items-center justify-center space-y-6 py-8">
               <div className="relative">
-                <Star className="w-10 h-10 text-purple-400/80 fill-purple-400/20 animate-slow-pulse" />
-                <div className="absolute inset-0 blur-xl bg-purple-500/20 rounded-full animate-slow-pulse" />
+                <Star className="w-12 h-12 text-yellow-400/80 fill-yellow-400/20 animate-slow-pulse" />
+                <div className="absolute inset-0 blur-xl bg-yellow-500/20 rounded-full animate-slow-pulse" />
               </div>
               
-              <div className="text-center px-2">
-                <p className="text-[13px] font-light text-white/90 tracking-widest uppercase leading-snug">
-                  This star is waiting for a signal.
+              <div className="text-center px-4">
+                <h2 className="text-white font-bold uppercase tracking-[0.2em] text-sm mb-2">JOIN HIRAYA</h2>
+                <p className="text-[13px] font-light text-white/60 leading-relaxed">
+                  This star is waiting for a signal. Join our constellation to connect.
                 </p>
               </div>
 
               <button 
                 onClick={() => window.location.href = '/login'}
-                className="px-5 py-2 border border-white/10 hover:border-white/30 text-white/70 hover:text-white rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-white/5 active:scale-95"
+                className="px-8 py-3 bg-yellow-500 hover:bg-yellow-400 text-black rounded-full text-xs font-bold uppercase tracking-[0.2em] transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)] active:scale-95 flex items-center gap-2"
               >
-                Join the Constellation
+                <Star className="w-3.5 h-3.5 fill-current" />
+                Join Hiraya
               </button>
             </div>
           ) : (
@@ -270,44 +269,44 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               
               <div className="flex flex-col h-full overflow-hidden mt-4">
                 {/* Header Section */}
-                <div className="flex items-center gap-4 mb-4 shrink-0 relative">
-              <div 
-                className={`relative w-14 h-14 rounded-full shrink-0 ${!active ? 'opacity-80' : ''} ${user.isGuest ? 'blur-md select-none' : ''}`}
-                style={{ 
-                  backgroundColor: hexColor,
-                  boxShadow: active && !user.isGuest ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
-                }}
-              >
-                {active && !user.isGuest && <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-black" title="Active Star" />}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-semibold text-white tracking-tight truncate">
-                        {user.nickname || user.username}
-                      </h2>
-                      <span className="text-sm shrink-0">✨</span>
-                      {!isEditing && !user.isGuest && (
-                        <button 
-                          onClick={profile ? toggleFavorite : undefined} 
-                          className={`text-white/30 hover:text-yellow-400 transition-colors p-1.5 shrink-0 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
-                          title={!profile ? "Login to favorite" : ""}
-                        >
-                          <Star className={`w-4 h-4 ${profile?.favorites?.includes(user.uid) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                        </button>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-white/40 font-medium tracking-wide uppercase">@{user.isGuest ? user.username[0] + '***' : user.username}</div>
+                <div className="flex items-center gap-3 mb-4 shrink-0 relative">
+                  <div 
+                    className={`relative w-12 h-12 rounded-full shrink-0 ${!active ? 'opacity-80' : ''} ${user.isGuest ? 'blur-md select-none' : ''}`}
+                    style={{ 
+                      backgroundColor: hexColor,
+                      boxShadow: active && !user.isGuest ? `0 0 15px rgba(${rgbColor}, 0.3)` : 'none'
+                    }}
+                  >
+                    {active && !user.isGuest && <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-black" title="Active Star" />}
                   </div>
-                </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-sm font-bold text-white uppercase tracking-[0.2em] truncate">
+                            {isEditing ? 'EDIT PROFILE' : (user.nickname || user.username)}
+                          </h2>
+                          {!isEditing && <span className="text-xs shrink-0">✨</span>}
+                          {!isEditing && !user.isGuest && (
+                            <button 
+                              onClick={profile ? toggleFavorite : undefined} 
+                              className={`text-white/30 hover:text-yellow-400 transition-colors p-1 shrink-0 ${!profile ? 'opacity-20 cursor-not-allowed' : ''}`}
+                              title={!profile ? "Login to favorite" : ""}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${profile?.favorites?.includes(user.uid) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                            </button>
+                          )}
+                        </div>
+                        {!isEditing && <div className="text-[9px] text-white/40 font-medium tracking-wide uppercase">@{user.isGuest ? user.username[0] + '***' : user.username}</div>}
+                      </div>
+                    </div>
 
                 {!user.isGuest && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] font-medium">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[9px] font-medium">
                     {user.location && !user.hideLocation && (
                       <div className="flex items-center gap-1 text-white/60">
-                        <MapPin className="w-2.5 h-2.5 text-white/30" />
+                        <MapPin className="w-2 h-2 text-white/30" />
                         <span>{user.location.city}</span>
                       </div>
                     )}
@@ -328,74 +327,74 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-4 pb-2">
+            <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-3 pb-2">
               {isEditing ? (
                 /* EDIT MODE */
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {/* A. Basic Info */}
-                  <section className="space-y-6">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Basic Info</div>
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Nickname</label>
+                  <section className="space-y-4">
+                    <div className="text-[9px] uppercase tracking-[0.2em] text-white/20 font-black px-1 border-b border-white/5 pb-1">Basic Info</div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Nickname</label>
                         <input
                           type="text"
                           value={editData.nickname ?? user.nickname ?? user.username}
                           onChange={(e) => setEditData({ ...editData, nickname: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
                           maxLength={30}
                         />
                       </div>
                       
                       {!user.usernameChanged && (
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Username (One-time change)</label>
-                          <div className="flex items-center gap-2 bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 focus-within:border-purple-500/30 focus-within:bg-white/[0.06] transition-all">
-                            <span className="text-white/20 font-bold">@</span>
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Username (One-time change)</label>
+                          <div className="flex items-center gap-2 bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 focus-within:border-purple-500/30 focus-within:bg-white/[0.06] transition-all">
+                            <span className="text-white/20 font-bold text-xs">@</span>
                             <input
                               type="text"
                               value={editData.username ?? user.username}
                               onChange={(e) => setEditData({ ...editData, username: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') })}
-                              className="bg-transparent border-none p-0 text-white focus:outline-none w-full"
+                              className="bg-transparent border-none p-0 text-xs text-white focus:outline-none w-full"
                               maxLength={30}
                             />
                           </div>
                         </div>
                       )}
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Pronouns</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Pronouns</label>
                           <input
                             type="text"
                             value={editData.pronouns ?? user.pronouns ?? ''}
                             onChange={(e) => setEditData({ ...editData, pronouns: e.target.value })}
-                            className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
+                            className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
                             placeholder="they/them"
                             maxLength={20}
                           />
                         </div>
-                        <div className="flex flex-col justify-end pb-3">
-                          <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="flex flex-col justify-end pb-2.5">
+                          <label className="flex items-center gap-2 cursor-pointer group">
                             <div className="relative flex items-center">
                               <input
                                 type="checkbox"
                                 checked={editData.hideLocation ?? user.hideLocation ?? false}
                                 onChange={(e) => setEditData({ ...editData, hideLocation: e.target.checked })}
-                                className="w-4 h-4 rounded border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500/50 focus:ring-offset-0 transition-all"
+                                className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 text-purple-500 focus:ring-purple-500/50 focus:ring-offset-0 transition-all"
                               />
                             </div>
-                            <span className="text-[10px] text-white/30 group-hover:text-white/50 transition-colors uppercase tracking-widest font-bold">Hide Location</span>
+                            <span className="text-[9px] text-white/30 group-hover:text-white/50 transition-colors uppercase tracking-widest font-bold">Hide Location</span>
                           </label>
                         </div>
                       </div>
 
                       {/* Location Update */}
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Location</label>
-                        <div className="flex items-center justify-between bg-white/[0.03] rounded-xl p-3 border border-transparent focus-within:border-purple-500/30 focus-within:bg-white/[0.06] transition-all">
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Location</label>
+                        <div className="flex items-center justify-between bg-white/[0.03] rounded-xl p-2.5 border border-transparent focus-within:border-purple-500/30 focus-within:bg-white/[0.06] transition-all">
                           <div className="flex flex-col">
-                            <span className="text-sm text-white font-medium">
+                            <span className="text-xs text-white font-medium">
                               {(editData.location ?? user.location)?.city 
                                 ? `${(editData.location ?? user.location)?.city}, ${(editData.location ?? user.location)?.country}`
                                 : 'Unknown'}
@@ -404,20 +403,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                           <button
                             onClick={handleUpdateLocation}
                             disabled={isLocating}
-                            className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-50 text-purple-300 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                            className="px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-50 text-purple-300 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1"
                           >
-                            <MapPin className="w-3 h-3" />
-                            {isLocating ? 'Locating...' : 'Update'}
+                            <MapPin className="w-2.5 h-2.5" />
+                            {isLocating ? '...' : 'Update'}
                           </button>
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Sambit</label>
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Sambit</label>
                         <textarea
                           value={editData.signal ?? user.signal}
                           onChange={(e) => setEditData({ ...editData, signal: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all resize-none h-24 text-sm leading-relaxed"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all resize-none h-20 leading-relaxed"
                           maxLength={100}
                           placeholder="What's on your mind?"
                         />
@@ -426,15 +425,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </section>
 
                   {/* B. Identity */}
-                  <section className="space-y-6">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Identity</div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Gender Identity</label>
+                  <section className="space-y-4">
+                    <div className="text-[9px] uppercase tracking-[0.2em] text-white/20 font-black px-1 border-b border-white/5 pb-1">Identity</div>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Gender Identity</label>
                         <select
                           value={editData.identity ?? user.identity ?? ''}
                           onChange={(e) => setEditData({ ...editData, identity: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
                           <option value="" className="bg-black">Select Identity</option>
                           <option value="Cis-Woman" className="bg-black">Cis-Woman</option>
@@ -446,12 +445,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         </select>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Sexual Role</label>
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Sexual Role</label>
                         <select
                           value={editData.sexualRole ?? user.sexualRole ?? ''}
                           onChange={(e) => setEditData({ ...editData, sexualRole: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
                           <option value="" className="bg-black">Select Sexual Role</option>
                           <option value="Stone Top" className="bg-black">Stone Top</option>
@@ -462,12 +461,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         </select>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Relationship Status</label>
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Relationship Status</label>
                         <select
                           value={editData.relationshipStatus ?? user.relationshipStatus ?? ''}
                           onChange={(e) => setEditData({ ...editData, relationshipStatus: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
                           <option value="" className="bg-black">Select Relationship Status</option>
                           <option value="single" className="bg-black">Single</option>
@@ -480,15 +479,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </section>
 
                   {/* C. Personality */}
-                  <section className="space-y-6">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Personality</div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Zodiac</label>
+                  <section className="space-y-4">
+                    <div className="text-[9px] uppercase tracking-[0.2em] text-white/20 font-black px-1 border-b border-white/5 pb-1">Personality</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Zodiac</label>
                         <select
                           value={editData.zodiacSign ?? user.zodiacSign ?? ''}
                           onChange={(e) => setEditData({ ...editData, zodiacSign: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
                           <option value="" className="bg-black">Zodiac</option>
                           <option value="Aries" className="bg-black">Aries</option>
@@ -506,12 +505,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                         </select>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">MBTI</label>
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">MBTI</label>
                         <select
                           value={editData.mbti ?? user.mbti ?? ''}
                           onChange={(e) => setEditData({ ...editData, mbti: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all appearance-none cursor-pointer"
                         >
                           <option value="" className="bg-black">MBTI</option>
                           <option value="INTJ" className="bg-black">INTJ</option>
@@ -536,12 +535,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </section>
 
                   {/* D. Preferences */}
-                  <section className="space-y-6">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Preferences</div>
-                    <div className="space-y-4">
-                      <div className="space-y-3">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Looking For (Max 3)</label>
-                        <div className="flex flex-wrap gap-2">
+                  <section className="space-y-4">
+                    <div className="text-[9px] uppercase tracking-[0.2em] text-white/20 font-black px-1 border-b border-white/5 pb-1">Preferences</div>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Looking For (Max 3)</label>
+                        <div className="flex flex-wrap gap-1.5">
                           {LOOKING_FOR_OPTIONS.map(option => {
                             const rawLookingFor = editData.lookingFor ?? user.lookingFor ?? [];
                             const currentLookingFor = Array.isArray(rawLookingFor) ? rawLookingFor : (typeof rawLookingFor === 'string' ? [rawLookingFor] : []);
@@ -576,7 +575,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                                   }
                                   setEditData({ ...editData, lookingFor: next });
                                 }}
-                                className={`px-4 py-2 rounded-full text-[11px] font-bold transition-all border ${
+                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
                                   isSelected 
                                     ? 'bg-purple-500/10 border-purple-500/50 text-purple-300' 
                                     : 'bg-white/[0.03] border-transparent text-white/40 hover:bg-white/[0.06] hover:text-white/60'
@@ -608,7 +607,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                                   const next = [...standard, val].slice(0, 3);
                                   setEditData({ ...editData, lookingFor: next });
                                 }}
-                                className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
+                                className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
                                 maxLength={50}
                               />
                             </motion.div>
@@ -619,11 +618,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   </section>
 
                   {/* E. Tags & Vibe */}
-                  <section className="space-y-6">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black px-1">Interests & Vibe</div>
-                    <div className="space-y-6">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-white/30 uppercase tracking-wider font-bold ml-1">Tags (Comma separated)</label>
+                  <section className="space-y-4">
+                    <div className="text-[9px] uppercase tracking-[0.2em] text-white/20 font-black px-1 border-b border-white/5 pb-1">Interests & Vibe</div>
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-white/30 uppercase tracking-wider font-bold ml-1">Tags (Comma separated)</label>
                         <input
                           type="text"
                           value={(editData.tags ?? user.tags).join(', ')}
@@ -631,32 +630,32 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                             const newTags = e.target.value.split(',').map(t => t.trim()).filter(Boolean).slice(0, 10).map(t => t.slice(0, 20));
                             setEditData({ ...editData, tags: newTags });
                           }}
-                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-4 py-3 text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
+                          className="w-full bg-white/[0.03] border border-transparent rounded-xl px-3 py-2.5 text-white focus:outline-none focus:bg-white/[0.06] focus:border-purple-500/30 transition-all"
                           placeholder="gaming, art, music..."
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         {VIBES.map(v => {
                           const isSelected = (editData.color ?? user.color) === v.color;
                           return (
                             <button
                               key={v.id}
                               onClick={() => setEditData({ ...editData, color: v.color, vibe: v.label })}
-                              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                              className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
                                 isSelected 
                                   ? 'bg-white/[0.06] border-white/20' 
                                   : 'bg-transparent border-transparent hover:bg-white/[0.03] opacity-60 hover:opacity-100'
                               }`}
                             >
                               <div 
-                                className="w-4 h-4 rounded-full"
+                                className="w-3.5 h-3.5 rounded-full"
                                 style={{ 
                                   backgroundColor: v.color,
                                   boxShadow: isSelected ? `0 0 15px ${v.color}` : 'none'
                                 }}
                               />
-                              <span className="text-[11px] font-bold text-white uppercase tracking-wider">{v.label}</span>
+                              <span className="text-[10px] font-bold text-white uppercase tracking-wider">{v.label}</span>
                             </button>
                           );
                         })}
@@ -666,16 +665,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 </div>
               ) : (
                 /* VIEW MODE */
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {/* Signal Section */}
                   {(user.signal || user.isGuest) && (
                     <section className="relative group">
                       <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity" />
-                      <div className={`relative bg-white/[0.03] rounded-xl p-3 space-y-1.5 border border-white/5 ${user.isGuest ? 'blur-md select-none' : ''}`}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1.5">
-                          <MessageCircle className="w-2.5 h-2.5" /> Sambit
+                      <div className={`relative bg-white/[0.03] rounded-xl p-2.5 space-y-1 border border-white/5 ${user.isGuest ? 'blur-md select-none' : ''}`}>
+                        <div className="text-[9px] uppercase tracking-wider text-white/30 font-bold flex items-center gap-1">
+                          <MessageCircle className="w-2 h-2" /> Sambit
                         </div>
-                        <p className="text-sm text-white/90 font-medium leading-relaxed tracking-tight">
+                        <p className="text-[13px] text-white/90 font-medium leading-relaxed tracking-tight">
                           "{user.isGuest ? "A thought waiting to be shared." : user.signal}"
                         </p>
                       </div>
@@ -684,11 +683,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
                   {/* Vibe + Looking For */}
                   {(user.vibe || (user.lookingFor && (Array.isArray(user.lookingFor) ? user.lookingFor.length > 0 : !!user.lookingFor))) && !user.isGuest && (
-                    <section className="space-y-2">
-                      <div className="flex flex-wrap gap-1.5">
+                    <section className="space-y-1.5">
+                      <div className="flex flex-wrap gap-1">
                         {user.vibe && (
                           <div 
-                            className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-transform hover:scale-105"
+                            className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 transition-transform hover:scale-105"
                             style={{ 
                               backgroundColor: `rgba(${rgbColor}, 0.08)`,
                               color: hexColor,

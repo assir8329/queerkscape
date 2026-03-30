@@ -29,9 +29,12 @@ export const incrementViewCount = async (thoughtId: string) => {
   }
 };
 
+import { getRandomName } from '../lib/randomNames';
+
 const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
   const [hasIncremented, setHasIncremented] = useState(false);
   const itemRef = React.useRef<HTMLDivElement>(null);
+  const anonymousName = getRandomName(thought.id);
 
   useEffect(() => {
     const viewedThoughts = JSON.parse(sessionStorage.getItem('viewedThoughts') || '[]');
@@ -57,47 +60,51 @@ const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
     return () => observer.disconnect();
   }, [thought.id, hasIncremented]);
 
+  const timeStr = thought.createdAt?.toMillis ? new Date(thought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
   return (
     <motion.div
       ref={itemRef}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 relative group hover:bg-white/[0.05] transition-colors"
+      className="bg-black/90 backdrop-blur-md border border-white/10 rounded-xl p-3 relative group hover:bg-white/[0.05] transition-all flex flex-col gap-2"
     >
-      <div className="flex flex-col gap-2">
-        {/* Header Label */}
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${thought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
-          <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">
-            {thought.isAnonymous ? 'A Whisper' : 'A Soul'}
-          </span>
-        </div>
+      {/* Subtle Glow */}
+      <div className="absolute -inset-1 bg-purple-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-        {/* Main Content */}
-        <p className="text-sm text-white/90 leading-relaxed font-medium line-clamp-3 max-w-[95%]">
+      {/* Header */}
+      <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-white/40 border-b border-white/5 pb-2 relative z-10">
+        <span className="text-purple-400/60 uppercase">Bulong</span>
+        <span className="opacity-20">|</span>
+        {thought.isAnonymous ? (
+          <span className="text-white/20 italic font-medium lowercase tracking-normal">{anonymousName}</span>
+        ) : (
+          <span className="truncate max-w-[100px] normal-case">{thought.username || "A Soul"}</span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col gap-0.5 relative z-10 py-1">
+        <p className="text-sm leading-relaxed text-white/90 m-0 font-medium line-clamp-3">
           "{thought.text}"
         </p>
+      </div>
 
-        {/* Metadata Footer */}
-        <div className="flex items-center gap-3 text-white/40 text-[10px] font-medium border-t border-white/5 pt-2 mt-1">
-          {thought.region && (
-            <div className="flex items-center gap-1">
-              <MapPin className="w-2.5 h-2.5 text-purple-400/60" />
-              <span>{thought.city || thought.region}</span>
-            </div>
-          )}
-          
+      {/* Footer */}
+      <div className="flex items-center justify-between text-white/40 text-[10px] font-bold border-t border-white/5 pt-2 relative z-10">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <Clock className="w-2.5 h-2.5" />
-            <span>{thought.createdAt?.toMillis ? new Date(thought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
+            <MapPin size={12} className="text-purple-400/60" />
+            <span>{thought.city || thought.region || 'Somewhere'}</span>
           </div>
-
-          {(thought.viewCount !== undefined && thought.viewCount > 0) && (
-            <div className="flex items-center gap-1">
-              <Eye className="w-2.5 h-2.5" />
-              <span>{thought.viewCount}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <Clock size={12} />
+            <span>{timeStr}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Sparkles size={12} className="text-yellow-400/40" />
+            <span>{thought.viewCount || 0} star listened</span>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -226,7 +233,7 @@ export const UnsaidThoughts: React.FC<UnsaidThoughtsProps> = ({ isOpen: external
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-[#1a1a2e]/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+              className="relative w-full max-w-lg bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
               <div className="p-4 pb-2 flex items-center justify-between border-b border-white/5">
                 <h2 className="text-base font-semibold text-white tracking-tight">Bulong</h2>

@@ -36,17 +36,17 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
   return (
     <>
       {/* Bottom Right Actions (Navigation & Zoom) */}
-      <div className="fixed right-6 bottom-8 z-40 hidden md:flex flex-col gap-4 pointer-events-none">
+      <div className="fixed right-6 bottom-20 md:bottom-8 z-40 flex flex-row gap-4 pointer-events-none">
         <motion.div 
           animate={{ 
             opacity: isVisible ? 1 : 0.2,
-            x: isVisible ? 0 : 20,
+            y: isVisible ? 0 : 20,
             scale: isVisible ? 1 : 0.95
           }}
           transition={{ type: "spring", stiffness: 200, damping: 25 }}
-          className="flex flex-col gap-4 pointer-events-auto"
+          className="flex flex-row gap-2 md:gap-4 pointer-events-auto"
         >
-          <div className="glass-dark rounded-3xl p-1.5 flex flex-col gap-1 shadow-2xl border-white/5">
+          <div className="glass-dark rounded-3xl p-1.5 flex flex-row gap-1 shadow-2xl border-white/5">
             <ActionButton 
               icon={<Navigation2 size={18} />} 
               label={isLoggedIn ? "Center Me" : "Sign in to center"} 
@@ -59,20 +59,16 @@ export const RightActionStack: React.FC<RightActionStackProps> = ({
               }} 
               variant="primary"
             />
-            {mapMode === 'constellation' && (
-              <>
-                <ActionButton 
-                  icon={<ZoomIn size={18} />} 
-                  label="Zoom In" 
-                  onClick={onZoomIn || (() => {})} 
-                />
-                <ActionButton 
-                  icon={<ZoomOut size={18} />} 
-                  label="Zoom Out" 
-                  onClick={onZoomOut || (() => {})} 
-                />
-              </>
-            )}
+            <ActionButton 
+              icon={<ZoomIn size={18} />} 
+              label="Zoom In" 
+              onClick={onZoomIn || (() => {})} 
+            />
+            <ActionButton 
+              icon={<ZoomOut size={18} />} 
+              label="Zoom Out" 
+              onClick={onZoomOut || (() => {})} 
+            />
           </div>
         </motion.div>
       </div>
@@ -109,7 +105,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, activ
       </div>
       
       {/* Tooltip on Hover */}
-      <div className="absolute right-full mr-3 px-3 py-1.5 glass-dark rounded-xl text-[10px] font-bold text-white/60 uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none whitespace-nowrap border border-white/5">
+      <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 px-3 py-1.5 glass-dark rounded-xl text-[10px] font-bold text-white/60 uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all pointer-events-none whitespace-nowrap border border-white/5">
         {label}
       </div>
     </button>

@@ -43,7 +43,7 @@ export const SignalModal: React.FC<SignalModalProps> = ({ isOpen, onClose, daily
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
+              className="relative w-full max-w-lg bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl overflow-hidden flex flex-col"
             >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
             
@@ -75,7 +75,7 @@ export const SignalModal: React.FC<SignalModalProps> = ({ isOpen, onClose, daily
                   value={response}
                   onChange={(e) => setResponse(e.target.value)}
                   placeholder="Type your reflection..."
-                  className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 resize-none h-40 text-lg leading-relaxed transition-all font-medium"
+                  className="w-full bg-white/5 border border-white/10 rounded-3xl px-6 py-0 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 resize-none h-40 text-lg leading-relaxed transition-all font-medium"
                   maxLength={140}
                 />
                 <div className="flex justify-end px-2">

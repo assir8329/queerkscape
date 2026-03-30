@@ -52,7 +52,9 @@ service cloud.firestore {
     // Collection: reports
     // Document ID: {reportId}
     // Fields:
-    //   - reportedUid: string (required, immutable)
+    //   - reportedUid: string (optional)
+    //   - contentId: string (optional)
+    //   - contentType: string (required, 'whisper', 'memory', 'user')
     //   - reportedByUid: string (required, immutable)
     //   - reason: string (required, max 500 chars)
     //   - category: string (required, max 50 chars)
@@ -251,9 +253,11 @@ service cloud.firestore {
     
     function isValidReport() {
       let data = request.resource.data;
-      return hasRequiredFields(['reportedUid', 'reportedByUid', 'reason', 'category', 'createdAt']) &&
+      return hasRequiredFields(['reportedByUid', 'reason', 'category', 'contentType', 'createdAt']) &&
              data.reportedByUid == request.auth.uid &&
-             data.reportedUid is string &&
+             (!('reportedUid' in data) || data.reportedUid is string) &&
+             (!('contentId' in data) || data.contentId is string) &&
+             data.contentType in ['whisper', 'memory', 'user'] &&
              validStringLength('reason', 1, 500) &&
              validStringLength('category', 1, 50) &&
              data.createdAt is timestamp;

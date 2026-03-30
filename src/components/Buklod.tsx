@@ -5,6 +5,7 @@ import { useAuth, UserProfile } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { getHexColor } from '../lib/colors';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
+import { StarNode } from './StarNode';
 
 export const Buklod: React.FC = () => {
   const { profile } = useAuth();
@@ -224,7 +225,7 @@ export const Buklod: React.FC = () => {
         {clampedSouls.map((soul) => (
           <div
             key={`kindred-star-${soul.uid}`}
-            className="absolute pointer-events-auto cursor-pointer group"
+            className="absolute pointer-events-auto cursor-pointer group flex flex-col items-center"
             style={{ 
               left: `calc(50% + ${soul.relX}px)`, 
               top: `calc(50% + ${soul.relY}px)`,
@@ -232,23 +233,17 @@ export const Buklod: React.FC = () => {
             }}
             onClick={() => setActiveTooltip(activeTooltip === soul.uid ? null : soul.uid)}
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              whileHover={{ scale: 1.5 }}
-              className="w-2 h-2 rounded-full border border-white/30 relative"
-              style={{ 
-                backgroundColor: getHexColor(soul.color),
-                boxShadow: `0 0 15px ${getHexColor(soul.color)}` 
-              }}
-            >
-              {/* Kindred Name Label (Visible for stars in view) */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 transition-opacity duration-300">
+            <StarNode
+              size={12}
+              color={getHexColor(soul.color)}
+              glowColor={`${getHexColor(soul.color)}66`}
+            />
+            {/* Kindred Name Label (Visible for stars in view) */}
+            <div className="mt-2 transition-opacity duration-300">
                 <span className="text-[8px] text-white/40 uppercase tracking-[0.2em] whitespace-nowrap font-bold">
                   {soul.nickname || soul.username}
                 </span>
-              </div>
-            </motion.div>
+            </div>
 
             {/* Tooltip */}
             <AnimatePresence>
@@ -276,26 +271,14 @@ export const Buklod: React.FC = () => {
         <div 
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center"
         >
-          <motion.div
-            animate={{ 
-              scale: [1, 1.1, 1],
-              boxShadow: [
-                `0 0 30px ${userVibeColor}66`,
-                `0 0 60px ${userVibeColor}99`,
-                `0 0 30px ${userVibeColor}66`
-              ]
-            }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-10 h-10 rounded-full border-2 border-white/20 relative"
-            style={{ 
-              backgroundColor: userVibeColor,
-              filter: `drop-shadow(0 0 15px ${userVibeColor})`
-            }}
-          >
-            <div className="absolute inset-0 rounded-full bg-white/30 blur-sm" />
-          </motion.div>
+          <StarNode
+            size={64}
+            color={userVibeColor}
+            glowColor={`${userVibeColor}99`}
+            isSanctuary={true}
+          />
           
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <h2 className="text-white font-black tracking-[0.3em] uppercase text-[10px] opacity-80">YOUR SANCTUARY</h2>
             <div className="w-8 h-[1px] mx-auto mt-2" style={{ backgroundColor: `${userVibeColor}66` }} />
           </div>

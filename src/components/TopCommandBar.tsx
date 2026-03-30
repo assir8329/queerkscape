@@ -47,7 +47,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
         transition={{ type: "spring", stiffness: 200, damping: 25 }}
         className="pointer-events-auto"
       >
-        <div className={`glass rounded-[2rem] p-1 flex items-center gap-2 shadow-2xl transition-all duration-500 ${isExpanded ? 'rounded-[2.5rem]' : ''}`}>
+        <div className={`glass rounded-xl p-1 flex items-center gap-2 shadow-2xl transition-all duration-500 ${isExpanded ? 'rounded-2xl' : ''}`}>
           
           {/* Left: Daily Prompt Trigger */}
           <button
@@ -108,7 +108,7 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 12, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="glass-dark rounded-[2.5rem] p-6 shadow-2xl border-white/10 relative overflow-hidden"
+              className="glass-dark rounded-2xl p-6 shadow-2xl border-white/10 relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
               

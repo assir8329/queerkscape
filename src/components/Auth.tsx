@@ -79,28 +79,28 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="z-10 w-full max-w-md flex flex-col items-center p-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl relative"
+        className="z-10 w-full max-w-[400px] flex flex-col items-center p-8 bg-[#050510]/95 backdrop-blur-2xl rounded-xl border border-white/10 shadow-2xl relative"
       >
         {onClose && (
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors"
+            className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors z-50"
             aria-label="Close login"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         )}
         <div className="flex flex-col items-center mb-8">
-          <Sparkles className="w-12 h-12 text-purple-400 mb-4" />
-          <h1 className="text-3xl font-bold mb-2 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+          <Sparkles className="w-10 h-10 text-purple-400 mb-4" />
+          <h1 className="text-xl font-brand font-normal mb-2 tracking-[0.3em] uppercase text-white">
             HIRAYA
           </h1>
-          <p className="text-white/60 text-center text-sm">
+          <p className="text-white/40 text-center text-[11px] tracking-wider uppercase">
             {isSignUp ? 'Find your place among the stars.' : 'Welcome back to your constellation.'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full space-y-4 mb-6">
+        <form onSubmit={handleSubmit} className="w-full space-y-3.5 mb-6">
           <AnimatePresence mode="wait">
             {isSignUp && (
               <motion.div
@@ -110,13 +110,13 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
                 exit={{ opacity: 0, height: 0 }}
                 className="relative"
               >
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
                 <input
                   type="text"
-                  placeholder="Username"
+                  placeholder="USERNAME"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all"
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-3 pl-10 pr-4 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.06] transition-all tracking-wider"
                   required
                 />
               </motion.div>
@@ -124,25 +124,25 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           </AnimatePresence>
 
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
             <input
               type="email"
-              placeholder="Email"
+              placeholder="EMAIL"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all"
+              className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-3 pl-10 pr-4 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.06] transition-all tracking-wider"
               required
             />
           </div>
 
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="PASSWORD"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 transition-all"
+              className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-3 pl-10 pr-4 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.06] transition-all tracking-wider"
               required
             />
           </div>
@@ -151,7 +151,7 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-red-400 text-xs text-center"
+              className="text-red-400/80 text-[10px] text-center tracking-wide"
             >
               {error}
             </motion.p>
@@ -160,40 +160,44 @@ export const Auth: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(168,85,247,0.3)] disabled:opacity-50"
+            className={`w-full py-3 rounded-xl text-[11px] font-ui uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+              isSignUp 
+                ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_20px_rgba(234,179,8,0.3)]' 
+                : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.3)]'
+            }`}
           >
             {isSubmitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                {isSignUp ? 'Create Account' : 'Sign In'}
-                <ArrowRight className="w-4 h-4" />
+                {isSignUp ? 'Join Hiraya' : 'Reignite Star'}
+                <ArrowRight className="w-3.5 h-3.5" />
               </>
             )}
           </button>
         </form>
 
         <div className="w-full flex items-center gap-4 mb-6">
-          <div className="h-px flex-1 bg-white/10" />
-          <span className="text-white/20 text-xs uppercase tracking-widest">or</span>
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="h-px flex-1 bg-white/5" />
+          <span className="text-white/10 text-[9px] uppercase tracking-[0.3em]">or</span>
+          <div className="h-px flex-1 bg-white/5" />
         </div>
 
         <button
           onClick={signIn}
-          className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all flex items-center justify-center gap-3 font-medium text-sm"
+          className="w-full py-3 bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 rounded-xl transition-all flex items-center justify-center gap-3 font-ui text-[10px] uppercase tracking-widest text-white/60 hover:text-white"
         >
-          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-3.5 h-3.5 opacity-70" />
           Sign in with Google
         </button>
 
-        <p className="mt-8 text-white/40 text-sm">
+        <p className="mt-8 text-white/30 text-[10px] uppercase tracking-widest">
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+            className="text-purple-400 hover:text-purple-300 font-ui transition-colors"
           >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
+            {isSignUp ? 'SIGN IN' : 'SIGN UP'}
           </button>
         </p>
       </motion.div>

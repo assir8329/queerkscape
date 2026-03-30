@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Cormorant+Garamond:ital,wght@1,300&family=Geologica:wght@100..900&display=swap');
 
 html, body {
   touch-action: none;
@@ -12,6 +12,9 @@ html, body {
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-brand: "Tenor Sans", sans-serif;
+  --font-soul: "Cormorant Garamond", serif;
+  --font-ui: "Geologica", sans-serif;
 }
 
 @layer utilities {
@@ -61,6 +64,12 @@ html, body {
 
   .animate-slow-pulse {
     animation: slow-pulse 3s ease-in-out infinite;
+  }
+
+  /* UI Technical Font */
+  .font-ui-tech {
+    font-family: var(--font-ui);
+    font-variation-settings: 'slnt' 0;
   }
 
   /* Leaflet Popup Overrides */

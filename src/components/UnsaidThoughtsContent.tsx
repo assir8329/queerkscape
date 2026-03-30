@@ -3,15 +3,20 @@ import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp,
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'motion/react';
-import { Send, Sparkles, Ghost, Clock, Eye, MapPin, Globe, Navigation } from 'lucide-react';
+import { Send, Sparkles, Ghost, Clock, Eye, MapPin, Globe, Navigation, Flag } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import { UnsaidThought } from '../types';
 import { getCityBaseCoordinates, getCityOffset } from '../lib/locations';
 import { incrementViewCount } from './UnsaidThoughts';
+import { ReportModal } from './ReportModal';
 
-const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
+import { getRandomName } from '../lib/randomNames';
+
+const ThoughtItem: React.FC<{ thought: UnsaidThought, currentUserUid?: string }> = ({ thought, currentUserUid }) => {
   const [hasIncremented, setHasIncremented] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const itemRef = React.useRef<HTMLDivElement>(null);
+  const anonymousName = getRandomName(thought.id);
 
   useEffect(() => {
     const viewedThoughts = JSON.parse(sessionStorage.getItem('viewedThoughts') || '[]');
@@ -37,6 +42,8 @@ const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
     return () => observer.disconnect();
   }, [thought.id, hasIncremented]);
 
+  const timeStr = thought.createdAt?.toMillis ? new Date(thought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
   return (
     <motion.div
       ref={itemRef}
@@ -45,38 +52,64 @@ const ThoughtItem: React.FC<{ thought: UnsaidThought }> = ({ thought }) => {
       className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 relative group hover:bg-white/[0.05] transition-colors"
     >
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${thought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_10px_rgba(168,85,247,0.5)]`} />
-          <span className="text-[10px] text-white/40 uppercase tracking-widest font-black">
-            {thought.isAnonymous ? "An Echo" : thought.username || "A Soul"}
-          </span>
+        {/* Header */}
+        <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-white/40 border-b border-white/5 pb-2">
+          <span className="text-purple-400/60 uppercase">Bulong</span>
+          <span className="opacity-20">|</span>
+          {thought.isAnonymous ? (
+            <span className="text-white/20 italic font-medium lowercase tracking-normal">{anonymousName}</span>
+          ) : (
+            <span className="truncate max-w-[120px] normal-case">{thought.username || "A Soul"}</span>
+          )}
         </div>
 
-        <p className="text-sm text-white/90 leading-relaxed font-medium">
+        <p className="text-sm text-white/90 leading-relaxed font-medium py-1">
           "{thought.text}"
         </p>
 
-        <div className="flex items-center gap-4 text-white/40 text-[10px] font-bold border-t border-white/5 pt-3 mt-1">
-          {thought.region && (
+        {/* Footer */}
+        <div className="flex items-center justify-between text-white/40 text-[10px] font-bold border-t border-white/5 pt-3">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
-              <MapPin className="w-3 h-3 text-purple-400/60" />
-              <span>{thought.city || thought.region}</span>
+              <MapPin size={12} className="text-purple-400/60" />
+              <span>{thought.city || thought.region || 'Somewhere'}</span>
             </div>
-          )}
-          
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3 h-3" />
-            <span>{thought.createdAt?.toMillis ? new Date(thought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
+            
+            <div className="flex items-center gap-1.5">
+              <Clock size={12} />
+              <span>{timeStr}</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={12} className="text-yellow-400/40" />
+              <span>{thought.viewCount || 0} star listened</span>
+            </div>
           </div>
 
-          {(thought.viewCount !== undefined && thought.viewCount > 0) && (
-            <div className="flex items-center gap-1.5">
-              <Eye className="w-3 h-3" />
-              <span>{thought.viewCount}</span>
-            </div>
+          {currentUserUid && currentUserUid !== thought.userId && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsReportModalOpen(true);
+              }}
+              className="flex items-center gap-1 text-white/30 hover:text-white/80 transition-colors"
+              title="Report this whisper"
+            >
+              <Flag size={12} strokeWidth={1.5} />
+              <span className="font-ui-tech font-medium tracking-wider uppercase">Report</span>
+            </button>
           )}
         </div>
       </div>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        reportedByUid={currentUserUid || ''}
+        reportedUid={thought.userId}
+        contentId={thought.id}
+        contentType="whisper"
+      />
     </motion.div>
   );
 };
@@ -190,7 +223,7 @@ export const UnsaidThoughtsContent: React.FC = () => {
           </div>
         ) : (
           filteredThoughts.map((thought) => (
-            <ThoughtItem key={thought.id} thought={thought} />
+            <ThoughtItem key={thought.id} thought={thought} currentUserUid={user?.uid} />
           ))
         )}
       </div>

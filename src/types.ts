@@ -69,4 +69,5 @@ export interface Memory {
   viewCount: number;
   date?: Timestamp;
   vibe?: string;
+  isAnonymous?: boolean;
 }

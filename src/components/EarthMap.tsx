@@ -12,8 +12,10 @@ import { handleFirestoreError, OperationType } from '../lib/firestore-errors';
 import L from 'leaflet';
 import { useDispersedStars } from '../lib/orbital-dispersion';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Target, MessageSquare, Sparkles, Eye, MapPin, Clock } from 'lucide-react';
+import { X, Target, MessageSquare, Sparkles, Eye, MapPin, Clock, Flag } from 'lucide-react';
 import { getHexColor } from '../lib/colors';
+import { ReportModal } from './ReportModal';
+import { getRandomName } from '../lib/randomNames';
 
 interface EarthMapProps {
   users: UserProfile[];
@@ -197,8 +199,9 @@ const MapContent: React.FC<{
   onMemoryClick: (memory: Memory) => void,
   onMapClick: (lat: number, lng: number) => void,
   activeThought: UnsaidThought | null,
+  currentUser: UserProfile | null,
   onInteraction?: () => void
-}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick, activeThought, onInteraction }) => {
+}> = ({ users, thoughts, memories, showStars, showThoughts, showMemories, isAddingMemory, onUserClick, onClusterClick, onThoughtClick, onMemoryClick, onMapClick, activeThought, currentUser, onInteraction }) => {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
 
@@ -306,6 +309,7 @@ const MapContent: React.FC<{
               <MemoryCard 
                 memory={memory} 
                 user={user}
+                currentUser={currentUser || undefined}
                 onClose={() => map?.closePopup()} 
               />
             </Popup>
@@ -330,6 +334,8 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   const [memoryModalOpen, setMemoryModalOpen] = useState(false);
   const [selectedMemoryLocation, setSelectedMemoryLocation] = useState<{lat: number, lng: number, region: string} | null>(null);
   const [viewingMemory, setViewingMemory] = useState<Memory | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ id: string, userId: string, type: 'whisper' | 'memory' } | null>(null);
 
   // Layer toggles
   const [activeLayers, setActiveLayers] = useState<string[]>(['stars', 'thoughts', 'memories']);
@@ -430,7 +436,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         paddingTopLeft: [20, 120],
         paddingBottomRight: [20, 120],
         animate: true,
-        duration: 1
+        duration: 2
       });
     }
   }, [map]);
@@ -476,15 +482,12 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div 
       className={`absolute inset-0 z-0 bg-[#050510] overflow-hidden ${isAddingMemory ? 'cursor-crosshair' : ''}`}
     >
       {isAddingMemory && (
         <div 
-          className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] glass-dark text-yellow-400 px-6 py-3 rounded-full font-bold shadow-2xl border border-yellow-500/30"
+          className="absolute top-24 left-1/2 -translate-x-1/2 z-[1000] glass-dark text-yellow-400 px-6 py-3 rounded-full font-brand font-normal uppercase tracking-[0.3em] shadow-2xl border border-yellow-500/30"
           style={{
             animationName: 'pulse',
             animationDuration: '2s',
@@ -500,7 +503,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         center={[12.8797, 121.7740]} 
         zoom={5.5} 
         ref={setMap}
-        style={{ height: '100%', width: '100%', background: '#050510' }}
+        style={{ height: '100%', width: '100%', background: '#050510', border: 'none', outline: 'none' }}
         zoomControl={false}
         attributionControl={false}
         minZoom={5.4}
@@ -536,6 +539,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
           onMemoryClick={handleMemoryClick}
           onMapClick={handleMapClick}
           activeThought={activeThought}
+          currentUser={currentUser}
           onInteraction={onInteraction}
         />
       </MapContainer>
@@ -553,6 +557,8 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
         filterTag={filterTag}
         setFilterTag={setFilterTag}
         isVisible={isUiVisible}
+        onZoomIn={() => map?.zoomIn()}
+        onZoomOut={() => map?.zoomOut()}
       />
 
       {/* Modals */}
@@ -578,60 +584,90 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-[#0a0a1a] border border-white/10 rounded-2xl p-4 max-w-sm w-full shadow-2xl relative overflow-hidden"
+              className="bg-[#050510]/95 backdrop-blur-2xl border border-white/10 rounded-xl p-3 w-[320px] shadow-2xl relative flex flex-col gap-2 group pointer-events-auto"
             >
-              <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-pink-500" />
+              {/* Subtle Glow */}
+              <div className="absolute -inset-1 bg-purple-500/5 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               
-              <button 
-                onClick={() => setActiveThought(null)}
-                className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center text-white/30 hover:text-white transition-all z-50"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="flex flex-col gap-3">
-                {/* Header Label */}
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${activeThought.isAnonymous ? 'bg-white/20' : 'bg-purple-500'} shadow-[0_0_8px_rgba(168,85,247,0.5)]`} />
-                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
-                    {activeThought.isAnonymous ? 'A Whisper' : 'A Soul'}
-                  </span>
+              {/* Header */}
+              <div className="flex items-center justify-between relative z-10 py-0.5 border-b border-white/5 pb-2">
+                <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-white/40">
+                  <span className="text-purple-400/60 uppercase">Bulong</span>
+                  <span className="opacity-20">|</span>
+                  {activeThought.isAnonymous ? (
+                    <span className="text-white/20 italic font-medium lowercase tracking-normal">{getRandomName(activeThought.id)}</span>
+                  ) : (
+                    <span className="truncate max-w-[100px] normal-case">{activeThought.username || 'A Soul'}</span>
+                  )}
                 </div>
+                <button 
+                  onClick={() => setActiveThought(null)}
+                  className="w-5 h-5 flex items-center justify-center text-white/30 hover:text-white transition-colors rounded-full hover:bg-white/5 shrink-0 relative z-20"
+                  aria-label="Close"
+                >
+                  <X size={14} />
+                </button>
+              </div>
 
-                {/* Main Content */}
-                <p className="text-sm text-white/90 leading-relaxed font-medium">
+              {/* Content */}
+              <div className="flex flex-col gap-0.5 relative z-10 py-1">
+                <p className="text-[0.95rem] font-soul font-light leading-[1.5] text-white/90 m-0">
                   "{activeThought.text}"
                 </p>
+              </div>
 
-                {/* Metadata Footer */}
-                <div className="flex flex-col gap-2 border-t border-white/5 pt-3 mt-1">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-white/40 font-medium">
-                    {activeThought.region && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-2.5 h-2.5 text-purple-400/60" />
-                        <span>{activeThought.city || activeThought.region}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      <span>{activeThought.createdAt?.toMillis ? new Date(activeThought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
-                    </div>
-
-                    {(activeThought.viewCount !== undefined && activeThought.viewCount > 0) && (
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-2.5 h-2.5" />
-                        <span>{activeThought.viewCount} stars listening</span>
-                      </div>
-                    )}
+              {/* Footer */}
+              <div className="flex items-center justify-between text-[10px] text-white/40 relative z-10 border-t border-white/5 pt-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <MapPin size={12} className="text-purple-400/60" />
+                    <span>{activeThought.city || activeThought.region || 'Somewhere'}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock size={12} />
+                    <span>{activeThought.createdAt?.toMillis ? new Date(activeThought.createdAt.toMillis()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Sparkles size={12} className="text-yellow-400/40" />
+                    <span>{activeThought.viewCount || 0} star listened</span>
                   </div>
                 </div>
+
+                {currentUser && currentUser.uid !== activeThought.userId && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReportTarget({
+                        id: activeThought.id,
+                        userId: activeThought.userId,
+                        type: 'whisper'
+                      });
+                      setIsReportModalOpen(true);
+                    }}
+                    className="flex items-center gap-1 text-white/30 hover:text-white/80 transition-colors"
+                    title="Report this whisper"
+                  >
+                    <Flag size={12} strokeWidth={1.5} />
+                    <span className="font-ui-tech font-medium tracking-wider uppercase">Report</span>
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => {
+          setIsReportModalOpen(false);
+          setReportTarget(null);
+        }}
+        reportedByUid={currentUser?.uid || ''}
+        reportedUid={reportTarget?.userId}
+        contentId={reportTarget?.id}
+        contentType={reportTarget?.type || 'whisper'}
+      />
       
       <style>{`
         .leaflet-container {
@@ -658,6 +694,6 @@ export const EarthMap: React.FC<EarthMapProps> = ({ users, currentUser, onUserCl
           100% { transform: scale(1); box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
         }
       `}</style>
-    </motion.div>
+    </div>
   );
 };

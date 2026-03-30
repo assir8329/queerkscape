@@ -215,12 +215,21 @@
     },
     "Report": {
       "title": "Report",
-      "description": "A report filed against a user.",
+      "description": "A report filed against a user or content.",
       "type": "object",
       "properties": {
         "reportedUid": {
           "type": "string",
-          "description": "UID of the user being reported."
+          "description": "UID of the user being reported (optional if reporting content)."
+        },
+        "contentId": {
+          "type": "string",
+          "description": "ID of the content being reported (optional if reporting user)."
+        },
+        "contentType": {
+          "type": "string",
+          "enum": ["whisper", "memory", "user"],
+          "description": "The type of content being reported."
         },
         "reportedByUid": {
           "type": "string",
@@ -232,14 +241,14 @@
         },
         "category": {
           "type": "string",
-          "description": "Category of the report (e.g., spam, harassment, fake account)."
+          "description": "Category of the report (e.g., spam, harassment, inappropriate)."
         },
         "createdAt": {
           "type": "timestamp",
           "description": "When the report was filed."
         }
       },
-      "required": ["reportedUid", "reportedByUid", "reason", "category", "createdAt"]
+      "required": ["reportedByUid", "reason", "category", "contentType", "createdAt"]
     },
     "UnsaidThought": {
       "title": "Unsaid Thought",
